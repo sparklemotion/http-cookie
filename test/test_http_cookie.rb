@@ -1,7 +1,6 @@
 require File.expand_path('helper', File.dirname(__FILE__))
 
 class TestHTTPCookie < Test::Unit::TestCase
-#class TestHTTPCookie < MiniTest::Unit::TestCase
   def silently
     warn_level = $VERBOSE
     $VERBOSE = false

@@ -1,8 +1,6 @@
 require File.expand_path('helper', File.dirname(__FILE__))
 
-class TestMechanizeCookieJar < Test::Unit::TestCase
-#class TestMechanizeCookieJar < MiniTest::Unit::TestCase
-
+class TestHTTPCookieJar < Test::Unit::TestCase
   def setup
     @jar = HTTP::CookieJar.new
   end
