@@ -23,4 +23,5 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
 
   gem.add_runtime_dependency("domain_name", ["~> 0.5"])
+  gem.add_development_dependency("bundler", [">= 1.2.0"])
 end
