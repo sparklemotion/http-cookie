@@ -31,7 +31,7 @@ Or install it yourself as:
 
     # Store received cookies
     HTTP::Cookie.parse(uri, set_cookie_header_value) { |cookie|
-      jar << cookie
+      jar << cookie if cookie.acceptable_from_uri?(uri)
     }
 
     # Extract cookies to send
