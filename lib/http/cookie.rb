@@ -162,8 +162,6 @@ class HTTP::Cookie
     end
   end
 
-  alias set_domain domain=
-
   # Sets the domain attribute.  A leading dot in +domain+ implies
   # turning the +for_domain?+ flag on.
   def domain=(domain)
@@ -183,7 +181,7 @@ class HTTP::Cookie
       end
       @domain_name = DomainName.new(domain)
     end
-    set_domain(@domain_name.hostname)
+    @domain = @domain_name.hostname
   end
 
   def expires=(t)
