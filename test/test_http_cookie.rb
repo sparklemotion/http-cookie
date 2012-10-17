@@ -207,6 +207,7 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_parse_many
     url = URI 'http://example/'
     cookie_str =
+      "abc, " \
       "name=Aaron; Domain=localhost; Expires=Sun, 06 Nov 2011 00:29:51 GMT; Path=/, " \
       "name=Aaron; Domain=localhost; Expires=Sun, 06 Nov 2011 00:29:51 GMT; Path=/, " \
       "name=Aaron; Domain=localhost; Expires=Sun, 06 Nov 2011 00:29:51 GMT; Path=/, " \

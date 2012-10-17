@@ -82,82 +82,84 @@ class HTTP::Cookie
 
   class << self
     # Parses a Set-Cookie header line +str+ sent from +uri+ into an
-    # array of Cookie objects.  Note that this array may contain
-    # nil's when some of the cookie-pairs are malformed.
+    # array of Cookie objects.  Parts (separated by commas) that are
+    # malformed are ignored.
     def parse(uri, str, log = nil)
-      return str.split(/,(?=[^;,]*=)|,$/).map { |c|
-        cookie_elem = c.split(/;+/)
-        first_elem = cookie_elem.shift
-        first_elem.strip!
-        key, value = first_elem.split(/\=/, 2)
+      [].tap { |cookies|
+        set_cookie.split(/,(?=[^;,]*=)|,$/).each { |c|
+          cookie_elem = c.split(/;+/)
+          first_elem = cookie_elem.shift
+          first_elem.strip!
+          key, value = first_elem.split(/\=/, 2)
 
-        begin
-          cookie = new(key, value.dup)
-        rescue
-          log.warn("Couldn't parse key/value: #{first_elem}") if log
-          next
-        end
-
-        cookie_elem.each do |pair|
-          pair.strip!
-          key, value = pair.split(/=/, 2)
-          next unless key
-          value = WEBrick::HTTPUtils.dequote(value.strip) if value
-
-          case key.downcase
-          when 'domain'
-            next unless value && !value.empty?
-            begin
-              cookie.domain = value
-              cookie.for_domain = true
-            rescue
-              log.warn("Couldn't parse domain: #{value}") if log
-            end
-          when 'path'
-            next unless value && !value.empty?
-            cookie.path = value
-          when 'expires'
-            next unless value && !value.empty?
-            begin
-              cookie.expires = Time::parse(value)
-            rescue
-              log.warn("Couldn't parse expires: #{value}") if log
-            end
-          when 'max-age'
-            next unless value && !value.empty?
-            begin
-              cookie.max_age = Integer(value)
-            rescue
-              log.warn("Couldn't parse max age '#{value}'") if log
-            end
-          when 'comment'
-            next unless value
-            cookie.comment = value
-          when 'version'
-            next unless value
-            begin
-              cookie.version = Integer(value)
-            rescue
-              log.warn("Couldn't parse version '#{value}'") if log
-              cookie.version = nil
-            end
-          when 'secure'
-            cookie.secure = true
+          begin
+            cookie = new(key, value.dup)
+          rescue
+            logger.warn("Couldn't parse key/value: #{first_elem}") if logger
+            next
           end
-        end
 
-        cookie.path    ||= (uri + './').path
-        cookie.secure  ||= false
-        cookie.domain  ||= uri.host
+          cookie_elem.each do |pair|
+            pair.strip!
+            key, value = pair.split(/=/, 2) #/)
+            next unless key
+            value = WEBrick::HTTPUtils.dequote(value.strip) if value
 
-        # RFC 6265 4.1.2.2
-        cookie.expires   = Time.now + cookie.max_age if cookie.max_age
-        cookie.session   = !cookie.expires
+            case key.downcase
+            when 'domain'
+              next unless value && !value.empty?
+              begin
+                cookie.domain = value
+                cookie.for_domain = true
+              rescue
+                logger.warn("Couldn't parse domain: #{value}") if logger
+              end
+            when 'path'
+              next unless value && !value.empty?
+              cookie.path = value
+            when 'expires'
+              next unless value && !value.empty?
+              begin
+                cookie.expires = Time.parse(value)
+              rescue
+                logger.warn("Couldn't parse expires: #{value}") if logger
+              end
+            when 'max-age'
+              next unless value && !value.empty?
+              begin
+                cookie.max_age = Integer(value)
+              rescue
+                logger.warn("Couldn't parse max age '#{value}'") if logger
+              end
+            when 'comment'
+              next unless value
+              cookie.comment = value
+            when 'version'
+              next unless value
+              begin
+                cookie.version = Integer(value)
+              rescue
+                logger.warn("Couldn't parse version '#{value}'") if logger
+                cookie.version = nil
+              end
+            when 'secure'
+              cookie.secure = true
+            end
+          end
 
-        # Move this in to the cookie jar
-        yield cookie if block_given?
+          cookie.path    ||= (origin + './').path
+          cookie.secure  ||= false
+          cookie.domain  ||= origin.host
 
-        cookie
+          # RFC 6265 4.1.2.2
+          cookie.expires   = Time.now + cookie.max_age if cookie.max_age
+          cookie.session   = !cookie.expires
+
+          # Move this in to the cookie jar
+          yield cookie if block_given?
+
+          cookies << cookie
+        }
       }
     end
   end
