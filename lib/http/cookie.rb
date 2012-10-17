@@ -9,6 +9,18 @@ end
 
 # This class is used to represent an HTTP Cookie.
 class HTTP::Cookie
+  # In Ruby < 1.9.3 URI() does not accept an URI object.
+  if RUBY_VERSION < "1.9.3"
+    module URIFix
+      def URI(url)
+        url.is_a?(URI) ? url : URI(url)
+      end
+      private :URI
+    end
+  end
+
+  include URIFix if defined?(URIFix)
+
   attr_reader :name
   attr_accessor :value, :version
   attr_accessor :domain, :path, :secure
@@ -81,6 +93,8 @@ class HTTP::Cookie
   alias for_domain? for_domain
 
   class << self
+    include URIFix if defined?(URIFix)
+
     # Parses a Set-Cookie header value +set_cookie+ sent from +origin+
     # into an array of Cookie objects.  Parts (separated by commas)
     # that are malformed are ignored.
