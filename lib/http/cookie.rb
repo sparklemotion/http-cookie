@@ -81,10 +81,12 @@ class HTTP::Cookie
   alias for_domain? for_domain
 
   class << self
-    # Parses a Set-Cookie header line +str+ sent from +uri+ into an
-    # array of Cookie objects.  Parts (separated by commas) that are
-    # malformed are ignored.
-    def parse(uri, str, log = nil)
+    # Parses a Set-Cookie header value +set_cookie+ sent from +origin+
+    # into an array of Cookie objects.  Parts (separated by commas)
+    # that are malformed are ignored.
+    #
+    # If a block is given, each cookie object is passed to the block.
+    def parse(origin, set_cookie, logger = nil)
       [].tap { |cookies|
         set_cookie.split(/,(?=[^;,]*=)|,$/).each { |c|
           cookie_elem = c.split(/;+/)
