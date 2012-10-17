@@ -30,8 +30,8 @@ Or install it yourself as:
     jar.load(filename) if File.exist?(filename)
 
     # Store received cookies
-    HTTP::Cookie.parse(uri, set_cookie_header_value) { |cookie|
-      jar << cookie if cookie.acceptable_from_uri?(uri)
+    HTTP::Cookie.parse(set_cookie_header_value, :origin => uri) { |cookie|
+      jar << cookie
     }
 
     # Extract cookies to send
