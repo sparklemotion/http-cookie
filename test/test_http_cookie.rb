@@ -34,7 +34,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     dates.each do |date|
       cookie = "PREF=1; expires=#{date}"
       silently do
-        HTTP::Cookie.parse(url, cookie) { |c|
+        HTTP::Cookie.parse(cookie, :origin => url) { |c|
           assert c.expires, "Tried parsing: #{date}"
           assert_equal(true, c.expires < yesterday)
         }
@@ -47,7 +47,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     uri = URI.parse 'http://example'
 
-    HTTP::Cookie.parse uri, cookie_str do |cookie|
+    HTTP::Cookie.parse cookie_str, :origin => uri do |cookie|
       assert_equal 'a', cookie.name
       assert_equal 'b', cookie.value
     end
@@ -58,7 +58,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     uri = URI.parse 'http://example'
 
-    HTTP::Cookie.parse uri, cookie_str do |cookie|
+    HTTP::Cookie.parse cookie_str, :origin => uri do |cookie|
       assert_equal 'foo',               cookie.name
       assert_equal 'bar',               cookie.value
       assert_equal '/',                 cookie.path
@@ -72,7 +72,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     uri = URI.parse 'http://example'
 
-    HTTP::Cookie.parse uri, cookie_str do |cookie|
+    HTTP::Cookie.parse cookie_str, :origin => uri do |cookie|
       assert_equal 'quoted', cookie.name
       assert_equal '"value"', cookie.value
     end
@@ -81,7 +81,7 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_parse_weird_cookie
     cookie = 'n/a, ASPSESSIONIDCSRRQDQR=FBLDGHPBNDJCPCGNCPAENELB; path=/'
     url = URI.parse('http://www.searchinnovation.com/')
-    HTTP::Cookie.parse(url, cookie) { |c|
+    HTTP::Cookie.parse(cookie, :origin => url) { |c|
       assert_equal('ASPSESSIONIDCSRRQDQR', c.name)
       assert_equal('FBLDGHPBNDJCPCGNCPAENELB', c.value)
     }
@@ -90,7 +90,7 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_double_semicolon
     double_semi = 'WSIDC=WEST;; domain=.williams-sonoma.com; path=/'
     url = URI.parse('http://williams-sonoma.com/')
-    HTTP::Cookie.parse(url, double_semi) { |cookie|
+    HTTP::Cookie.parse(double_semi, :origin => url) { |cookie|
       assert_equal('WSIDC', cookie.name)
       assert_equal('WEST', cookie.value)
     }
@@ -99,7 +99,7 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_parse_bad_version
     bad_cookie = 'PRETANET=TGIAqbFXtt; Name=/PRETANET; Path=/; Version=1.2; Content-type=text/html; Domain=192.168.6.196; expires=Friday, 13-November-2026  23:01:46 GMT;'
     url = URI.parse('http://localhost/')
-    HTTP::Cookie.parse(url, bad_cookie) { |cookie|
+    HTTP::Cookie.parse(bad_cookie, :origin => url) { |cookie|
       assert_nil(cookie.version)
     }
   end
@@ -107,7 +107,7 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_parse_bad_max_age
     bad_cookie = 'PRETANET=TGIAqbFXtt; Name=/PRETANET; Path=/; Max-Age=1.2; Content-type=text/html; Domain=192.168.6.196; expires=Friday, 13-November-2026  23:01:46 GMT;'
     url = URI.parse('http://localhost/')
-    HTTP::Cookie.parse(url, bad_cookie) { |cookie|
+    HTTP::Cookie.parse(bad_cookie, :origin => url) { |cookie|
       assert_nil(cookie.max_age)
     }
   end
@@ -122,7 +122,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     silently do
       dates.each do |date|
         cookie = "PREF=1; expires=#{date}"
-        HTTP::Cookie.parse(url, cookie) { |c|
+        HTTP::Cookie.parse(cookie, :origin => url) { |c|
           assert_equal(true, c.expires.nil?)
         }
       end
@@ -134,7 +134,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_str = 'a=b; domain=.example.com'
 
-    cookie = HTTP::Cookie.parse(url, cookie_str).first
+    cookie = HTTP::Cookie.parse(cookie_str, :origin => url).first
 
     assert_equal 'example.com', cookie.domain
     assert cookie.for_domain?
@@ -145,7 +145,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_str = 'a=b; domain=example.com'
 
-    cookie = HTTP::Cookie.parse(url, cookie_str).first
+    cookie = HTTP::Cookie.parse(cookie_str, :origin => url).first
 
     assert_equal 'example.com', cookie.domain
     assert cookie.for_domain?
@@ -156,7 +156,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_str = 'a=b;'
 
-    cookie = HTTP::Cookie.parse(url, cookie_str).first
+    cookie = HTTP::Cookie.parse(cookie_str, :origin => url).first
 
     assert_equal 'example.com', cookie.domain
     assert !cookie.for_domain?
@@ -167,17 +167,17 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     date = 'Mon, 19 Feb 2012 19:26:04 GMT'
 
-    cookie = HTTP::Cookie.parse(url, "name=Akinori; expires=#{date}").first
+    cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}", :origin => url).first
     assert_equal Time.at(1329679564), cookie.expires
 
-    cookie = HTTP::Cookie.parse(url, 'name=Akinori; max-age=3600').first
+    cookie = HTTP::Cookie.parse('name=Akinori; max-age=3600', :origin => url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
 
     # Max-Age has precedence over Expires
-    cookie = HTTP::Cookie.parse(url, "name=Akinori; max-age=3600; expires=#{date}").first
+    cookie = HTTP::Cookie.parse("name=Akinori; max-age=3600; expires=#{date}", :origin => url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
 
-    cookie = HTTP::Cookie.parse(url, "name=Akinori; expires=#{date}; max-age=3600").first
+    cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}; max-age=3600", :origin => url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
   end
 
@@ -191,7 +191,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       'name=Akinori; expires=',
       'name=Akinori; max-age=',
     ].each { |str|
-      cookie = HTTP::Cookie.parse(url, str).first
+      cookie = HTTP::Cookie.parse(str, :origin => url).first
       assert cookie.session, str
     }
 
@@ -199,13 +199,13 @@ class TestHTTPCookie < Test::Unit::TestCase
       'name=Akinori; expires=Mon, 19 Feb 2012 19:26:04 GMT',
       'name=Akinori; max-age=3600',
     ].each { |str|
-      cookie = HTTP::Cookie.parse(url, str).first
+      cookie = HTTP::Cookie.parse(str, :origin => url).first
       assert !cookie.session, str
     }
   end
 
   def test_parse_many
-    url = URI 'http://example/'
+    url = URI 'http://localhost/'
     cookie_str =
       "abc, " \
       "name=Aaron; Domain=localhost; Expires=Sun, 06 Nov 2011 00:29:51 GMT; Path=/, " \
@@ -221,7 +221,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       "no_domain2=no_domain; Expires=Sun, 06 Nov 2011 00:29:53 GMT; no_expires=nope; Domain, " \
       "no_domain3=no_domain; Expires=Sun, 06 Nov 2011 00:29:53 GMT; no_expires=nope; Domain="
 
-    cookies = HTTP::Cookie.parse url, cookie_str
+    cookies = HTTP::Cookie.parse cookie_str, :origin => url
     assert_equal 13, cookies.length
 
     name = cookies.find { |c| c.name == 'name' }
@@ -278,7 +278,7 @@ class TestHTTPCookie < Test::Unit::TestCase
         end
       end
       cookie = nil
-      HTTP::Cookie.parse(url, cookie_text) { |p_cookie| cookie = p_cookie }
+      HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
@@ -313,7 +313,7 @@ class TestHTTPCookie < Test::Unit::TestCase
         end
       end
       cookie = nil
-      HTTP::Cookie.parse(url, cookie_text) { |p_cookie| cookie = p_cookie }
+      HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
 
       assert_equal('12345%7D=', cookie.to_s)
       assert_equal('', cookie.value)
@@ -351,7 +351,7 @@ class TestHTTPCookie < Test::Unit::TestCase
         end
       end
       cookie = nil
-      HTTP::Cookie.parse(url, cookie_text) { |p_cookie| cookie = p_cookie }
+      HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
@@ -388,7 +388,7 @@ class TestHTTPCookie < Test::Unit::TestCase
         end
       end
       cookie = nil
-      HTTP::Cookie.parse(url, cookie_text) { |p_cookie| cookie = p_cookie }
+      HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
@@ -424,7 +424,7 @@ class TestHTTPCookie < Test::Unit::TestCase
         end
       end
       cookie = nil
-      HTTP::Cookie.parse(url, cookie_text) { |p_cookie| cookie = p_cookie }
+      HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
@@ -469,7 +469,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     url = URI.parse('http://host.dom.example.com:8080/')
 
     cookie_str = 'a=b; domain=Example.Com'
-    cookie = HTTP::Cookie.parse(url, cookie_str).first
+    cookie = HTTP::Cookie.parse(cookie_str, :origin => url).first
     assert 'example.com', cookie.domain
 
     cookie.domain = DomainName(url.host)
@@ -484,6 +484,33 @@ class TestHTTPCookie < Test::Unit::TestCase
       end
     }
     assert 'example.com', cookie.domain
+  end
+
+  def test_origin=
+    url = URI.parse('http://example.com/path/')
+
+    cookie_str = 'a=b'
+    cookie = HTTP::Cookie.parse(cookie_str).first
+    cookie.origin = url
+    assert_equal '/path/', cookie.path
+    assert_equal 'example.com', cookie.domain
+    assert_equal false, cookie.for_domain
+    assert_raises(ArgumentError) {
+      cookie.origin = URI.parse('http://www.example.com/')
+    }
+
+    cookie_str = 'a=b; domain=.example.com; path=/'
+    cookie = HTTP::Cookie.parse(cookie_str).first
+    cookie.origin = url
+    assert_equal '/', cookie.path
+    assert_equal 'example.com', cookie.domain
+    assert_equal true, cookie.for_domain
+
+    cookie_str = 'a=b; domain=example.com'
+    cookie = HTTP::Cookie.parse(cookie_str).first
+    assert_raises(ArgumentError) {
+      cookie.origin = URI.parse('http://example.org/')
+    }
   end
 end
 

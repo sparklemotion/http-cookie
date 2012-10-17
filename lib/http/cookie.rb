@@ -31,6 +31,8 @@ class HTTP::Cookie
   attr_accessor :created_at
   attr_accessor :accessed_at
 
+  attr_accessor :origin
+
   # :call-seq:
   #     new(name, value)
   #     new(name, value, attr_hash)
@@ -95,12 +97,21 @@ class HTTP::Cookie
   class << self
     include URIFix if defined?(URIFix)
 
-    # Parses a Set-Cookie header value +set_cookie+ sent from +origin+
-    # into an array of Cookie objects.  Parts (separated by commas)
-    # that are malformed are ignored.
+    # Parses a Set-Cookie header value +set_cookie+ into an array of
+    # Cookie objects.  Parts (separated by commas) that are malformed
+    # are ignored.
     #
     # If a block is given, each cookie object is passed to the block.
-    def parse(origin, set_cookie, logger = nil)
+    #
+    # The cookie's origin URI/URL and a logger object can be passed in
+    # +options+ with the keywords +:origin+ and +:logger+,
+    # respectively.
+    def parse(set_cookie, options = nil, &block)
+      if options
+        logger = options[:logger]
+        origin = options[:origin] and origin = URI(origin)
+      end
+
       [].tap { |cookies|
         set_cookie.split(/,(?=[^;,]*=)|,$/).each { |c|
           cookie_elem = c.split(/;+/)
@@ -163,15 +174,21 @@ class HTTP::Cookie
             end
           end
 
-          cookie.path    ||= (origin + './').path
           cookie.secure  ||= false
-          cookie.domain  ||= origin.host
 
           # RFC 6265 4.1.2.2
           cookie.expires   = Time.now + cookie.max_age if cookie.max_age
           cookie.session   = !cookie.expires
 
-          # Move this in to the cookie jar
+          if origin
+            begin
+              cookie.origin = origin
+            rescue => e
+              logger.warn("Invalid cookie for the origin: #{origin} (#{e})") if logger
+              next
+            end
+          end
+
           yield cookie if block_given?
 
           cookies << cookie
@@ -202,6 +219,15 @@ class HTTP::Cookie
     @domain = @domain_name.hostname
   end
 
+  def origin=(origin)
+    origin = URI(origin)
+    acceptable_from_uri?(origin) or
+      raise ArgumentError, "unacceptable cookie sent from URI #{origin}"
+    self.domain ||= origin.host
+    self.path   ||= (origin + './').path
+    @origin = origin
+  end
+
   def expires=(t)
     @expires = t && (t.is_a?(Time) ? t.httpdate : t.to_s)
   end
@@ -222,7 +248,7 @@ class HTTP::Cookie
 
     # RFC 6265 5.3
     # When the user agent "receives a cookie":
-    return host.hostname == domain unless @for_domain
+    return domain.nil? || host.hostname == domain unless @for_domain
 
     if host.cookie_domain?(@domain_name)
       true
@@ -236,7 +262,7 @@ class HTTP::Cookie
 
   def valid_for_uri?(uri)
     return false if secure? && uri.scheme != 'https'
-    acceptable_from_uri?(uri) && uri.path.start_with?(path)
+    acceptable_from_uri?(uri) && (@path.nil? || uri.path.start_with?(@path))
   end
 
   def to_s
