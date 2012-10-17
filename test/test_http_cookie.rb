@@ -455,6 +455,13 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 'key', cookie.name
     assert_equal 'value', cookie.value
     assert_equal expires, cookie.expires
+
+    cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', :expires => expires.dup, :domain => 'example.org', :for_domain? => true)
+    assert_equal 'key', cookie.name
+    assert_equal 'value', cookie.value
+    assert_equal expires, cookie.expires
+    assert_equal 'example.org', cookie.domain
+    assert_equal true, cookie.for_domain?
   end
 
   def test_domain=

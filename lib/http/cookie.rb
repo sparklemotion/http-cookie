@@ -56,7 +56,9 @@ class HTTP::Cookie
     for_domain = false
     attr_hash.each_pair { |key, val|
       skey = key.to_s.downcase
-      skey.sub!(/[!?]\z/, '')
+      if skey.sub!(/\?\z/, '')
+        val = val ? true : false
+      end
       case skey
       when 'for_domain'
         for_domain = !!val
