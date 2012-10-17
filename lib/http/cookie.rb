@@ -220,6 +220,8 @@ class HTTP::Cookie
   end
 
   def origin=(origin)
+    @origin.nil? or
+      raise ArgumentError, "origin cannot be changed once it is set"
     origin = URI(origin)
     acceptable_from_uri?(origin) or
       raise ArgumentError, "unacceptable cookie sent from URI #{origin}"

@@ -505,6 +505,9 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal '/', cookie.path
     assert_equal 'example.com', cookie.domain
     assert_equal true, cookie.for_domain
+    assert_raises(ArgumentError) {
+      cookie.origin = URI.parse('http://www.example.com/')
+    }
 
     cookie_str = 'a=b; domain=example.com'
     cookie = HTTP::Cookie.parse(cookie_str).first
