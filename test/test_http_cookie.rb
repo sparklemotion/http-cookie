@@ -515,5 +515,43 @@ class TestHTTPCookie < Test::Unit::TestCase
       cookie.origin = URI.parse('http://example.org/')
     }
   end
+
+  def test_valid_for_uri?
+    cookie = HTTP::Cookie.parse('a=b', :origin => URI('http://example.com/dir/file.html')).first
+    assert_equal true,  cookie.valid_for_uri?(URI('https://example.com/dir/test.html'))
+    assert_equal true,  cookie.valid_for_uri?(URI('http://example.com/dir/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('https://example.com/dir2/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('http://example.com/dir2/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('https://www.example.com/dir/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('http://www.example.com/dir/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('https://www.example.com/dir2/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('http://www.example.com/dir2/test.html'))
+
+    cookie = HTTP::Cookie.parse('a=b; path=/dir2/', :origin => URI('http://example.com/dir/file.html')).first
+    assert_equal false, cookie.valid_for_uri?(URI('https://example.com/dir/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('http://example.com/dir/test.html'))
+    assert_equal true,  cookie.valid_for_uri?(URI('https://example.com/dir2/test.html'))
+    assert_equal true,  cookie.valid_for_uri?(URI('http://example.com/dir2/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('https://www.example.com/dir/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('http://www.example.com/dir/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('https://www.example.com/dir2/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('http://www.example.com/dir2/test.html'))
+
+    cookie = HTTP::Cookie.parse('a=b; domain=example.com; path=/dir2/', :origin => URI('http://example.com/dir/file.html')).first
+    assert_equal false, cookie.valid_for_uri?(URI('https://example.com/dir/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('http://example.com/dir/test.html'))
+    assert_equal true,  cookie.valid_for_uri?(URI('https://example.com/dir2/test.html'))
+    assert_equal true,  cookie.valid_for_uri?(URI('http://example.com/dir2/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('https://www.example.com/dir/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('http://www.example.com/dir/test.html'))
+    assert_equal true, cookie.valid_for_uri?(URI('https://www.example.com/dir2/test.html'))
+    assert_equal true, cookie.valid_for_uri?(URI('http://www.example.com/dir2/test.html'))
+
+    cookie = HTTP::Cookie.parse('a=b; secure', :origin => URI('https://example.com/dir/file.html')).first
+    assert_equal true,  cookie.valid_for_uri?(URI('https://example.com/dir/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('http://example.com/dir/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('https://example.com/dir2/test.html'))
+    assert_equal false, cookie.valid_for_uri?(URI('http://example.com/dir2/test.html'))
+  end
 end
 
