@@ -465,6 +465,13 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal true, cookie.for_domain?
   end
 
+  def test_domain_nil
+    cookie = HTTP::Cookie.parse('a=b').first
+    assert_raises(RuntimeError) {
+      cookie.valid_for_uri?('http://example.com/')
+    }
+  end
+
   def test_domain=
     url = URI.parse('http://host.dom.example.com:8080/')
 

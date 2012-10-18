@@ -265,8 +265,11 @@ class HTTP::Cookie
 
   def valid_for_uri?(uri)
     uri = URI(uri)
+    if @domain.nil?
+      raise "cannot tell if this cookie is valid because the domain is unknown"
+    end
     return false if secure? && uri.scheme != 'https'
-    acceptable_from_uri?(uri) && (@path.nil? || uri.path.start_with?(@path))
+    acceptable_from_uri?(uri) && uri.path.start_with?(@path)
   end
 
   def to_s
