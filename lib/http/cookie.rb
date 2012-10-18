@@ -251,11 +251,11 @@ class HTTP::Cookie
 
     # RFC 6265 5.3
     # When the user agent "receives a cookie":
-    return domain.nil? || host.hostname == domain unless @for_domain
+    return @domain.nil? || host.hostname == @domain unless @for_domain
 
     if host.cookie_domain?(@domain_name)
       true
-    elsif host.hostname == domain
+    elsif host.hostname == @domain
       @for_domain = false
       true
     else
