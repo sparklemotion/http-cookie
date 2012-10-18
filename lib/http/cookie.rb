@@ -13,7 +13,7 @@ class HTTP::Cookie
   if RUBY_VERSION < "1.9.3"
     module URIFix
       def URI(url)
-        url.is_a?(URI) ? url : URI(url)
+        url.is_a?(URI) ? url : Kernel::URI(url)
       end
       private :URI
     end
