@@ -123,6 +123,27 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal(0, @jar.cookies(URI('http://google.com/')).length)
   end
 
+  def test_add_multiple_cookies_with_the_same_name
+    now = Time.now
+
+    cookies = [
+      { :value => 'a', :path => '/', },
+      { :value => 'b', :path => '/abc/def/', :created_at => now - 1 },
+      { :value => 'c', :path => '/abc/def/', :domain => 'www.rubyforge.org', :created_at => now },
+      { :value => 'd', :path => '/abc/' },
+    ].map { |attrs|
+      HTTP::Cookie.new(cookie_values(attrs))
+    }
+
+    url = URI 'http://www.rubyforge.org/abc/def/ghi'
+
+    cookies.permutation(cookies.size) { |shuffled|
+      @jar.clear
+      shuffled.each { |cookie| @jar.add(url, cookie) }
+      assert_equal %w[b c d a], @jar.cookies(url).map { |cookie| cookie.value }
+    }
+  end
+
   def test_add_rejects_cookies_that_do_not_contain_an_embedded_dot
     url = URI 'http://rubyforge.org/'
 

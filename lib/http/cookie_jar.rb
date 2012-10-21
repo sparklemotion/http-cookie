@@ -51,11 +51,7 @@ class HTTP::CookieJar
 
     select { |cookie|
       !cookie.expired? && cookie.valid_for_uri?(url) && (cookie.accessed_at = now)
-    }.sort_by { |cookie|
-      # RFC 6265 5.4
-      # Precedence: 1. longer path  2. older creation
-      [-cookie.path.length, cookie.created_at]
-    }
+    }.sort
   end
 
   def empty?(url)

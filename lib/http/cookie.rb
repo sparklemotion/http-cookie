@@ -300,6 +300,17 @@ class HTTP::Cookie
     "#{@name}=#{@value}"
   end
 
+  # Compares the cookie with another.  When there are many cookies with
+  # the same name for a URL, the value of the smallest must be used.
+  def <=>(other)
+    # RFC 6265 5.4
+    # Precedence: 1. longer path  2. older creation
+    (@name <=> other.name).nonzero? ||
+      (other.path.length <=> @path.length).nonzero? ||
+      @created_at <=> other.created_at
+  end
+  include Comparable
+
   # YAML serialization helper for Syck.
   def to_yaml_properties
     PERSISTENT_PROPERTIES.map { |name| "@#{name}" }
