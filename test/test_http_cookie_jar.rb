@@ -254,7 +254,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal(0, @jar.cookies(url).length)
   end
 
-  def test_clear_bang
+  def test_clear
     url = URI 'http://rubyforge.org/'
 
     # Add one cookie with an expiration date in the future
@@ -263,7 +263,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     @jar.add(url, HTTP::Cookie.new(cookie_values(:name => 'Baz')))
     assert_equal(2, @jar.cookies(url).length)
 
-    @jar.clear!
+    @jar.clear
 
     assert_equal(0, @jar.cookies(url).length)
   end
@@ -448,7 +448,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     in_tmpdir do
       @jar.save_as("cookies.txt", :cookiestxt)
-      @jar.clear!
+      @jar.clear
 
       @jar.load("cookies.txt", :cookiestxt)
     end
@@ -463,7 +463,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     in_tmpdir do
       @jar.save_as("cookies.txt", :cookiestxt)
-      @jar.clear!
+      @jar.clear
 
       @jar.load("cookies.txt", :cookiestxt)
     end

@@ -156,7 +156,7 @@ class HTTP::CookieJar
   end
 
   # Clear the cookie jar
-  def clear!
+  def clear
     @jar = {}
   end
 
