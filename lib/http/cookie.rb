@@ -47,8 +47,7 @@ class HTTP::Cookie
 
   include URIFix if defined?(URIFix)
 
-  attr_reader :name
-  attr_accessor :value, :version
+  attr_accessor :name, :value, :version
   attr_accessor :domain, :path, :secure
   attr_reader :domain_name
   attr_accessor :comment, :max_age
@@ -84,11 +83,11 @@ class HTTP::Cookie
     @created_at = @accessed_at = Time.now
     case args.size
     when 2
-      @name, @value = *args
+      self.name, self.value = *args
       @for_domain = false
       return
     when 3
-      @name, @value, attr_hash = *args
+      self.name, self.value, attr_hash = *args
     when 1
       attr_hash = args.first
     else
@@ -104,10 +103,6 @@ class HTTP::Cookie
       case skey
       when 'for_domain'
         for_domain = !!val
-      when 'name'
-        @name = val
-      when 'value'
-        @value = val
       when 'origin'
         origin = val
       else
@@ -115,6 +110,9 @@ class HTTP::Cookie
         send(setter, val) if respond_to?(setter)
       end
     }
+    if @name.nil? || @value.nil?
+      raise ArgumentError, "at least name and value must be specified"
+    end
     @for_domain = for_domain
     if origin
       self.origin = origin
@@ -259,6 +257,15 @@ class HTTP::Cookie
     end
   end
 
+  def name=(name)
+    if name.nil? || name.empty?
+      raise ArgumentError, "cookie name cannot be empty"
+    elsif name.match(/[\x00-\x1F=\x7F]/)
+      raise ArgumentError, "cookie name cannot contain a control character or an equal sign"
+    end
+    @name = name
+  end
+
   # Sets the domain attribute.  A leading dot in +domain+ implies
   # turning the +for_domain?+ flag on.
   def domain=(domain)
@@ -382,8 +389,6 @@ class HTTP::Cookie
   def yaml_initialize(tag, map)
     map.each { |key, value|
       case key
-      when 'name'
-        @name = value
       when *PERSISTENT_PROPERTIES
         send(:"#{key}=", value)
       end

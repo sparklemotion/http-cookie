@@ -463,6 +463,12 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal expires, cookie.expires
     assert_equal 'example.org', cookie.domain
     assert_equal true, cookie.for_domain?
+
+    assert_raises(ArgumentError) { HTTP::Cookie.new(:name => 'name') }
+    assert_raises(ArgumentError) { HTTP::Cookie.new(:value => 'value') }
+    assert_raises(ArgumentError) { HTTP::Cookie.new('', 'value') }
+    assert_raises(ArgumentError) { HTTP::Cookie.new('key=key', 'value') }
+    assert_raises(ArgumentError) { HTTP::Cookie.new("key\tkey", 'value') }
   end
 
   def cookie_values(options = {})
