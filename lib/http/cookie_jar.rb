@@ -152,25 +152,7 @@ class HTTP::CookieJar
     now = Time.now
 
     io.each_line do |line|
-      line.chomp!
-      line.gsub!(/#.+/, '')
-      fields = line.split("\t")
-
-      next if fields.length != 7
-
-      expires_seconds = fields[4].to_i
-      expires = (expires_seconds == 0) ? nil : Time.at(expires_seconds)
-      next if expires and (expires < now)
-
-      c = HTTP::Cookie.new(fields[5], fields[6])
-      c.domain = fields[0]
-      c.for_domain = (fields[1] == "TRUE") # Whether this cookie is for domain
-      c.path = fields[2]               # Path for which the cookie is relevant
-      c.secure = (fields[3] == "TRUE") # Requires a secure connection
-      c.expires = expires             # Time the cookie expires.
-      c.version = 0                   # Conforms to Netscape cookie spec.
-
-      add(c)
+      c = HTTP::Cookie.parse_cookiestxt_line(line) and add(c)
     end
 
     @jar
@@ -179,15 +161,7 @@ class HTTP::CookieJar
   # Write cookies to Mozilla cookies.txt-style IO stream
   def dump_cookiestxt(io)
     to_a.each do |cookie|
-      io.puts([
-        cookie.domain,
-        cookie.for_domain? ? "TRUE" : "FALSE",
-        cookie.path,
-        cookie.secure ? "TRUE" : "FALSE",
-        cookie.expires.to_i.to_s,
-        cookie.name,
-        cookie.value
-      ].join("\t"))
+      io.print cookie.to_cookiestxt_line
     end
   end
 
