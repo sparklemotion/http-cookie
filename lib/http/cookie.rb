@@ -239,7 +239,7 @@ class HTTP::Cookie
       path,		# Path for which the cookie is relevant
       s_secure,		# Requires a secure connection
       s_expires,	# Time the cookie expires (Unix epoch time)
-      name, value = line.split("\t")
+      name, value = line.split("\t", 7)
       return nil if value.nil?
 
       value.chomp!
