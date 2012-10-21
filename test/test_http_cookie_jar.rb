@@ -324,7 +324,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
 
   def test_save_cookies_cookiestxt
-    url = URI 'http://rubyforge.org/'
+    url = URI 'http://rubyforge.org/foo/'
 
     # Add one cookie with an expiration date in the future
     cookie = HTTP::Cookie.new(cookie_values)
@@ -334,7 +334,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     @jar.add(cookie)
     @jar.add(s_cookie)
-    @jar.add(HTTP::Cookie.new(cookie_values(:name => 'Baz')))
+    @jar.add(HTTP::Cookie.new(cookie_values(:name => 'Baz', :value => 'Foo#Baz', :path => '/foo/', :for_domain => false)))
 
     assert_equal(3, @jar.cookies(url).length)
 
@@ -343,7 +343,24 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
       jar = HTTP::CookieJar.new
       jar.load("cookies.txt", :cookiestxt) # HACK test the format
-      assert_equal(2, jar.cookies(url).length)
+      cookies = jar.cookies(url)
+      assert_equal(2, cookies.length)
+      cookies.each { |cookie|
+        case cookie.name
+        when 'Foo'
+          assert_equal 'Bar', cookie.value
+          assert_equal 'rubyforge.org', cookie.domain
+          assert_equal true, cookie.for_domain
+          assert_equal '/', cookie.path
+        when 'Baz'
+          assert_equal 'Foo#Baz', cookie.value
+          assert_equal 'rubyforge.org', cookie.domain
+          assert_equal false, cookie.for_domain
+          assert_equal '/foo/', cookie.path
+        else
+          raise
+        end
+      }
     end
 
     assert_equal(3, @jar.cookies(url).length)
