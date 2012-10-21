@@ -9,6 +9,13 @@ end
 
 # This class is used to represent an HTTP Cookie.
 class HTTP::Cookie
+  PERSISTENT_PROPERTIES = %w[
+    name        value
+    domain      for_domain  path
+    secure
+    expires     created_at  accessed_at
+  ]
+
   # In Ruby < 1.9.3 URI() does not accept an URI object.
   if RUBY_VERSION < "1.9.3"
     module URIFix
@@ -293,18 +300,31 @@ class HTTP::Cookie
     "#{@name}=#{@value}"
   end
 
+  # YAML serialization helper for Syck.
+  def to_yaml_properties
+    PERSISTENT_PROPERTIES.map { |name| "@#{name}" }
+  end
+
+  # YAML serialization helper for Psych.
+  def encode_with(coder)
+    PERSISTENT_PROPERTIES.each { |key|
+      coder[key.to_s] = instance_variable_get(:"@#{key}")
+    }
+  end
+
+  # YAML deserialization helper for Syck.
   def init_with(coder)
     yaml_initialize(coder.tag, coder.map)
   end
 
+  # YAML deserialization helper for Psych.
   def yaml_initialize(tag, map)
-    @for_domain = true    # for forward compatibility
     map.each { |key, value|
       case key
-      when 'domain'
-        self.domain = value # ditto
-      else
-        instance_variable_set(:"@#{key}", value)
+      when 'name'
+        @name = value
+      when *PERSISTENT_PROPERTIES
+        send(:"#{key}=", value)
       end
     }
   end
