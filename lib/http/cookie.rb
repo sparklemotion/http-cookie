@@ -69,7 +69,7 @@ class HTTP::Cookie
     @version = 0     # Netscape Cookie
 
     @domain = @path = @secure = @comment = @max_age =
-      @expires = @comment_url = @discard = @port = nil
+      @expires = nil
 
     @created_at = @accessed_at = Time.now
     case args.size
