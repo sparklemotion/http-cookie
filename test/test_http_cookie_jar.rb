@@ -279,7 +279,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     @jar.add(url, cookie)
     @jar.add(url, s_cookie)
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:name => 'Baz')))
+    @jar.add(url, HTTP::Cookie.new(cookie_values(:name => 'Baz', :for_domain => false)))
 
     assert_equal(3, @jar.cookies(url).length)
 
@@ -289,7 +289,12 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
       jar = HTTP::CookieJar.new
       jar.load("cookies.yml")
-      assert_equal(2, jar.cookies(url).length)
+      cookies = jar.cookies(url).sort_by { |cookie| cookie.name }
+      assert_equal(2, cookies.length)
+      assert_equal('Baz', cookies[0].name)
+      assert_equal(false, cookies[0].for_domain)
+      assert_equal('Foo', cookies[1].name)
+      assert_equal(true,  cookies[1].for_domain)
     end
 
     assert_equal(3, @jar.cookies(url).length)
