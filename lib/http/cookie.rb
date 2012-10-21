@@ -93,6 +93,7 @@ class HTTP::Cookie
       raise ArgumentError, "wrong number of arguments (#{args.size} for 1-3)"
     end
     for_domain = false
+    origin = nil
     attr_hash.each_pair { |key, val|
       skey = key.to_s.downcase
       if skey.sub!(/\?\z/, '')
@@ -105,12 +106,17 @@ class HTTP::Cookie
         @name = val
       when 'value'
         @value = val
+      when 'origin'
+        origin = val
       else
         setter = :"#{skey}="
         send(setter, val) if respond_to?(setter)
       end
     }
     @for_domain = for_domain
+    if origin
+      self.origin = origin
+    end
   end
 
   # If this flag is true, this cookie will be sent to any host in the
