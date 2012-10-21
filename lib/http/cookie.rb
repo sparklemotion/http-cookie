@@ -41,6 +41,7 @@ class HTTP::Cookie
   attr_reader :name
   attr_accessor :value, :version
   attr_accessor :domain, :path, :secure
+  attr_reader :domain_name
   attr_accessor :comment, :max_age
 
   attr_accessor :session
