@@ -20,7 +20,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
       :path     => '/',
       :expires  => Time.now + (10 * 86400),
       :for_domain => true,
-      :domain   => 'rubyforge.org'
+      :domain   => 'rubyforge.org',
+      :origin   => 'http://rubyforge.org/'
    }.merge(options)
   end
 
@@ -28,8 +29,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     url = URI 'http://rubyforge.org/'
 
     cookie = HTTP::Cookie.new(cookie_values)
-    @jar.add(url, cookie)
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:path => '/onetwo')))
+    @jar.add(cookie)
+    @jar.add(HTTP::Cookie.new(cookie_values(:path => '/onetwo')))
 
     assert_equal(1, @jar.cookies(url).length)
     assert_equal 2, @jar.cookies(URI('http://rubyforge.org/onetwo')).length
@@ -40,11 +41,10 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     # Add one cookie with an expiration date in the future
     cookie = HTTP::Cookie.new(cookie_values)
-    @jar.add(url, cookie)
+    @jar.add(cookie)
     assert_equal(1, @jar.cookies(url).length)
 
-    @jar.add(url, HTTP::Cookie.new(
-        cookie_values(:domain => 'RuByForge.Org', :name   => 'aaron')))
+    @jar.add(HTTP::Cookie.new(cookie_values(:domain => 'RuByForge.Org', :name => 'aaron')))
 
     assert_equal(2, @jar.cookies(url).length)
 
@@ -55,7 +55,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_host_only
     url = URI.parse('http://rubyforge.org/')
 
-    @jar.add(url, HTTP::Cookie.new(
+    @jar.add(HTTP::Cookie.new(
         cookie_values(:domain => 'rubyforge.org', :for_domain => false)))
 
     assert_equal(1, @jar.cookies(url).length)
@@ -68,16 +68,16 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   end
 
   def test_empty_value
-    values = cookie_values(:value => "")
     url = URI 'http://rubyforge.org/'
+    values = cookie_values(:value => "")
 
     # Add one cookie with an expiration date in the future
     cookie = HTTP::Cookie.new(values)
-    @jar.add(url, cookie)
+    @jar.add(cookie)
     assert_equal(1, @jar.cookies(url).length)
 
-    @jar.add url, HTTP::Cookie.new(values.merge(:domain => 'RuByForge.Org',
-                                                     :name   => 'aaron'))
+    @jar.add HTTP::Cookie.new(values.merge(:domain => 'RuByForge.Org',
+                                           :name   => 'aaron'))
 
     assert_equal(2, @jar.cookies(url).length)
 
@@ -90,11 +90,11 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     # Add one cookie with an expiration date in the future
     cookie = HTTP::Cookie.new(cookie_values)
-    @jar.add(url, cookie)
+    @jar.add(cookie)
     assert_equal(1, @jar.cookies(url).length)
 
     # Add the same cookie, and we should still only have one
-    @jar.add(url, HTTP::Cookie.new(cookie_values))
+    @jar.add(HTTP::Cookie.new(cookie_values))
     assert_equal(1, @jar.cookies(url).length)
 
     # Make sure we can get the cookie from different paths
@@ -109,11 +109,11 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     # Add one cookie with an expiration date in the future
     cookie = HTTP::Cookie.new(cookie_values)
-    @jar.add(url, cookie)
+    @jar.add(cookie)
     assert_equal(1, @jar.cookies(url).length)
 
     # Add the same cookie, and we should still only have one
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:name => 'Baz')))
+    @jar.add(HTTP::Cookie.new(cookie_values(:name => 'Baz')))
     assert_equal(2, @jar.cookies(url).length)
 
     # Make sure we can get the cookie from different paths
@@ -129,7 +129,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     cookies = [
       { :value => 'a', :path => '/', },
       { :value => 'b', :path => '/abc/def/', :created_at => now - 1 },
-      { :value => 'c', :path => '/abc/def/', :domain => 'www.rubyforge.org', :created_at => now },
+      { :value => 'c', :path => '/abc/def/', :domain => 'www.rubyforge.org', :origin => 'http://www.rubyforge.org/abc/def/', :created_at => now },
       { :value => 'd', :path => '/abc/' },
     ].map { |attrs|
       HTTP::Cookie.new(cookie_values(attrs))
@@ -139,7 +139,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     cookies.permutation(cookies.size) { |shuffled|
       @jar.clear
-      shuffled.each { |cookie| @jar.add(url, cookie) }
+      shuffled.each { |cookie| @jar.add(cookie) }
       assert_equal %w[b c d a], @jar.cookies(url).map { |cookie| cookie.value }
     }
   end
@@ -156,8 +156,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_add_makes_exception_for_localhost
     url = URI 'http://localhost'
 
-    tld_cookie = HTTP::Cookie.new(cookie_values(:domain => 'localhost'))
-    @jar.add(url, tld_cookie)
+    tld_cookie = HTTP::Cookie.new(cookie_values(:domain => 'localhost', :origin => url))
+    @jar.add(tld_cookie)
 
     assert_equal(1, @jar.cookies(url).length)
   end
@@ -165,8 +165,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_add_cookie_for_the_parent_domain
     url = URI 'http://x.foo.com'
 
-    cookie = HTTP::Cookie.new(cookie_values(:domain => '.foo.com'))
-    @jar.add(url, cookie)
+    cookie = HTTP::Cookie.new(cookie_values(:domain => '.foo.com', :origin => url))
+    @jar.add(cookie)
 
     assert_equal(1, @jar.cookies(url).length)
   end
@@ -174,8 +174,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_add_does_not_reject_cookies_from_a_nested_subdomain
     url = URI 'http://y.x.foo.com'
 
-    cookie = HTTP::Cookie.new(cookie_values(:domain => '.foo.com'))
-    @jar.add(url, cookie)
+    cookie = HTTP::Cookie.new(cookie_values(:domain => '.foo.com', :origin => url))
+    @jar.add(cookie)
 
     assert_equal(1, @jar.cookies(url).length)
   end
@@ -184,7 +184,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     url = URI 'http://arubyforge.org/'
 
     cookie = HTTP::Cookie.new(cookie_values(:domain => 'rubyforge.org'))
-    @jar.add(url, cookie)
+    @jar.add(cookie)
 
     assert_equal(0, @jar.cookies(url).length)
   end
@@ -192,8 +192,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_cookie_without_leading_dot_matches_subdomains
     url = URI 'http://admin.rubyforge.org/'
 
-    cookie = HTTP::Cookie.new(cookie_values(:domain => 'rubyforge.org'))
-    @jar.add(url, cookie)
+    cookie = HTTP::Cookie.new(cookie_values(:domain => 'rubyforge.org', :origin => url))
+    @jar.add(cookie)
 
     assert_equal(1, @jar.cookies(url).length)
   end
@@ -201,7 +201,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_cookies_with_leading_dot_match_subdomains
     url = URI 'http://admin.rubyforge.org/'
 
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:domain => '.rubyforge.org')))
+    @jar.add(HTTP::Cookie.new(cookie_values(:domain => '.rubyforge.org', :origin => url)))
 
     assert_equal(1, @jar.cookies(url).length)
   end
@@ -209,7 +209,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_cookies_with_leading_dot_match_parent_domains
     url = URI 'http://rubyforge.org/'
 
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:domain => '.rubyforge.org')))
+    @jar.add(HTTP::Cookie.new(cookie_values(:domain => '.rubyforge.org', :origin => url)))
 
     assert_equal(1, @jar.cookies(url).length)
   end
@@ -217,7 +217,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_cookies_with_leading_dot_match_parent_domains_exactly
     url = URI 'http://arubyforge.org/'
 
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:domain => '.rubyforge.org')))
+    @jar.add(HTTP::Cookie.new(cookie_values(:domain => '.rubyforge.org')))
 
     assert_equal(0, @jar.cookies(url).length)
   end
@@ -225,8 +225,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_cookie_for_ipv4_address_matches_the_exact_ipaddress
     url = URI 'http://192.168.0.1/'
 
-    cookie = HTTP::Cookie.new(cookie_values(:domain => '192.168.0.1'))
-    @jar.add(url, cookie)
+    cookie = HTTP::Cookie.new(cookie_values(:domain => '192.168.0.1', :origin => url))
+    @jar.add(cookie)
 
     assert_equal(1, @jar.cookies(url).length)
   end
@@ -234,8 +234,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_cookie_for_ipv6_address_matches_the_exact_ipaddress
     url = URI 'http://[fe80::0123:4567:89ab:cdef]/'
 
-    cookie = HTTP::Cookie.new(cookie_values(:domain => '[fe80::0123:4567:89ab:cdef]'))
-    @jar.add(url, cookie)
+    cookie = HTTP::Cookie.new(cookie_values(:domain => '[fe80::0123:4567:89ab:cdef]', :origin => url))
+    @jar.add(cookie)
 
     assert_equal(1, @jar.cookies(url).length)
   end
@@ -243,8 +243,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_cookies_dot
     url = URI 'http://www.host.example/'
 
-    @jar.add(url,
-             HTTP::Cookie.new(cookie_values(:domain => 'www.host.example')))
+    @jar.add(HTTP::Cookie.new(cookie_values(:domain => 'www.host.example', :origin => url)))
 
     url = URI 'http://wwwxhost.example/'
     assert_equal(0, @jar.cookies(url).length)
@@ -254,9 +253,9 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     url = URI 'http://rubyforge.org/'
 
     # Add one cookie with an expiration date in the future
-    cookie = HTTP::Cookie.new(cookie_values)
-    @jar.add(url, cookie)
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:name => 'Baz')))
+    cookie = HTTP::Cookie.new(cookie_values(:origin => url))
+    @jar.add(cookie)
+    @jar.add(HTTP::Cookie.new(cookie_values(:name => 'Baz', :origin => url)))
     assert_equal(2, @jar.cookies(url).length)
 
     @jar.clear
@@ -268,14 +267,15 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     url = URI 'http://rubyforge.org/'
 
     # Add one cookie with an expiration date in the future
-    cookie = HTTP::Cookie.new(cookie_values)
+    cookie = HTTP::Cookie.new(cookie_values(:origin => url))
     s_cookie = HTTP::Cookie.new(cookie_values(:name => 'Bar',
                                               :expires => nil,
-                                              :session => true))
+                                              :session => true,
+                                              :origin => url))
 
-    @jar.add(url, cookie)
-    @jar.add(url, s_cookie)
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:name => 'Baz', :for_domain => false)))
+    @jar.add(cookie)
+    @jar.add(s_cookie)
+    @jar.add(HTTP::Cookie.new(cookie_values(:name => 'Baz', :for_domain => false, :origin => url)))
 
     assert_equal(3, @jar.cookies(url).length)
 
@@ -305,9 +305,9 @@ class TestHTTPCookieJar < Test::Unit::TestCase
                                               :expires => nil,
                                               :session => true))
 
-    @jar.add(url, cookie)
-    @jar.add(url, s_cookie)
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:name => 'Baz')))
+    @jar.add(cookie)
+    @jar.add(s_cookie)
+    @jar.add(HTTP::Cookie.new(cookie_values(:name => 'Baz')))
 
     assert_equal(3, @jar.cookies(url).length)
 
@@ -332,9 +332,9 @@ class TestHTTPCookieJar < Test::Unit::TestCase
                                               :expires => nil,
                                               :session => true))
 
-    @jar.add(url, cookie)
-    @jar.add(url, s_cookie)
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:name => 'Baz')))
+    @jar.add(cookie)
+    @jar.add(s_cookie)
+    @jar.add(HTTP::Cookie.new(cookie_values(:name => 'Baz')))
 
     assert_equal(3, @jar.cookies(url).length)
 
@@ -354,24 +354,22 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     # Add one cookie with an expiration date in the future
     cookie = HTTP::Cookie.new(cookie_values)
-    @jar.add(url, cookie)
+    @jar.add(cookie)
     assert_equal(1, @jar.cookies(url).length)
 
     # Add a second cookie
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:name => 'Baz')))
+    @jar.add(HTTP::Cookie.new(cookie_values(:name => 'Baz')))
     assert_equal(2, @jar.cookies(url).length)
 
     # Make sure we can get the cookie from different paths
     assert_equal(2, @jar.cookies(URI('http://rubyforge.org/login')).length)
 
     # Expire the first cookie
-    @jar.add(url, HTTP::Cookie.new(
-        cookie_values(:expires => Time.now - (10 * 86400))))
+    @jar.add(HTTP::Cookie.new(cookie_values(:expires => Time.now - (10 * 86400))))
     assert_equal(1, @jar.cookies(url).length)
 
     # Expire the second cookie
-    @jar.add(url, HTTP::Cookie.new(
-        cookie_values( :name => 'Baz', :expires => Time.now - (10 * 86400))))
+    @jar.add(HTTP::Cookie.new(cookie_values( :name => 'Baz', :expires => Time.now - (10 * 86400))))
     assert_equal(0, @jar.cookies(url).length)
   end
 
@@ -381,23 +379,22 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     # Add one cookie with an expiration date in the future
     cookie = HTTP::Cookie.new(values)
-    @jar.add(url, cookie)
+    @jar.add(cookie)
     assert_equal(1, @jar.cookies(url).length)
 
     # Add a second cookie
-    @jar.add(url, HTTP::Cookie.new(values.merge(:name => 'Baz')))
+    @jar.add(HTTP::Cookie.new(values.merge(:name => 'Baz')))
     assert_equal(2, @jar.cookies(url).length)
 
     # Make sure we can get the cookie from different paths
     assert_equal(2, @jar.cookies(URI('http://rubyforge.org/login')).length)
 
     # Expire the first cookie
-    @jar.add(url, HTTP::Cookie.new(values.merge(:expires => Time.now - (10 * 86400))))
+    @jar.add(HTTP::Cookie.new(values.merge(:expires => Time.now - (10 * 86400))))
     assert_equal(1, @jar.cookies(url).length)
 
     # Expire the second cookie
-    @jar.add(url, HTTP::Cookie.new(
-        values.merge(:name => 'Baz', :expires => Time.now - (10 * 86400))))
+    @jar.add(HTTP::Cookie.new(values.merge(:name => 'Baz', :expires => Time.now - (10 * 86400))))
     assert_equal(0, @jar.cookies(url).length)
 
     # When given a URI with a blank path, CookieJar#cookies should return
@@ -406,22 +403,21 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal '', url.path
     assert_equal(0, @jar.cookies(url).length)
     # Now add a cookie with the path set to '/':
-    @jar.add(url, HTTP::Cookie.new(values.merge( :name => 'has_root_path',
-                                          :path => '/')))
+    @jar.add(HTTP::Cookie.new(values.merge(:name => 'has_root_path', :path => '/')))
     assert_equal(1, @jar.cookies(url).length)
   end
 
   def test_paths
-    values = cookie_values(:path => "/login", :expires => nil)
     url = URI 'http://rubyforge.org/login'
+    values = cookie_values(:path => "/login", :expires => nil, :origin => url)
 
     # Add one cookie with an expiration date in the future
     cookie = HTTP::Cookie.new(values)
-    @jar.add(url, cookie)
+    @jar.add(cookie)
     assert_equal(1, @jar.cookies(url).length)
 
     # Add a second cookie
-    @jar.add(url, HTTP::Cookie.new(values.merge( :name => 'Baz' )))
+    @jar.add(HTTP::Cookie.new(values.merge( :name => 'Baz' )))
     assert_equal(2, @jar.cookies(url).length)
 
     # Make sure we don't get the cookie in a different path
@@ -429,11 +425,11 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal(0, @jar.cookies(URI('http://rubyforge.org/')).length)
 
     # Expire the first cookie
-    @jar.add(url, HTTP::Cookie.new(values.merge( :expires => Time.now - (10 * 86400))))
+    @jar.add(HTTP::Cookie.new(values.merge( :expires => Time.now - (10 * 86400))))
     assert_equal(1, @jar.cookies(url).length)
 
     # Expire the second cookie
-    @jar.add(url, HTTP::Cookie.new(values.merge( :name => 'Baz',
+    @jar.add(HTTP::Cookie.new(values.merge( :name => 'Baz',
                                           :expires => Time.now - (10 * 86400))))
     assert_equal(0, @jar.cookies(url).length)
   end
@@ -443,8 +439,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     # Add one cookie with an expiration date in the future
     cookie = HTTP::Cookie.new(cookie_values)
-    @jar.add(url, cookie)
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:name => 'Baz')))
+    @jar.add(cookie)
+    @jar.add(HTTP::Cookie.new(cookie_values(:name => 'Baz')))
     assert_equal(2, @jar.cookies(url).length)
 
     in_tmpdir do
@@ -460,7 +456,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_save_and_read_cookiestxt_with_session_cookies
     url = URI 'http://rubyforge.org/'
 
-    @jar.add(url, HTTP::Cookie.new(cookie_values(:expires => nil)))
+    @jar.add(HTTP::Cookie.new(cookie_values(:expires => nil)))
 
     in_tmpdir do
       @jar.save_as("cookies.txt", :cookiestxt)
@@ -479,7 +475,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     @jar.jar['rubyforge.org'] = {}
 
 
-    @jar.add url, HTTP::Cookie.new(cookie_values)
+    @jar.add HTTP::Cookie.new(cookie_values)
 
     # HACK no asertion
   end
@@ -491,11 +487,11 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     url = URI 'https://rubyforge.org/login'
 
     cookie = HTTP::Cookie.new(values)
-    @jar.add(url, cookie)
+    @jar.add(cookie)
     assert_equal(1, @jar.cookies(url).length, "did not handle SSL cookie")
 
     cookie = HTTP::Cookie.new(values_ssl)
-    @jar.add(url, cookie)
+    @jar.add(cookie)
     assert_equal(2, @jar.cookies(url).length, "did not handle SSL cookie with :443")
   end
 
@@ -503,13 +499,15 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     nurl = URI 'http://rubyforge.org/login'
     surl = URI 'https://rubyforge.org/login'
 
-    ncookie = HTTP::Cookie.new(cookie_values(:name => 'Foo1'))
-    scookie = HTTP::Cookie.new(cookie_values(:name => 'Foo2', :secure => true))
+    nncookie = HTTP::Cookie.new(cookie_values(:name => 'Foo1', :origin => nurl))
+    sncookie = HTTP::Cookie.new(cookie_values(:name => 'Foo1', :origin => surl))
+    nscookie = HTTP::Cookie.new(cookie_values(:name => 'Foo2', :secure => true, :origin => nurl))
+    sscookie = HTTP::Cookie.new(cookie_values(:name => 'Foo2', :secure => true, :origin => surl))
 
-    @jar.add(nurl, ncookie)
-    @jar.add(nurl, scookie)
-    @jar.add(surl, ncookie)
-    @jar.add(surl, scookie)
+    @jar.add(nncookie)
+    @jar.add(sncookie)
+    @jar.add(nscookie)
+    @jar.add(sscookie)
 
     assert_equal('Foo1',      @jar.cookies(nurl).map { |c| c.name }.sort.join(' ') )
     assert_equal('Foo1 Foo2', @jar.cookies(surl).map { |c| c.name }.sort.join(' ') )

@@ -21,17 +21,8 @@ class HTTP::CookieJar
     @jar = Marshal.load Marshal.dump other.jar
   end
 
-  # Add a +cookie+ to the jar if it is considered acceptable from
-  # +uri+.  Return nil if the cookie was not added, otherwise return
-  # the cookie added.
-  def add(uri, cookie)
-    return nil unless cookie.acceptable_from_uri?(uri)
-    add!(cookie)
-    cookie
-  end
-
   # Add a +cookie+ to the jar and return self.
-  def add!(cookie)
+  def add(cookie)
     normal_domain = cookie.domain.downcase
 
     @jar[normal_domain] ||= {} unless @jar.has_key?(normal_domain)
@@ -41,7 +32,7 @@ class HTTP::CookieJar
 
     self
   end
-  alias << add!
+  alias << add
 
   # Fetch the cookies that should be used for the URI object passed in.
   def cookies(url)
@@ -179,7 +170,7 @@ class HTTP::CookieJar
       c.expires = expires             # Time the cookie expires.
       c.version = 0                   # Conforms to Netscape cookie spec.
 
-      add!(c)
+      add(c)
     end
 
     @jar
