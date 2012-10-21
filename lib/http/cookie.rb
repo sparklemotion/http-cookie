@@ -19,6 +19,23 @@ class HTTP::Cookie
     end
   end
 
+  if String.respond_to?(:try_convert)
+    def check_string_type(object)
+      String.try_convert(object)
+    end
+    private :check_string_type
+  else
+    def check_string_type(object)
+      if object.is_a?(String) ||
+          (object.respond_to?(:to_str) && (object = object.to_str).is_a?(String))
+        object
+      else
+        nil
+      end
+    end
+    private :check_string_type
+  end
+
   include URIFix if defined?(URIFix)
 
   attr_reader :name
@@ -203,8 +220,7 @@ class HTTP::Cookie
     if DomainName === domain
       @domain_name = domain
     else
-      domain.is_a?(String) or
-        (domain.respond_to?(:to_str) && (domain = domain.to_str).is_a?(String)) or
+      domain = check_string_type(domain) or
         raise TypeError, "#{domain.class} is not a String"
       if domain.start_with?('.')
         @for_domain = true
