@@ -465,6 +465,47 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal true, cookie.for_domain?
   end
 
+  def cookie_values(options = {})
+    {
+      :name     => 'Foo',
+      :value    => 'Bar',
+      :path     => '/',
+      :expires  => Time.now + (10 * 86400),
+      :for_domain => true,
+      :domain   => 'rubyforge.org',
+      :origin   => 'http://rubyforge.org/'
+   }.merge(options)
+  end
+
+  def test_new_rejects_cookies_that_do_not_contain_an_embedded_dot
+    url = URI 'http://rubyforge.org/'
+
+    assert_raises(ArgumentError) {
+      tld_cookie = HTTP::Cookie.new(cookie_values(:domain => '.org', :origin => url))
+    }
+    assert_raises(ArgumentError) {
+      single_dot_cookie = HTTP::Cookie.new(cookie_values(:domain => '.', :origin => url))
+    }
+  end
+
+  def test_fall_back_rules_for_local_domains
+    url = URI 'http://www.example.local'
+
+    assert_raises(ArgumentError) {
+      tld_cookie = HTTP::Cookie.new(cookie_values(:domain => '.local', :origin => url))
+    }
+
+    sld_cookie = HTTP::Cookie.new(cookie_values(:domain => '.example.local', :origin => url))
+  end
+
+  def test_new_rejects_cookies_with_ipv4_address_subdomain
+    url = URI 'http://192.168.0.1/'
+
+    assert_raises(ArgumentError) {
+      cookie = HTTP::Cookie.new(cookie_values(:domain => '.0.1', :origin => url))
+    }
+  end
+
   def test_domain_nil
     cookie = HTTP::Cookie.parse('a=b').first
     assert_raises(RuntimeError) {

@@ -144,27 +144,11 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     }
   end
 
-  def test_add_rejects_cookies_that_do_not_contain_an_embedded_dot
-    url = URI 'http://rubyforge.org/'
-
-    tld_cookie = HTTP::Cookie.new(cookie_values(:domain => '.org'))
-    @jar.add(url, tld_cookie)
-    single_dot_cookie = HTTP::Cookie.new(cookie_values(:domain => '.'))
-    @jar.add(url, single_dot_cookie)
-
-    assert_equal(0, @jar.cookies(url).length)
-  end
-
   def test_fall_back_rules_for_local_domains
     url = URI 'http://www.example.local'
 
-    tld_cookie = HTTP::Cookie.new(cookie_values(:domain => '.local'))
-    @jar.add(url, tld_cookie)
-
-    assert_equal(0, @jar.cookies(url).length)
-
-    sld_cookie = HTTP::Cookie.new(cookie_values(:domain => '.example.local'))
-    @jar.add(url, sld_cookie)
+    sld_cookie = HTTP::Cookie.new(cookie_values(:domain => '.example.local', :origin => url))
+    @jar.add(sld_cookie)
 
     assert_equal(1, @jar.cookies(url).length)
   end
@@ -245,15 +229,6 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     @jar.add(url, cookie)
 
     assert_equal(1, @jar.cookies(url).length)
-  end
-
-  def test_cookie_for_ipv4_address_does_not_cause_subdomain_match
-    url = URI 'http://192.168.0.1/'
-
-    cookie = HTTP::Cookie.new(cookie_values(:domain => '.0.1'))
-    @jar.add(url, cookie)
-
-    assert_equal(0, @jar.cookies(url).length)
   end
 
   def test_cookie_for_ipv6_address_matches_the_exact_ipaddress
