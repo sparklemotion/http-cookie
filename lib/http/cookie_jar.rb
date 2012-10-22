@@ -23,12 +23,9 @@ class HTTP::CookieJar
 
   # Add a +cookie+ to the jar and return self.
   def add(cookie)
-    normal_domain = cookie.domain.downcase
+    normal_domain = cookie.domain_name.hostname
 
-    @jar[normal_domain] ||= {} unless @jar.has_key?(normal_domain)
-
-    @jar[normal_domain][cookie.path] ||= {}
-    @jar[normal_domain][cookie.path][cookie.name] = cookie
+    ((@jar[normal_domain] ||= {})[cookie.path] ||= {})[cookie.name] = cookie
 
     self
   end
