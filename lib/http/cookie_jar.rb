@@ -41,7 +41,7 @@ class HTTP::CookieJar
   end
 
   def empty?(url)
-    cookies(url).length > 0 ? false : true
+    cookies(url).empty?
   end
 
   def each
