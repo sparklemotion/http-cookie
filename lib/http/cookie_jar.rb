@@ -98,7 +98,7 @@ class HTTP::CookieJar
     open(file, 'w') { |f|
       case format
       when :yaml then
-        load_yaml
+        require_yaml
 
         YAML.dump(jar.jar, f)
       when :cookiestxt then
@@ -120,7 +120,7 @@ class HTTP::CookieJar
     File.open(file) { |f|
       case format
       when :yaml then
-        load_yaml
+        require_yaml
         @jar = YAML.load(f)
       when :cookiestxt then
         load_cookiestxt(f)
@@ -132,7 +132,7 @@ class HTTP::CookieJar
     cleanup
   end
 
-  def load_yaml # :nodoc:
+  def require_yaml # :nodoc:
     begin
       require 'psych'
     rescue LoadError
@@ -140,6 +140,7 @@ class HTTP::CookieJar
 
     require 'yaml'
   end
+  private :require_yaml
 
   # Clear the cookie jar and return self.
   def clear
