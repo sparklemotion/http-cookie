@@ -117,7 +117,7 @@ class HTTP::CookieJar
   # :yaml  <- YAML structure.
   # :cookiestxt  <- Mozilla's cookies.txt format
   def load(file, format = :yaml)
-    open(file) { |f|
+    File.open(file) { |f|
       case format
       when :yaml then
         load_yaml
