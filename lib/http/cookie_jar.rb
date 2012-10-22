@@ -33,10 +33,7 @@ class HTTP::CookieJar
 
   # Fetch the cookies that should be used for the URI object passed in.
   def cookies(url)
-    cleanup
-    url.path = '/' if url.path.empty?
     now = Time.now
-
     select { |cookie|
       !cookie.expired? && cookie.valid_for_uri?(url) && (cookie.accessed_at = now)
     }.sort

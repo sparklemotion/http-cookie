@@ -607,6 +607,9 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal false, cookie.valid_for_uri?(URI('http://example.com/dir/test.html'))
     assert_equal false, cookie.valid_for_uri?(URI('https://example.com/dir2/test.html'))
     assert_equal false, cookie.valid_for_uri?(URI('http://example.com/dir2/test.html'))
+
+    cookie = HTTP::Cookie.parse('a=b', :origin => URI('https://example.com/')).first
+    assert_equal true,  cookie.valid_for_uri?(URI('https://example.com'))
   end
 end
 
