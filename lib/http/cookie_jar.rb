@@ -54,6 +54,7 @@ class HTTP::CookieJar
         }
       }
     }
+    self
   end
 
   # call-seq:
@@ -110,12 +111,11 @@ class HTTP::CookieJar
   # :yaml  <- YAML structure.
   # :cookiestxt  <- Mozilla's cookies.txt format
   def load(file, format = :yaml)
-    @jar = open(file) { |f|
+    open(file) { |f|
       case format
       when :yaml then
         load_yaml
-
-        YAML.load(f)
+        @jar = YAML.load(f)
       when :cookiestxt then
         load_cookiestxt(f)
       else
@@ -124,8 +124,6 @@ class HTTP::CookieJar
     }
 
     cleanup
-
-    self
   end
 
   def load_yaml # :nodoc:
@@ -137,12 +135,14 @@ class HTTP::CookieJar
     require 'yaml'
   end
 
-  # Clear the cookie jar
+  # Clear the cookie jar and return self.
   def clear
     @jar = {}
+    self
   end
 
-  # Read cookies from Mozilla cookies.txt-style IO stream
+  # Read cookies from Mozilla cookies.txt-style IO stream and return
+  # self.
   def load_cookiestxt(io)
     now = Time.now
 
@@ -150,19 +150,21 @@ class HTTP::CookieJar
       c = HTTP::Cookie.parse_cookiestxt_line(line) and add(c)
     end
 
-    @jar
+    self
   end
 
-  # Write cookies to Mozilla cookies.txt-style IO stream
+  # Write cookies to Mozilla cookies.txt-style IO stream and return
+  # self.
   def dump_cookiestxt(io)
     to_a.each do |cookie|
       io.print cookie.to_cookiestxt_line
     end
+    self
   end
 
   protected
 
-  # Remove expired cookies
+  # Remove expired cookies and return self.
   def cleanup session = false
     @jar.each do |domain, paths|
       paths.each do |path, names|
@@ -172,6 +174,7 @@ class HTTP::CookieJar
         end
       end
     end
+    self
   end
 end
 
