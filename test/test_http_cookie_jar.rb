@@ -171,6 +171,18 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal(1, @jar.cookies(url).length)
   end
 
+  def test_add_rejects_cookies_with_unknown_domain_or_path
+    cookie = HTTP::Cookie.new(cookie_values.reject { |k,v| [:origin, :domain].include?(k) })
+    assert_raises(ArgumentError) {
+      @jar.add(cookie)
+    }
+
+    cookie = HTTP::Cookie.new(cookie_values.reject { |k,v| [:origin, :path].include?(k) })
+    assert_raises(ArgumentError) {
+      @jar.add(cookie)
+    }
+  end
+
   def test_add_does_not_reject_cookies_from_a_nested_subdomain
     url = URI 'http://y.x.foo.com'
 

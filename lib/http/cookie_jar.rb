@@ -9,8 +9,6 @@ end
 class HTTP::CookieJar
   include Enumerable
 
-  # add_cookie wants something resembling a URI.
-
   attr_reader :jar
 
   def initialize
@@ -23,6 +21,9 @@ class HTTP::CookieJar
 
   # Add a +cookie+ to the jar and return self.
   def add(cookie)
+    if cookie.domain.nil? || cookie.path.nil?
+      raise ArgumentError, "a cookie with unknown domain or path cannot be added"
+    end
     normal_domain = cookie.domain_name.hostname
 
     ((@jar[normal_domain] ||= {})[cookie.path] ||= {})[cookie.name] = cookie
