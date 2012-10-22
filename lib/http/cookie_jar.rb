@@ -167,11 +167,10 @@ class HTTP::CookieJar
   # Remove expired cookies and return self.
   def cleanup session = false
     @jar.each do |domain, paths|
-      paths.each do |path, names|
-        names.each do |cookie_name, cookie|
-          paths[path].delete(cookie_name) if
-            cookie.expired? or (session and cookie.session)
-        end
+      paths.each do |path, hash|
+        hash.delete_if { |cookie_name, cookie|
+          cookie.expired? or (session and cookie.session)
+        }
       end
     end
     self
