@@ -32,11 +32,11 @@ class HTTP::CookieJar
   end
   alias << add
 
-  # Fetch the cookies that should be used for the URI object passed in.
+  # Fetch the cookies that should be used for the URL/URI.
   def cookies(url)
     now = Time.now
-    select { |cookie|
-      !cookie.expired? && cookie.valid_for_uri?(url) && (cookie.accessed_at = now)
+    each(url).select { |cookie|
+      !cookie.expired? && (cookie.accessed_at = now)
     }.sort
   end
 
@@ -44,14 +44,20 @@ class HTTP::CookieJar
     cookies(url).empty?
   end
 
-  def each
-    block_given? or return enum_for(__method__)
-    cleanup
+  # Iterate over cookies.  If +uri+ is given, cookies not for the
+  # URL/URI are excluded.
+  def each(uri = nil, &block)
+    block_given? or return enum_for(__method__, uri)
+
+    if uri
+      block = proc { |cookie|
+        yield cookie if cookie.valid_for_uri?(uri)
+      }
+    end
+
     @jar.each { |domain, paths|
       paths.each { |path, hash|
-        hash.each_value { |cookie|
-          yield cookie
-        }
+        hash.each_value(&block)
       }
     }
     self
