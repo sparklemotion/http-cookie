@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'test/unit'
+require 'test-unit'
 require 'uri'
 require 'http/cookie'
 
