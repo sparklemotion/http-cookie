@@ -163,6 +163,7 @@ class HTTP::CookieJar
   # Write cookies to Mozilla cookies.txt-style IO stream and return
   # self.
   def dump_cookiestxt(io)
+    io.puts "# HTTP Cookie File"
     to_a.each do |cookie|
       io.print cookie.to_cookiestxt_line
     end
