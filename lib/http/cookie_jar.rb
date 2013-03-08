@@ -151,8 +151,6 @@ class HTTP::CookieJar
   # Read cookies from Mozilla cookies.txt-style IO stream and return
   # self.
   def load_cookiestxt(io)
-    now = Time.now
-
     io.each_line do |line|
       c = HTTP::Cookie.parse_cookiestxt_line(line) and add(c)
     end
