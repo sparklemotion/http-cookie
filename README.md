@@ -40,6 +40,12 @@ Or install it yourself as:
     # Save to a file
     jar.save_as(filename)
 
+## To-Do list
+
+- Print kind error messages to make migration from Mechanize::Cookie easier
+
+- Make serializers pluggable/autoloadable and prepare a binary friendly API
+
 ## Contributing
 
 1. Fork it
