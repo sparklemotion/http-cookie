@@ -75,7 +75,7 @@ class HTTP::Cookie
   def initialize(*args)
     @version = 0     # Netscape Cookie
 
-    @domain = @path = @secure = @comment = @max_age =
+    @origin = @domain = @path = @secure = @comment = @max_age =
       @expires = nil
 
     @created_at = @accessed_at = Time.now
