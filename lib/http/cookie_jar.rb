@@ -144,7 +144,7 @@ class HTTP::CookieJar
 
   # Clear the cookie jar and return self.
   def clear
-    @jar = {}
+    @jar.clear
     self
   end
 
