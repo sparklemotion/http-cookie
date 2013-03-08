@@ -47,8 +47,8 @@ class HTTP::Cookie
 
   include URIFix if defined?(URIFix)
 
-  attr_accessor :name, :value, :version
-  attr_accessor :domain, :path, :secure
+  attr_reader :name, :domain, :path, :origin
+  attr_accessor :secure, :value, :version
   attr_reader :domain_name
   attr_accessor :comment, :max_age
 
@@ -56,8 +56,6 @@ class HTTP::Cookie
 
   attr_accessor :created_at
   attr_accessor :accessed_at
-
-  attr_accessor :origin
 
   # :call-seq:
   #     new(name, value)
