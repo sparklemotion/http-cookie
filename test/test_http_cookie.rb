@@ -418,6 +418,21 @@ class TestHTTPCookie < Test::Unit::TestCase
    }.merge(options)
   end
 
+  def test_compare
+    time = Time.now
+    cookies = [
+      { :created_at => time + 1 },
+      { :created_at => time - 1 },
+      { :created_at => time },
+      { :created_at => time, :path => '/foo/bar/' },
+      { :created_at => time, :path => '/foo/' },
+    ].map { |attrs| HTTP::Cookie.new(cookie_values(attrs)) }
+
+    assert_equal([3, 4, 1, 2, 0], cookies.sort.map { |i|
+        cookies.find_index { |j| j.equal?(i) }
+      })
+  end
+
   def test_new_rejects_cookies_that_do_not_contain_an_embedded_dot
     url = URI 'http://rubyforge.org/'
 
