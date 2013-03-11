@@ -284,6 +284,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       assert_equal('/', cookie.path)
 
       assert_equal(keys.include?('expires') ? @expires : nil, cookie.expires)
+      assert_equal(keys.include?('httponly'), cookie.httponly?)
     end
   end
 
@@ -302,6 +303,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       assert_equal('/', cookie.path)
 
       assert_equal(keys.include?('expires') ? @expires : nil, cookie.expires)
+      assert_equal(keys.include?('httponly'), cookie.httponly?)
     end
   end
 
@@ -321,6 +323,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       assert_equal('/', cookie.path)
 
       assert_equal(keys.include?('expires') ? @expires : nil, cookie.expires)
+      assert_equal(keys.include?('httponly'), cookie.httponly?)
     end
   end
 
@@ -341,6 +344,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       assert_equal(true, cookie.secure)
 
       assert_equal(keys.include?('expires') ? @expires : nil, cookie.expires)
+      assert_equal(keys.include?('httponly'), cookie.httponly?)
     end
   end
 
@@ -358,6 +362,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       assert_equal('/', cookie.path)
 
       assert_equal(keys.include?('expires') ? @expires : nil, cookie.expires)
+      assert_equal(keys.include?('httponly'), cookie.httponly?)
     end
   end
 

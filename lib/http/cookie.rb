@@ -12,7 +12,7 @@ class HTTP::Cookie
   PERSISTENT_PROPERTIES = %w[
     name        value
     domain      for_domain  path
-    secure
+    secure      httponly
     expires     created_at  accessed_at
   ]
   True  = "TRUE"
@@ -48,7 +48,7 @@ class HTTP::Cookie
   include URIFix if defined?(URIFix)
 
   attr_reader :name, :domain, :path, :origin
-  attr_accessor :secure, :value, :version
+  attr_accessor :secure, :httponly, :value, :version
   attr_reader :domain_name
   attr_accessor :comment, :max_age
 
@@ -75,8 +75,10 @@ class HTTP::Cookie
   def initialize(*args)
     @version = 0     # Netscape Cookie
 
-    @origin = @domain = @path = @secure = @comment = @max_age =
-      @expires = nil
+    @origin = @domain = @path =
+      @secure = @httponly =
+      @expires = @max_age =
+      @comment = nil
 
     @created_at = @accessed_at = Time.now
     case args.size
@@ -200,14 +202,17 @@ class HTTP::Cookie
               end
             when 'secure'
               cookie.secure = true
+            when 'httponly'
+              cookie.httponly = true
             end
           end
 
-          cookie.secure  ||= false
+          cookie.secure   ||= false
+          cookie.httponly ||= false
 
           # RFC 6265 4.1.2.2
-          cookie.expires   = Time.now + cookie.max_age if cookie.max_age
-          cookie.session   = !cookie.expires
+          cookie.expires    = Time.now + cookie.max_age if cookie.max_age
+          cookie.session    = !cookie.expires
 
           if origin
             begin
@@ -326,6 +331,7 @@ class HTTP::Cookie
   end
 
   alias secure? secure
+  alias httponly? httponly
 
   def acceptable_from_uri?(uri)
     uri = URI(uri)
