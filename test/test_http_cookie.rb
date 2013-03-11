@@ -433,6 +433,11 @@ class TestHTTPCookie < Test::Unit::TestCase
       })
   end
 
+  def test_equal
+    assert_not_equal(HTTP::Cookie.new(cookie_values),
+      HTTP::Cookie.new(cookie_values(:value => 'bar')))
+  end
+
   def test_new_rejects_cookies_that_do_not_contain_an_embedded_dot
     url = URI 'http://rubyforge.org/'
 

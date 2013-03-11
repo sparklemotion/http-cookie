@@ -379,7 +379,8 @@ class HTTP::Cookie
     # Precedence: 1. longer path  2. older creation
     (@name <=> other.name).nonzero? ||
       (other.path.length <=> @path.length).nonzero? ||
-      @created_at <=> other.created_at
+      (@created_at <=> other.created_at).nonzero? ||
+      @value <=> other.value
   end
   include Comparable
 
