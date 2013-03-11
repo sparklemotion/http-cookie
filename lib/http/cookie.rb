@@ -134,14 +134,22 @@ class HTTP::Cookie
     #
     # If a block is given, each cookie object is passed to the block.
     #
-    # The cookie's origin URI/URL and a logger object can be passed in
-    # +options+ with the keywords +:origin+ and +:logger+,
-    # respectively.
+    # Available option keywords are below:
+    #
+    # * +origin+
+    #   The cookie's origin URI/URL
+    # * +date+
+    #   The base date used for interpreting Max-Age attribute values
+    #   instead of the current time
+    # * +logger+
+    #   Logger object useful for debugging
     def parse(set_cookie, options = nil, &block)
       if options
         logger = options[:logger]
         origin = options[:origin] and origin = URI(origin)
+        date = options[:date]
       end
+      date ||= Time.now
 
       [].tap { |cookies|
         set_cookie.split(/,(?=[^;,]*=)|,$/).each { |c|
@@ -211,7 +219,7 @@ class HTTP::Cookie
           cookie.httponly ||= false
 
           # RFC 6265 4.1.2.2
-          cookie.expires    = Time.now + cookie.max_age if cookie.max_age
+          cookie.expires    = date + cookie.max_age if cookie.max_age
           cookie.session    = !cookie.expires
 
           if origin

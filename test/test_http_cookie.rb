@@ -178,20 +178,27 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_parse_max_age
     url = URI.parse('http://localhost/')
 
-    date = 'Mon, 19 Feb 2012 19:26:04 GMT'
+    epoch, date = 4485353164, 'Fri, 19 Feb 2112 19:26:04 GMT'
+    base = Time.at(1363014000)
 
     cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}", :origin => url).first
-    assert_equal Time.at(1329679564), cookie.expires
+    assert_equal Time.at(epoch), cookie.expires
 
     cookie = HTTP::Cookie.parse('name=Akinori; max-age=3600', :origin => url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
+    cookie = HTTP::Cookie.parse('name=Akinori; max-age=3600', :origin => url, :date => base).first
+    assert_equal base + 3600, cookie.expires
 
     # Max-Age has precedence over Expires
     cookie = HTTP::Cookie.parse("name=Akinori; max-age=3600; expires=#{date}", :origin => url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
+    cookie = HTTP::Cookie.parse("name=Akinori; max-age=3600; expires=#{date}", :origin => url, :date => base).first
+    assert_equal base + 3600, cookie.expires
 
     cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}; max-age=3600", :origin => url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
+    cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}; max-age=3600", :origin => url, :date => base).first
+    assert_equal base + 3600, cookie.expires
   end
 
   def test_parse_expires_session
