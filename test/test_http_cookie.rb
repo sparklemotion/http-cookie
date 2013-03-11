@@ -9,6 +9,19 @@ class TestHTTPCookie < Test::Unit::TestCase
     res
   end
 
+  def setup
+    httpdate = 'Sun, 27-Sep-2037 00:00:00 GMT'
+
+    @cookie_params = {
+      'expires'  => 'expires=%s' % httpdate,
+      'path'     => 'path=/',
+      'domain'   => 'domain=.rubyforge.org',
+      'httponly' => 'HttpOnly',
+    }
+
+    @expires = Time.parse(httpdate)
+  end
+
   def test_parse_dates
     url = URI.parse('http://localhost/')
 
@@ -259,59 +272,28 @@ class TestHTTPCookie < Test::Unit::TestCase
 
   def test_parse_valid_cookie
     url = URI.parse('http://rubyforge.org/')
-    cookie_params = {}
-    cookie_params['expires']   = 'expires=Sun, 27-Sep-2037 00:00:00 GMT'
-    cookie_params['path']      = 'path=/'
-    cookie_params['domain']    = 'domain=.rubyforge.org'
-    cookie_params['httponly']  = 'HttpOnly'
+    cookie_params = @cookie_params
     cookie_value = '12345%7D=ASDFWEE345%3DASda'
 
-    expires = Time.parse('Sun, 27-Sep-2037 00:00:00 GMT')
-    
-    cookie_params.keys.combine.each do |c|
-      cookie_text = "#{cookie_value}; "
-      c.each_with_index do |key, idx|
-        if idx == (c.length - 1)
-          cookie_text << "#{cookie_params[key]}"
-        else
-          cookie_text << "#{cookie_params[key]}; "
-        end
-      end
+    cookie_params.keys.combine.each do |keys|
+      cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
       cookie = nil
       HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
 
-      # if expires was set, make sure we parsed it
-      if c.find { |k| k == 'expires' }
-        assert_equal(expires, cookie.expires)
-      else
-        assert_nil(cookie.expires)
-      end
+      assert_equal(keys.include?('expires') ? @expires : nil, cookie.expires)
     end
   end
 
   def test_parse_valid_cookie_empty_value
     url = URI.parse('http://rubyforge.org/')
-    cookie_params = {}
-    cookie_params['expires']   = 'expires=Sun, 27-Sep-2037 00:00:00 GMT'
-    cookie_params['path']      = 'path=/'
-    cookie_params['domain']    = 'domain=.rubyforge.org'
-    cookie_params['httponly']  = 'HttpOnly'
+    cookie_params = @cookie_params
     cookie_value = '12345%7D='
 
-    expires = Time.parse('Sun, 27-Sep-2037 00:00:00 GMT')
-    
-    cookie_params.keys.combine.each do |c|
-      cookie_text = "#{cookie_value}; "
-      c.each_with_index do |key, idx|
-        if idx == (c.length - 1)
-          cookie_text << "#{cookie_params[key]}"
-        else
-          cookie_text << "#{cookie_params[key]}; "
-        end
-      end
+    cookie_params.keys.combine.each do |keys|
+      cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
       cookie = nil
       HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
 
@@ -319,74 +301,38 @@ class TestHTTPCookie < Test::Unit::TestCase
       assert_equal('', cookie.value)
       assert_equal('/', cookie.path)
 
-      # if expires was set, make sure we parsed it
-      if c.find { |k| k == 'expires' }
-        assert_equal(expires, cookie.expires)
-      else
-        assert_nil(cookie.expires)
-      end
+      assert_equal(keys.include?('expires') ? @expires : nil, cookie.expires)
     end
   end
 
   # If no path was given, use the one from the URL
   def test_cookie_using_url_path
     url = URI.parse('http://rubyforge.org/login.php')
-    cookie_params = {}
-    cookie_params['expires']   = 'expires=Sun, 27-Sep-2037 00:00:00 GMT'
-    cookie_params['path']      = 'path=/'
-    cookie_params['domain']    = 'domain=.rubyforge.org'
-    cookie_params['httponly']  = 'HttpOnly'
+    cookie_params = @cookie_params
     cookie_value = '12345%7D=ASDFWEE345%3DASda'
 
-    expires = Time.parse('Sun, 27-Sep-2037 00:00:00 GMT')
-    
-    cookie_params.keys.combine.each do |c|
-      next if c.find { |k| k == 'path' }
-      cookie_text = "#{cookie_value}; "
-      c.each_with_index do |key, idx|
-        if idx == (c.length - 1)
-          cookie_text << "#{cookie_params[key]}"
-        else
-          cookie_text << "#{cookie_params[key]}; "
-        end
-      end
+    cookie_params.keys.combine.each do |keys|
+      next if keys.include?('path')
+      cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
       cookie = nil
       HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
 
-      # if expires was set, make sure we parsed it
-      if c.find { |k| k == 'expires' }
-        assert_equal(expires, cookie.expires)
-      else
-        assert_nil(cookie.expires)
-      end
+      assert_equal(keys.include?('expires') ? @expires : nil, cookie.expires)
     end
   end
 
   # Test using secure cookies
   def test_cookie_with_secure
     url = URI.parse('http://rubyforge.org/')
-    cookie_params = {}
-    cookie_params['expires']   = 'expires=Sun, 27-Sep-2037 00:00:00 GMT'
-    cookie_params['path']      = 'path=/'
-    cookie_params['domain']    = 'domain=.rubyforge.org'
-    cookie_params['secure']    = 'secure'
+    cookie_params = @cookie_params.merge('secure' => 'secure')
     cookie_value = '12345%7D=ASDFWEE345%3DASda'
 
-    expires = Time.parse('Sun, 27-Sep-2037 00:00:00 GMT')
-    
-    cookie_params.keys.combine.each do |c|
-      next unless c.find { |k| k == 'secure' }
-      cookie_text = "#{cookie_value}; "
-      c.each_with_index do |key, idx|
-        if idx == (c.length - 1)
-          cookie_text << "#{cookie_params[key]}"
-        else
-          cookie_text << "#{cookie_params[key]}; "
-        end
-      end
+    cookie_params.keys.combine.each do |keys|
+      next unless keys.include?('secure')
+      cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
       cookie = nil
       HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
 
@@ -394,47 +340,24 @@ class TestHTTPCookie < Test::Unit::TestCase
       assert_equal('/', cookie.path)
       assert_equal(true, cookie.secure)
 
-      # if expires was set, make sure we parsed it
-      if c.find { |k| k == 'expires' }
-        assert_equal(expires, cookie.expires)
-      else
-        assert_nil(cookie.expires)
-      end
+      assert_equal(keys.include?('expires') ? @expires : nil, cookie.expires)
     end
   end
 
   def test_parse_cookie_no_spaces
     url = URI.parse('http://rubyforge.org/')
-    cookie_params = {}
-    cookie_params['expires']   = 'expires=Sun, 27-Sep-2037 00:00:00 GMT'
-    cookie_params['path']      = 'path=/'
-    cookie_params['domain']    = 'domain=.rubyforge.org'
-    cookie_params['httponly']  = 'HttpOnly'
+    cookie_params = @cookie_params
     cookie_value = '12345%7D=ASDFWEE345%3DASda'
 
-    expires = Time.parse('Sun, 27-Sep-2037 00:00:00 GMT')
-    
-    cookie_params.keys.combine.each do |c|
-      cookie_text = "#{cookie_value};"
-      c.each_with_index do |key, idx|
-        if idx == (c.length - 1)
-          cookie_text << "#{cookie_params[key]}"
-        else
-          cookie_text << "#{cookie_params[key]};"
-        end
-      end
+    cookie_params.keys.combine.each do |keys|
+      cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join(';')
       cookie = nil
       HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
 
-      # if expires was set, make sure we parsed it
-      if c.find { |k| k == 'expires' }
-        assert_equal(expires, cookie.expires)
-      else
-        assert_nil(cookie.expires)
-      end
+      assert_equal(keys.include?('expires') ? @expires : nil, cookie.expires)
     end
   end
 
