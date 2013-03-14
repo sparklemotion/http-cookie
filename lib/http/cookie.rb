@@ -12,6 +12,8 @@ class HTTP::Cookie
   # Maximum number of bytes per cookie (RFC 6265 6.1 requires 4096 at least)
   MAX_LENGTH = 4096
 
+  UNIX_EPOCH = Time.at(0)
+
   PERSISTENT_PROPERTIES = %w[
     name        value
     domain      for_domain  path
@@ -345,6 +347,11 @@ class HTTP::Cookie
   def expired?
     return false unless @expires
     Time.now > @expires
+  end
+
+  def expire
+    @expires = UNIX_EPOCH
+    self
   end
 
   alias secure? secure

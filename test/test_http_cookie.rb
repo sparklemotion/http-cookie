@@ -447,6 +447,14 @@ class TestHTTPCookie < Test::Unit::TestCase
       })
   end
 
+  def test_expiration
+    cookie = HTTP::Cookie.new(cookie_values)
+
+    assert_equal false, cookie.expired?
+    cookie.expire
+    assert_equal true, cookie.expired?
+  end
+
   def test_equal
     assert_not_equal(HTTP::Cookie.new(cookie_values),
       HTTP::Cookie.new(cookie_values(:value => 'bar')))
