@@ -369,6 +369,27 @@ class TestHTTPCookie < Test::Unit::TestCase
     end
   end
 
+  def test_set_cookie_value
+    url = URI.parse('http://rubyforge.org/')
+    cookie_params = @cookie_params.merge('secure' => 'secure')
+    cookie_value = 'foo=bar'
+
+    cookie_params.keys.combine.each do |keys|
+      cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
+      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
+      cookie2, = HTTP::Cookie.parse(cookie.set_cookie_value, :origin => url)
+
+      assert_equal(cookie.name, cookie2.name)
+      assert_equal(cookie.value, cookie2.value)
+      assert_equal(cookie.domain, cookie2.domain)
+      assert_equal(cookie.for_domain?, cookie2.for_domain?)
+      assert_equal(cookie.path, cookie2.path)
+      assert_equal(cookie.expires, cookie2.expires)
+      assert_equal(cookie.secure?, cookie2.secure?)
+      assert_equal(cookie.httponly?, cookie2.httponly?)
+    end
+  end
+
   def test_parse_cookie_no_spaces
     url = URI.parse('http://rubyforge.org/')
     cookie_params = @cookie_params

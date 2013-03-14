@@ -385,21 +385,12 @@ class HTTP::Cookie
     acceptable_from_uri?(uri) && normalize_path(uri.path).start_with?(@path)
   end
 
-  def to_s
+  # Returns a string for use in a Cookie header value,
+  # i.e. "name=value".
+  def cookie_value
     "#{@name}=#{@value}"
   end
-
-  # Compares the cookie with another.  When there are many cookies with
-  # the same name for a URL, the value of the smallest must be used.
-  def <=>(other)
-    # RFC 6265 5.4
-    # Precedence: 1. longer path  2. older creation
-    (@name <=> other.name).nonzero? ||
-      (other.path.length <=> @path.length).nonzero? ||
-      (@created_at <=> other.created_at).nonzero? ||
-      @value <=> other.value
-  end
-  include Comparable
+  alias to_s cookie_value
 
   # Serializes the cookie into a cookies.txt line.
   def to_cookiestxt_line(linefeed = "\n")
@@ -413,6 +404,50 @@ class HTTP::Cookie
       @value
     ].join("\t") << linefeed
   end
+
+  # Returns a string for use in a Set-Cookie header value.  If the
+  # cookie does not have an origin set, one must be given from the
+  # argument.
+  #
+  # This method does not check if this cookie will be accepted from
+  # the origin.
+  def set_cookie_value(origin = nil)
+    origin = origin ? URI(origin) : @origin or
+      raise "origin must be specified to produce a value for Set-Cookie"
+
+    string = cookie_value
+    if @for_domain || @domain != DomainName.new(origin.host).hostname
+      string << "; domain=#{@domain}"
+    end
+    if (normalize_uri_path(origin) + './').path != @path
+      string << "; path=#{@path}"
+    end
+    if expires = @expires
+      string << "; expires=#{@expires.httpdate}"
+    end
+    if comment = @comment
+      string << "; comment=#{@comment}"
+    end
+    if httponly?
+      string << "; HttpOnly"
+    end
+    if secure?
+      string << "; secure"
+    end
+    string
+  end
+
+  # Compares the cookie with another.  When there are many cookies with
+  # the same name for a URL, the value of the smallest must be used.
+  def <=>(other)
+    # RFC 6265 5.4
+    # Precedence: 1. longer path  2. older creation
+    (@name <=> other.name).nonzero? ||
+      (other.path.length <=> @path.length).nonzero? ||
+      (@created_at <=> other.created_at).nonzero? ||
+      @value <=> other.value
+  end
+  include Comparable
 
   # YAML serialization helper for Syck.
   def to_yaml_properties

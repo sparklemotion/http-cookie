@@ -23,6 +23,10 @@ Or install it yourself as:
 
 ## Usage
 
+    ########################
+    # Client side example
+    ########################
+
     # Initialize a cookie jar
     jar = HTTP::CookieJar.new
 
@@ -30,15 +34,30 @@ Or install it yourself as:
     jar.load(filename) if File.exist?(filename)
 
     # Store received cookies
-    HTTP::Cookie.parse(set_cookie_header_value, :origin => uri) { |cookie|
+    HTTP::Cookie.parse(set_cookie_header_value, origin: uri) { |cookie|
       jar << cookie
     }
 
-    # Extract cookies to send
-    cookie_value_to_send = jar.cookies(uri).join(', ')
+    # Get the value for the Cookie field of a request header
+    cookie_header_value = jar.cookies(uri).join(', ')
 
     # Save to a file
-    jar.save_as(filename)
+    jar.save(filename)
+
+
+    ########################
+    # Server side example
+    ########################
+
+    # Generate a cookie
+    cookies = HTTP::Cookie.new("uid", "a12345", domain: 'example.org',
+                                                for_domain: true,
+                                                path: '/',
+                                                max_age: 7*86400)
+
+    # Get the value for the Set-Cookie field of a response header
+    set_cookie_header_value = cookies.set_cookie_value(my_url)
+
 
 ## To-Do list
 
