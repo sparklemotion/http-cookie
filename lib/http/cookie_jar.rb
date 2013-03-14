@@ -1,6 +1,4 @@
-module HTTP
-  autoload :Cookie, 'http/cookie'
-end
+require 'http/cookie'
 
 ##
 # This class is used to manage the Cookies that have been returned from
@@ -8,15 +6,25 @@ end
 
 class HTTP::CookieJar
   autoload :AbstractSaver, 'http/cookie_jar/abstract_saver'
+  autoload :AbstractStore, 'http/cookie_jar/abstract_store'
 
-  attr_reader :jar
+  attr_reader :store
 
-  def initialize
-    @jar = {}
+  def initialize(store = :hash, options = nil)
+    case store
+    when Symbol
+      @store = AbstractStore.implementation(store).new(options)
+    when AbstractStore
+      options.empty? or
+        raise ArgumentError, 'wrong number of arguments (%d for 1)' % (1 + options.size)
+      @store = store
+    else
+      raise TypeError, 'wrong object given as cookie store: %s' % store.inspect
+    end
   end
 
-  def initialize_copy other # :nodoc:
-    @jar = Marshal.load Marshal.dump other.jar
+  def initialize_copy(other)
+    @store = other.instance_eval { @store.dup }
   end
 
   # Add a +cookie+ to the jar and return self.
@@ -24,16 +32,8 @@ class HTTP::CookieJar
     if cookie.domain.nil? || cookie.path.nil?
       raise ArgumentError, "a cookie with unknown domain or path cannot be added"
     end
-    normal_domain = cookie.domain_name.hostname
 
-    path_cookies = ((@jar[normal_domain] ||= {})[cookie.path] ||= {})
-
-    if cookie.expired?
-      path_cookies.delete(cookie.name)
-    else
-      path_cookies[cookie.name] = cookie
-    end
-
+    @store.add(cookie)
     self
   end
   alias << add
@@ -53,12 +53,23 @@ class HTTP::CookieJar
       each(url) { return false }
       return true
     else
-      @jar.empty?
+      @store.empty?
     end
   end
 
-  # Iterate over cookies.  If +uri+ is given, cookies not for the
-  # URL/URI are excluded.
+  # Iterates over all cookies that are not expired.
+  #
+  # Available option keywords are below:
+  #
+  # * +uri+
+  #
+  #   Specify a URI/URL indicating the destination of the cookies
+  #   being selected.  Every cookie yielded should be good to send to
+  #   the given URI, i.e. cookie.valid_for_uri?(uri) evaluates to
+  #   true.
+  #
+  #   If (and only if) this option is given, last access time of each
+  #   cookie is updated to the current time.
   def each(uri = nil, &block)
     block_given? or return enum_for(__method__, uri)
 
@@ -68,11 +79,7 @@ class HTTP::CookieJar
       }
     end
 
-    @jar.each { |domain, paths|
-      paths.each { |path, hash|
-        hash.each_value(&block)
-      }
-    }
+    @store.each(uri, &block)
     self
   end
   include Enumerable
@@ -202,22 +209,13 @@ class HTTP::CookieJar
 
   # Clear the cookie jar and return self.
   def clear
-    @jar.clear
+    @store.clear
     self
   end
 
-  protected
-
   # Remove expired cookies and return self.
-  def cleanup session = false
-    @jar.each do |domain, paths|
-      paths.each do |path, hash|
-        hash.delete_if { |cookie_name, cookie|
-          cookie.expired? || (session && cookie.session?)
-        }
-      end
-    end
+  def cleanup(session = false)
+    @store.cleanup session
     self
   end
 end
-

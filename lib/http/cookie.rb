@@ -131,6 +131,19 @@ class HTTP::Cookie
   class << self
     include URIFix if defined?(URIFix)
 
+    # Normalizes a given path.  If it is empty, the root path '/' is
+    # returned.  If a URI object is given, returns a new URI object
+    # with the path part normalized.
+    def normalize_path(uri)
+      # Currently does not replace // to /
+      case uri
+      when URI
+        uri.path.empty? ? uri + '/' : uri
+      else
+        uri.empty? ? '/' : uri
+      end
+    end
+
     # Parses a Set-Cookie header value +set_cookie+ into an array of
     # Cookie objects.  Parts (separated by commas) that are malformed
     # are ignored.
@@ -277,20 +290,8 @@ class HTTP::Cookie
     @domain = @domain_name.hostname
   end
 
-  def normalize_uri_path(uri)
-    # Currently does not replace // to /
-    uri.path.empty? ? uri + '/' : uri
-  end
-  private :normalize_uri_path
-
-  def normalize_path(path)
-    # Currently does not replace // to /
-    path.empty? ? '/' : path
-  end
-  private :normalize_path
-
   def path=(path)
-    @path = normalize_path(path)
+    @path = HTTP::Cookie.normalize_path(path)
   end
 
   def origin=(origin)
@@ -298,7 +299,7 @@ class HTTP::Cookie
       raise ArgumentError, "origin cannot be changed once it is set"
     origin = URI(origin)
     self.domain ||= origin.host
-    self.path   ||= (normalize_uri_path(origin) + './').path
+    self.path   ||= (HTTP::Cookie.normalize_path(origin) + './').path
     acceptable_from_uri?(origin) or
       raise ArgumentError, "unacceptable cookie sent from URI #{origin}"
     @origin = origin
@@ -351,7 +352,7 @@ class HTTP::Cookie
       raise "cannot tell if this cookie is valid because the domain is unknown"
     end
     return false if secure? && uri.scheme != 'https'
-    acceptable_from_uri?(uri) && normalize_path(uri.path).start_with?(@path)
+    acceptable_from_uri?(uri) && HTTP::Cookie.normalize_path(uri.path).start_with?(@path)
   end
 
   # Returns a string for use in a Cookie header value,
@@ -375,7 +376,7 @@ class HTTP::Cookie
     if @for_domain || @domain != DomainName.new(origin.host).hostname
       string << "; domain=#{@domain}"
     end
-    if (normalize_uri_path(origin) + './').path != @path
+    if (HTTP::Cookie.normalize_path(origin) + './').path != @path
       string << "; path=#{@path}"
     end
     if expires = @expires
