@@ -298,8 +298,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_params.keys.combine.each do |keys|
       cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-      cookie = nil
-      HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
+      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
@@ -316,8 +315,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_params.keys.combine.each do |keys|
       cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-      cookie = nil
-      HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
+      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
 
       assert_equal('12345%7D=', cookie.to_s)
       assert_equal('', cookie.value)
@@ -337,8 +335,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     cookie_params.keys.combine.each do |keys|
       next if keys.include?('path')
       cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-      cookie = nil
-      HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
+      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
@@ -357,8 +354,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     cookie_params.keys.combine.each do |keys|
       next unless keys.include?('secure')
       cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-      cookie = nil
-      HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
+      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
@@ -397,8 +393,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_params.keys.combine.each do |keys|
       cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join(';')
-      cookie = nil
-      HTTP::Cookie.parse(cookie_text, :origin => url) { |p_cookie| cookie = p_cookie }
+      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
