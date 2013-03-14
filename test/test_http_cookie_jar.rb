@@ -301,7 +301,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal(3, @jar.cookies(url).length)
 
     in_tmpdir do
-      value = @jar.save_as("cookies.yml")
+      value = @jar.save("cookies.yml")
       assert_same @jar, value
 
       jar = HTTP::CookieJar.new
@@ -333,7 +333,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal(3, @jar.cookies(url).length)
 
     in_tmpdir do
-      @jar.save_as("cookies.yml", :format => :yaml, :session => true)
+      @jar.save("cookies.yml", :format => :yaml, :session => true)
 
       jar = HTTP::CookieJar.new
       jar.load("cookies.yml")
@@ -365,7 +365,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal(3, @jar.cookies(url).length)
 
     in_tmpdir do
-      @jar.save_as("cookies.txt", :cookiestxt)
+      @jar.save("cookies.txt", :cookiestxt)
 
       jar = HTTP::CookieJar.new
       jar.load("cookies.txt", :cookiestxt) # HACK test the format

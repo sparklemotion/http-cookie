@@ -20,8 +20,6 @@ class HTTP::Cookie
     secure      httponly
     expires     created_at  accessed_at
   ]
-  True  = "TRUE"
-  False = "FALSE"
 
   # In Ruby < 1.9.3 URI() does not accept an URI object.
   if RUBY_VERSION < "1.9.3"
@@ -247,35 +245,6 @@ class HTTP::Cookie
         }
       }
     end
-
-    # Parses a line from cookies.txt and returns a cookie object if
-    # the line represents a cookie record or returns nil otherwise.
-    def parse_cookiestxt_line(line)
-      return nil if line.match(/^#/)
-
-      domain,
-      s_for_domain,	# Whether this cookie is for domain
-      path,		# Path for which the cookie is relevant
-      s_secure,		# Requires a secure connection
-      s_expires,	# Time the cookie expires (Unix epoch time)
-      name, value = line.split("\t", 7)
-      return nil if value.nil?
-
-      value.chomp!
-
-      if (expires_seconds = s_expires.to_i).nonzero?
-        expires = Time.at(expires_seconds)
-        return nil if expires < Time.now
-      end
-
-      HTTP::Cookie.new(name, value,
-        :domain => domain,
-        :for_domain => s_for_domain == True,
-        :path => path,
-        :secure => s_secure == True,
-        :expires => expires,
-        :version => 0)
-    end
   end
 
   def name=(name)
@@ -391,19 +360,6 @@ class HTTP::Cookie
     "#{@name}=#{@value}"
   end
   alias to_s cookie_value
-
-  # Serializes the cookie into a cookies.txt line.
-  def to_cookiestxt_line(linefeed = "\n")
-    [
-      @domain,
-      @for_domain ? True : False,
-      @path,
-      @secure ? True : False,
-      @expires.to_i,
-      @name,
-      @value
-    ].join("\t") << linefeed
-  end
 
   # Returns a string for use in a Set-Cookie header value.  If the
   # cookie does not have an origin set, one must be given from the

@@ -7,7 +7,7 @@ end
 # any particular website.
 
 class HTTP::CookieJar
-  include Enumerable
+  autoload :AbstractSaver, 'http/cookie_jar/abstract_saver'
 
   attr_reader :jar
 
@@ -75,13 +75,15 @@ class HTTP::CookieJar
     }
     self
   end
+  include Enumerable
 
   # call-seq:
-  #   jar.save_as(file, format = :yaml)
-  #   jar.save_as(file, options)
+  #   jar.save(filename_or_io, **options)
+  #   jar.save(filename_or_io, format = :yaml, **options)
   #
-  # Save the cookie jar to a file in the format specified and return
-  # self.
+  # Save the cookie jar into a file or an IO in the format specified
+  # and return self.  If the given object responds to #write it is
+  # taken as an IO, or taken as a filename otherwise.
   #
   # Available option keywords are below:
   #
@@ -95,89 +97,112 @@ class HTTP::CookieJar
   #     Save session cookies as well.
   #   [+false+]
   #     Do not save session cookies. (default)
-  def save_as(file, options = nil)
-    if Symbol === options
-      format = options
-      session = false
+  #
+  # All options given are passed through to the underlying cookie
+  # saver module.
+  def save(writable, *options)
+    opthash = {
+      :format => :yaml,
+      :session => false,
+    }
+    case options.size
+    when 0
+    when 1
+      case options = options.first
+      when Symbol
+        opthash[:format] = options
+      else
+        opthash.update(options) if options
+      end
+    when 2
+      opthash[:format], options = options
+      opthash.update(options) if options
     else
-      options ||= {}
-      format = options[:format] || :yaml
-      session = !!options[:session]
+      raise ArgumentError, 'wrong number of arguments (%d for 1-3)' % (1 + options.size)
     end
 
-    jar = dup
-    jar.cleanup !session
+    begin
+      saver = AbstractSaver.implementation(opthash[:format]).new(opthash)
+    rescue KeyError => e
+      raise ArgumentError, e.message
+    end
 
-    open(file, 'w') { |f|
-      case format
-      when :yaml then
-        require_yaml
-
-        YAML.dump(jar.jar, f)
-      when :cookiestxt then
-        jar.dump_cookiestxt(f)
-      else
-        raise ArgumentError, "Unknown cookie jar file format"
-      end
-    }
+    if writable.respond_to?(:write)
+      saver.save(writable, self)
+    else
+      File.open(writable, 'w') { |io|
+        saver.save(io, self)
+      }
+    end
 
     self
   end
 
-  # Load cookie jar from a file in the format specified.
-  #
-  # Available formats:
-  # :yaml  <- YAML structure.
-  # :cookiestxt  <- Mozilla's cookies.txt format
-  def load(file, format = :yaml)
-    File.open(file) { |f|
-      case format
-      when :yaml then
-        require_yaml
-        @jar = YAML.load(f)
-      when :cookiestxt then
-        load_cookiestxt(f)
-      else
-        raise ArgumentError, "Unknown cookie jar file format"
-      end
-    }
-
-    cleanup
+  # An obsolete name for save().
+  def save_as(*args)
+    warn "%s() is obsolete; use save()." % __method__
+    save(*args)
   end
 
-  def require_yaml # :nodoc:
-    begin
-      require 'psych'
-    rescue LoadError
+  # call-seq:
+  #   jar.load(filename_or_io, **options)
+  #   jar.load(filename_or_io, format = :yaml, **options)
+  #
+  # Load cookies recorded in a file or an IO in the format specified
+  # into the jar and return self.  If the given object responds to
+  # #read it is taken as an IO, or taken as a filename otherwise.
+  #
+  # Available option keywords are below:
+  #
+  # * +format+
+  #   [<tt>:yaml</tt>]
+  #     YAML structure (default)
+  #   [<tt>:cookiestxt</tt>]
+  #     Mozilla's cookies.txt format
+  #
+  # All options given are passed through to the underlying cookie
+  # saver module.
+  def load(readable, *options)
+    opthash = {
+      :format => :yaml,
+      :session => false,
+    }
+    case options.size
+    when 0
+    when 1
+      case options = options.first
+      when Symbol
+        opthash[:format] = options
+      else
+        opthash.update(options) if options
+      end
+    when 2
+      opthash[:format], options = options
+      opthash.update(options) if options
+    else
+      raise ArgumentError, 'wrong number of arguments (%d for 1-3)' % (1 + options.size)
     end
 
-    require 'yaml'
+    begin
+      saver = AbstractSaver.implementation(opthash[:format]).new(opthash)
+    rescue KeyError => e
+      raise ArgumentError, e.message
+    end
+
+    if readable.respond_to?(:write)
+      saver.load(readable, self)
+    else
+      File.open(readable, 'r') { |io|
+        saver.load(io, self)
+      }
+    end
+
+    self
   end
-  private :require_yaml
 
   # Clear the cookie jar and return self.
   def clear
     @jar.clear
-    self
-  end
-
-  # Read cookies from Mozilla cookies.txt-style IO stream and return
-  # self.
-  def load_cookiestxt(io)
-    io.each_line do |line|
-      c = HTTP::Cookie.parse_cookiestxt_line(line) and add(c)
-    end
-
-    self
-  end
-
-  # Write cookies to Mozilla cookies.txt-style IO stream and return
-  # self.
-  def dump_cookiestxt(io)
-    io.puts "# HTTP Cookie File"
-    to_a.each do |cookie|
-      io.print cookie.to_cookiestxt_line
-    end
     self
   end
 
