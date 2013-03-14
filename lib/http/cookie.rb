@@ -52,7 +52,7 @@ class HTTP::Cookie
 
   attr_reader :name, :domain, :path, :origin
   attr_accessor :secure, :httponly, :value, :version
-  attr_reader :domain_name
+  attr_reader :domain_name, :expires
   attr_accessor :comment, :max_age
 
   attr_accessor :session
@@ -334,16 +334,17 @@ class HTTP::Cookie
   end
 
   def expires=(t)
-    @expires = t && (t.is_a?(Time) ? t.httpdate : t.to_s)
-  end
-
-  def expires
-    @expires && Time.parse(@expires)
+    case t
+    when nil, Time
+      @expires = t
+    else
+      @expires = Time.parse(t)
+    end
   end
 
   def expired?
-    return false unless expires
-    Time.now > expires
+    return false unless @expires
+    Time.now > @expires
   end
 
   alias secure? secure
@@ -400,7 +401,7 @@ class HTTP::Cookie
       @for_domain ? True : False,
       @path,
       @secure ? True : False,
-      @expires.to_i.to_s,
+      @expires.to_i,
       @name,
       @value
     ].join("\t") << linefeed

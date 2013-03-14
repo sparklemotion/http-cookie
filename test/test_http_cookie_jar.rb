@@ -18,7 +18,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
       :name     => 'Foo',
       :value    => 'Bar',
       :path     => '/',
-      :expires  => Time.now + (10 * 86400),
+      :expires  => Time.at(Time.now.to_i + 10 * 86400), # to_i is important here
       :for_domain => true,
       :domain   => 'rubyforge.org',
       :origin   => 'http://rubyforge.org/'
@@ -335,18 +335,23 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   end
 
 
-  def test_save_cookies_cookiestxt
+  def test_save_and_read_cookiestxt
     url = URI 'http://rubyforge.org/foo/'
 
     # Add one cookie with an expiration date in the future
     cookie = HTTP::Cookie.new(cookie_values)
+    expires = cookie.expires
     s_cookie = HTTP::Cookie.new(cookie_values(:name => 'Bar',
                                               :expires => nil,
                                               :session => true))
+    cookie2 = HTTP::Cookie.new(cookie_values(:name => 'Baz',
+                                             :value => 'Foo#Baz',
+                                             :path => '/foo/',
+                                             :for_domain => false))
 
     @jar.add(cookie)
     @jar.add(s_cookie)
-    @jar.add(HTTP::Cookie.new(cookie_values(:name => 'Baz', :value => 'Foo#Baz', :path => '/foo/', :for_domain => false)))
+    @jar.add(cookie2)
 
     assert_equal(3, @jar.cookies(url).length)
 
@@ -361,6 +366,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
         case cookie.name
         when 'Foo'
           assert_equal 'Bar', cookie.value
+          assert_equal expires, cookie.expires
           assert_equal 'rubyforge.org', cookie.domain
           assert_equal true, cookie.for_domain
           assert_equal '/', cookie.path
@@ -461,52 +467,6 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     @jar.add(HTTP::Cookie.new(values.merge( :name => 'Baz',
                                           :expires => Time.now - (10 * 86400))))
     assert_equal(0, @jar.cookies(url).length)
-  end
-
-  def test_save_and_read_cookiestxt
-    url = URI 'http://rubyforge.org/'
-
-    # Add one cookie with an expiration date in the future
-    cookie = HTTP::Cookie.new(cookie_values)
-    @jar.add(cookie)
-    @jar.add(HTTP::Cookie.new(cookie_values(:name => 'Baz')))
-    assert_equal(2, @jar.cookies(url).length)
-
-    in_tmpdir do
-      @jar.save_as("cookies.txt", :cookiestxt)
-      @jar.clear
-
-      @jar.load("cookies.txt", :cookiestxt)
-    end
-
-    assert_equal(2, @jar.cookies(url).length)
-  end
-
-  def test_save_and_read_cookiestxt_with_session_cookies
-    url = URI 'http://rubyforge.org/'
-
-    @jar.add(HTTP::Cookie.new(cookie_values(:expires => nil)))
-
-    in_tmpdir do
-      @jar.save_as("cookies.txt", :cookiestxt)
-      @jar.clear
-
-      @jar.load("cookies.txt", :cookiestxt)
-    end
-
-    assert_equal(1, @jar.cookies(url).length)
-    assert_nil @jar.cookies(url).first.expires
-  end
-
-  def test_save_and_read_expired_cookies
-    url = URI 'http://rubyforge.org/'
-
-    @jar.jar['rubyforge.org'] = {}
-
-
-    @jar.add HTTP::Cookie.new(cookie_values)
-
-    # HACK no asertion
   end
 
   def test_ssl_cookies
