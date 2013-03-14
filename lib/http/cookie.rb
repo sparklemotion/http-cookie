@@ -344,9 +344,9 @@ class HTTP::Cookie
     end
   end
 
-  def expired?
+  def expired?(time = Time.now)
     return false unless @expires
-    Time.now > @expires
+    time > @expires
   end
 
   def expire
