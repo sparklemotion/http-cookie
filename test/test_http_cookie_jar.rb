@@ -25,6 +25,15 @@ class TestHTTPCookieJar < Test::Unit::TestCase
    }.merge(options)
   end
 
+  def test_empty?
+    assert_equal true, @jar.empty?
+    cookie = HTTP::Cookie.new(cookie_values)
+    @jar.add(cookie)
+    assert_equal false, @jar.empty?
+    assert_equal false, @jar.empty?('http://rubyforge.org/')
+    assert_equal true, @jar.empty?('http://example.local/')
+  end
+
   def test_two_cookies_same_domain_and_name_different_paths
     url = URI 'http://rubyforge.org/'
 

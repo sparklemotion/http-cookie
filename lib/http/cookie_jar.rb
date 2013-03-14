@@ -46,8 +46,15 @@ class HTTP::CookieJar
     }.sort
   end
 
-  def empty?(url)
-    cookies(url).empty?
+  # Tests if the jar is empty.  If url is given, tests if there is no
+  # cookie for the URL.
+  def empty?(url = nil)
+    if url
+      each(url) { return false }
+      return true
+    else
+      @jar.empty?
+    end
   end
 
   # Iterate over cookies.  If +uri+ is given, cookies not for the
