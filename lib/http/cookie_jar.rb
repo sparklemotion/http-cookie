@@ -26,7 +26,13 @@ class HTTP::CookieJar
     end
     normal_domain = cookie.domain_name.hostname
 
-    ((@jar[normal_domain] ||= {})[cookie.path] ||= {})[cookie.name] = cookie
+    path_cookies = ((@jar[normal_domain] ||= {})[cookie.path] ||= {})
+
+    if cookie.expired?
+      path_cookies.delete(cookie.name)
+    else
+      path_cookies[cookie.name] = cookie
+    end
 
     self
   end
