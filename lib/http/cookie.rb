@@ -340,6 +340,7 @@ class HTTP::Cookie
 
   alias secure? secure
   alias httponly? httponly
+  alias session? session
 
   def acceptable_from_uri?(uri)
     uri = URI(uri)

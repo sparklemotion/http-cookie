@@ -212,7 +212,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       'name=Akinori; max-age=',
     ].each { |str|
       cookie = HTTP::Cookie.parse(str, :origin => url).first
-      assert cookie.session, str
+      assert cookie.session?, str
     }
 
     [
@@ -220,7 +220,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       'name=Akinori; max-age=3600',
     ].each { |str|
       cookie = HTTP::Cookie.parse(str, :origin => url).first
-      assert !cookie.session, str
+      assert !cookie.session?, str
     }
   end
 

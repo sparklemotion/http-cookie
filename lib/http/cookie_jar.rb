@@ -175,7 +175,7 @@ class HTTP::CookieJar
     @jar.each do |domain, paths|
       paths.each do |path, hash|
         hash.delete_if { |cookie_name, cookie|
-          cookie.expired? or (session and cookie.session)
+          cookie.expired? || (session && cookie.session?)
         }
       end
     end
