@@ -606,5 +606,19 @@ class TestHTTPCookie < Test::Unit::TestCase
     cookie = HTTP::Cookie.parse('a=b', :origin => URI('https://example.com/')).first
     assert_equal true,  cookie.valid_for_uri?(URI('https://example.com'))
   end
+
+  def test_migration
+    assert_raises_with_message(ArgumentError, /equivalent/) {
+      HTTP::Cookie.parse('http://example.com/', 'key=value')
+    }
+    assert_raises_with_message(ArgumentError, /equivalent/) {
+      HTTP::Cookie.parse('http://example.com/', 'key=value', Object.new)
+    }
+
+    cookie = HTTP::Cookie.new('key', 'value')
+    assert_raises_with_message(NoMethodError, /equivalent/) {
+      cookie.set_domain('www.example.com')
+    }
+  end
 end
 

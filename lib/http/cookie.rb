@@ -163,7 +163,10 @@ class HTTP::Cookie
     #   instead of the current time
     # * +logger+
     #   Logger object useful for debugging
-    def parse(set_cookie, options = nil, &block)
+    def parse(set_cookie, options = nil, *_, &block)
+      _.empty? && !options.is_a?(String) or
+        raise ArgumentError, 'HTTP::Cookie equivalent for Mechanize::Cookie.parse(uri, set_cookie[, log]) is HTTP::Cookie.parse(set_cookie, :origin => uri[, :logger => log]).'
+
       if options
         logger = options[:logger]
         origin = options[:origin] and origin = URI(origin)
@@ -292,6 +295,11 @@ class HTTP::Cookie
       @domain_name = DomainName.new(domain)
     end
     @domain = @domain_name.hostname
+  end
+
+  # Used to exist in Mechanize::CookieJar.  Use #domain=().
+  def set_domain(domain)
+    raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#set_domain() is #domain=().'
   end
 
   def path=(path)

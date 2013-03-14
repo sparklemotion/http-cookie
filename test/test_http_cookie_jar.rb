@@ -566,4 +566,20 @@ class TestHTTPCookieJar < Test::Unit::TestCase
       cookie.domain == cookie.value
     }
   end
+
+  def test_migration
+    cookie = HTTP::Cookie.new(cookie_values)
+    assert_raises_with_message(ArgumentError, /equivalent/) {
+      @jar.add('http://example.com/', cookie)
+    }
+    assert_raises_with_message(NoMethodError, /equivalent/) {
+      @jar.add!(cookie)
+    }
+    assert_raises_with_message(NoMethodError, /equivalent/) {
+      @jar.clear!()
+    }
+    assert_raises_with_message(NoMethodError, /equivalent/) {
+      @jar.save_as('/dev/null')
+    }
+  end
 end

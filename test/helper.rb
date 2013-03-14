@@ -19,3 +19,15 @@ module Enumerable
     result
   end
 end
+
+module Test::Unit::Assertions
+  def assert_raises_with_message(exc, re, message = nil, &block)
+    e = nil
+    begin
+      block.call
+    rescue Exception => e
+    end
+    assert_instance_of(exc, e, message)
+    assert_match(re, e.message, message)
+  end
+end

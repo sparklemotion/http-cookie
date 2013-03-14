@@ -28,7 +28,10 @@ class HTTP::CookieJar
   end
 
   # Add a +cookie+ to the jar and return self.
-  def add(cookie)
+  def add(cookie, *_)
+    _.empty? or
+      raise ArgumentError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#add(uri, cookie) is #add(cookie) after setting cookie.origin = uri.'
+
     if cookie.domain.nil? || cookie.path.nil?
       raise ArgumentError, "a cookie with unknown domain or path cannot be added"
     end
@@ -37,6 +40,11 @@ class HTTP::CookieJar
     self
   end
   alias << add
+
+  # Used to exist in Mechanize::CookieJar.  Use #add().
+  def add!(cookie)
+    raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#add!() is #add().'
+  end
 
   # Fetch the cookies that should be used for the URL/URI.
   def cookies(url)
@@ -145,10 +153,9 @@ class HTTP::CookieJar
     self
   end
 
-  # An obsolete name for save().
+  # Used to exist in Mechanize::CookieJar.  Use #save().
   def save_as(*args)
-    warn "%s() is obsolete; use save()." % __method__
-    save(*args)
+    raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#save_as() is #save().'
   end
 
   # call-seq:
@@ -211,6 +218,11 @@ class HTTP::CookieJar
   def clear
     @store.clear
     self
+  end
+
+  # Used to exist in Mechanize::CookieJar.  Use #clear().
+  def clear!(*args)
+    raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#clear!() is #clear().'
   end
 
   # Remove expired cookies and return self.
