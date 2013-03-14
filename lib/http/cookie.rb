@@ -9,6 +9,9 @@ end
 
 # This class is used to represent an HTTP Cookie.
 class HTTP::Cookie
+  # Maximum number of bytes per cookie (RFC 6265 6.1 requires 4096 at least)
+  MAX_LENGTH = 4096
+
   PERSISTENT_PROPERTIES = %w[
     name        value
     domain      for_domain  path
@@ -153,6 +156,11 @@ class HTTP::Cookie
 
       [].tap { |cookies|
         set_cookie.split(/,(?=[^;,]*=)|,$/).each { |c|
+          if c.bytesize > MAX_LENGTH
+            logger.warn("Cookie definition too long: #{c}") if logger
+            next
+          end
+
           cookie_elem = c.split(/;+/)
           first_elem = cookie_elem.shift
           first_elem.strip!

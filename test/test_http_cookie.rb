@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require File.expand_path('helper', File.dirname(__FILE__))
 
 class TestHTTPCookie < Test::Unit::TestCase
@@ -77,6 +78,19 @@ class TestHTTPCookie < Test::Unit::TestCase
       assert_equal '/',                 cookie.path
       assert_equal Time.at(1320539286), cookie.expires
     end
+  end
+
+  def test_parse_too_long_cookie
+    uri = URI.parse 'http://example'
+
+    cookie_str = "foo=#{'クッキー' * 340}; path=/ab/"
+    assert_equal(HTTP::Cookie::MAX_LENGTH - 1, cookie_str.bytesize)
+
+    assert_equal 1, HTTP::Cookie.parse(cookie_str, :origin => uri).size
+
+    assert_equal 1, HTTP::Cookie.parse(cookie_str.sub(';', 'x;'), :origin => uri).size
+
+    assert_equal 0, HTTP::Cookie.parse(cookie_str.sub(';', 'xx;'), :origin => uri).size
   end
 
   def test_parse_quoted
