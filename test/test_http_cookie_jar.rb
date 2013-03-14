@@ -510,4 +510,60 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal('Foo1',      @jar.cookies(nurl).map { |c| c.name }.sort.join(' ') )
     assert_equal('Foo1 Foo2', @jar.cookies(surl).map { |c| c.name }.sort.join(' ') )
   end
+
+  def test_max_cookies
+    jar = HTTP::CookieJar.new
+    limit_per_domain = HTTP::Cookie::MAX_COOKIES_PER_DOMAIN
+    uri = URI('http://www.example.org/')
+    date = Time.at(Time.now.to_i + 86400)
+    (1..(limit_per_domain + 1)).each { |i|
+      jar << HTTP::Cookie.new(cookie_values(
+          :name => 'Foo%d' % i,
+          :value => 'Bar%d' % i,
+          :domain => uri.host,
+          :for_domain => true,
+          :path => '/dir%d/' % (i / 2),
+          :origin => uri,
+          )).tap { |cookie|
+        cookie.created_at = i == 42 ? date - i : date
+      }
+    }
+    assert_equal limit_per_domain + 1, jar.to_a.size
+    jar.cleanup
+    count = jar.to_a.size
+    assert_equal limit_per_domain, count
+    assert_equal [*1..41] + [*43..(limit_per_domain + 1)], jar.map { |cookie|
+      cookie.name[/(?<=^Foo)(\d+)$/].to_i
+    }
+
+    hlimit = HTTP::Cookie::MAX_COOKIES_TOTAL
+    slimit = hlimit + HTTP::CookieJar::HashStore::GC_THRESHOLD
+
+    n = hlimit / limit_per_domain * 2
+
+    (1..n).each { |i|
+      (1..(limit_per_domain + 1)).each { |j|
+        uri = URI('http://www%d.example.jp/' % i)
+        jar << HTTP::Cookie.new(cookie_values(
+            :name => 'Baz%d' % j,
+            :value => 'www%d.example.jp' % j,
+            :domain => uri.host,
+            :for_domain => true,
+            :path => '/dir%d/' % (i / 2),
+            :origin => uri,
+            )).tap { |cookie|
+          cookie.created_at = i == j ? date - i : date
+        }
+        count += 1
+      }
+    }
+
+    assert_equal true, count > slimit
+    assert_equal true, jar.to_a.size <= slimit
+    jar.cleanup
+    assert_equal hlimit, jar.to_a.size
+    assert_equal false, jar.any? { |cookie|
+      cookie.domain == cookie.value
+    }
+  end
 end

@@ -11,6 +11,10 @@ end
 class HTTP::Cookie
   # Maximum number of bytes per cookie (RFC 6265 6.1 requires 4096 at least)
   MAX_LENGTH = 4096
+  # Maximum number of cookies per domain (RFC 6265 6.1 requires 50 at least)
+  MAX_COOKIES_PER_DOMAIN = 50
+  # Maximum number of cookies total (RFC 6265 6.1 requires 3000 at least)
+  MAX_COOKIES_TOTAL = 3000
 
   UNIX_EPOCH = Time.at(0)
 
