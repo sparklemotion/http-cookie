@@ -391,16 +391,16 @@ class HTTP::Cookie
     if (HTTP::Cookie.normalize_path(origin) + './').path != @path
       string << "; path=#{@path}"
     end
-    if expires = @expires
+    if @expires
       string << "; expires=#{@expires.httpdate}"
     end
-    if comment = @comment
+    if @comment
       string << "; comment=#{@comment}"
     end
-    if httponly?
+    if @httponly
       string << "; HttpOnly"
     end
-    if secure?
+    if @secure
       string << "; secure"
     end
     string

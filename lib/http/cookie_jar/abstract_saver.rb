@@ -1,5 +1,3 @@
-require 'http/cookie_jar'
-
 class HTTP::CookieJar::AbstractSaver
   class << self
     @@class_map = {}
@@ -13,7 +11,7 @@ class HTTP::CookieJar::AbstractSaver
       begin
         require 'http/cookie_jar/%s_saver' % symbol
         @@class_map.fetch(symbol)
-      rescue LoadError, IndexError => e
+      rescue LoadError, IndexError
         raise IndexError, 'cookie saver unavailable: %s' % symbol.inspect
       end
     end

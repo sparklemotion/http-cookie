@@ -1,5 +1,3 @@
-require 'http/cookie_jar'
-
 class HTTP::CookieJar::AbstractStore
   class << self
     @@class_map = {}
@@ -13,7 +11,7 @@ class HTTP::CookieJar::AbstractStore
       begin
         require 'http/cookie_jar/%s_store' % symbol
         @@class_map.fetch(symbol)
-      rescue LoadError, IndexError => e
+      rescue LoadError, IndexError
         raise IndexError, 'cookie store unavailable: %s' % symbol.inspect
       end
     end
