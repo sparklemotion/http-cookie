@@ -525,7 +525,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
           :domain => uri.host,
           :for_domain => true,
           :path => '/dir%d/' % (i / 2),
-          :origin => uri,
+          :origin => uri
           )).tap { |cookie|
         cookie.created_at = i == 42 ? date - i : date
       }
@@ -535,8 +535,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     count = jar.to_a.size
     assert_equal limit_per_domain, count
     assert_equal [*1..41] + [*43..(limit_per_domain + 1)], jar.map { |cookie|
-      cookie.name[/(?<=^Foo)(\d+)$/].to_i
-    }
+      cookie.name[/(\d+)$/].to_i
+    }.sort
 
     hlimit = HTTP::Cookie::MAX_COOKIES_TOTAL
     slimit = hlimit + HTTP::CookieJar::HashStore::GC_THRESHOLD
@@ -552,7 +552,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
             :domain => uri.host,
             :for_domain => true,
             :path => '/dir%d/' % (i / 2),
-            :origin => uri,
+            :origin => uri
             )).tap { |cookie|
           cookie.created_at = i == j ? date - i : date
         }
