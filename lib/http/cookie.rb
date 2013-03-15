@@ -342,6 +342,7 @@ class HTTP::Cookie
 
   def acceptable_from_uri?(uri)
     uri = URI(uri)
+    return false unless URI::HTTP === uri && uri.host
     host = DomainName.new(uri.host)
 
     # RFC 6265 5.3
@@ -359,11 +360,11 @@ class HTTP::Cookie
   end
 
   def valid_for_uri?(uri)
-    uri = URI(uri)
     if @domain.nil?
       raise "cannot tell if this cookie is valid because the domain is unknown"
     end
-    return false if secure? && uri.scheme != 'https'
+    uri = URI(uri)
+    return false if secure? && !(URI::HTTPS === uri)
     acceptable_from_uri?(uri) && HTTP::Cookie.normalize_path(uri.path).start_with?(@path)
   end
 

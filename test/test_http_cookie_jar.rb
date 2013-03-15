@@ -270,6 +270,14 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal(0, @jar.cookies(url).length)
   end
 
+  def test_cookies_no_host
+    url = URI 'file:///path/'
+
+    assert_raises(ArgumentError) {
+      @jar.add(HTTP::Cookie.new(cookie_values(:origin => url)))
+    }
+  end
+
   def test_clear
     url = URI 'http://rubyforge.org/'
 
