@@ -5,8 +5,8 @@ require 'http/cookie'
 # any particular website.
 
 class HTTP::CookieJar
-  autoload :AbstractSaver, 'http/cookie_jar/abstract_saver'
-  autoload :AbstractStore, 'http/cookie_jar/abstract_store'
+  require 'http/cookie_jar/abstract_store'
+  require 'http/cookie_jar/abstract_saver'
 
   attr_reader :store
 
@@ -136,7 +136,7 @@ class HTTP::CookieJar
 
     begin
       saver = AbstractSaver.implementation(opthash[:format]).new(opthash)
-    rescue KeyError => e
+    rescue IndexError => e
       raise ArgumentError, e.message
     end
 
@@ -197,7 +197,7 @@ class HTTP::CookieJar
 
     begin
       saver = AbstractSaver.implementation(opthash[:format]).new(opthash)
-    rescue KeyError => e
+    rescue IndexError => e
       raise ArgumentError, e.message
     end
 
