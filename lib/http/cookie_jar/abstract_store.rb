@@ -71,6 +71,10 @@ class HTTP::CookieJar::AbstractStore
   end
   include Enumerable
 
+  def empty?
+    raise
+  end
+
   def clear
     raise
     self
