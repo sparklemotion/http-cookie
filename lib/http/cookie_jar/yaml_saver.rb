@@ -1,8 +1,5 @@
 require 'http/cookie_jar'
-begin
-  require 'psych'
-rescue LoadError
-end
+require 'psych' if !defined(YAML) && RUBY_VERSION == "1.9.2"
 require 'yaml'
 
 # YAMLSaver saves and loads cookies in the YAML format.
