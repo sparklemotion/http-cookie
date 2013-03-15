@@ -5,14 +5,6 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     @jar = HTTP::CookieJar.new
   end
 
-  def in_tmpdir
-    Dir.mktmpdir do |dir|
-      Dir.chdir dir do
-        yield
-      end
-    end
-  end
-
   def cookie_values(options = {})
     {
       :name     => 'Foo',
@@ -310,12 +302,12 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     assert_equal(3, @jar.cookies(url).length)
 
-    in_tmpdir do
-      value = @jar.save("cookies.yml")
+    Dir.mktmpdir do |dir|
+      value = @jar.save(File.join(dir, "cookies.yml"))
       assert_same @jar, value
 
       jar = HTTP::CookieJar.new
-      jar.load("cookies.yml")
+      jar.load(File.join(dir, "cookies.yml"))
       cookies = jar.cookies(url).sort_by { |cookie| cookie.name }
       assert_equal(2, cookies.length)
       assert_equal('Baz', cookies[0].name)
@@ -342,11 +334,11 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     assert_equal(3, @jar.cookies(url).length)
 
-    in_tmpdir do
-      @jar.save("cookies.yml", :format => :yaml, :session => true)
+    Dir.mktmpdir do |dir|
+      @jar.save(File.join(dir, "cookies.yml"), :format => :yaml, :session => true)
 
       jar = HTTP::CookieJar.new
-      jar.load("cookies.yml")
+      jar.load(File.join(dir, "cookies.yml"))
       assert_equal(3, jar.cookies(url).length)
     end
 
@@ -374,11 +366,11 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     assert_equal(3, @jar.cookies(url).length)
 
-    in_tmpdir do
-      @jar.save("cookies.txt", :cookiestxt)
+    Dir.tmpdir do |dir|
+      @jar.save(File.join(dir, "cookies.txt"), :cookiestxt)
 
       jar = HTTP::CookieJar.new
-      jar.load("cookies.txt", :cookiestxt) # HACK test the format
+      jar.load(File.join(dir, "cookies.txt"), :cookiestxt) # HACK test the format
       cookies = jar.cookies(url)
       assert_equal(2, cookies.length)
       cookies.each { |cookie|
