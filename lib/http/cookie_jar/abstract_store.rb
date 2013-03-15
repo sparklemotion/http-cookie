@@ -6,15 +6,15 @@ class HTTP::CookieJar::AbstractStore
 
     # Gets an implementation class by the name, optionally trying to
     # load "http/cookie_jar/*_store" if not found.  If loading fails,
-    # KeyError is raised.
+    # IndexError is raised.
     def implementation(symbol)
       @@class_map.fetch(symbol)
-    rescue KeyError
+    rescue IndexError
       begin
         require 'http/cookie_jar/%s_store' % symbol
         @@class_map.fetch(symbol)
-      rescue LoadError, KeyError => e
-        raise KeyError, 'cookie store unavailable: %s' % symbol.inspect
+      rescue LoadError, IndexError => e
+        raise IndexError, 'cookie store unavailable: %s' % symbol.inspect
       end
     end
 

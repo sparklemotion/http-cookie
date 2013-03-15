@@ -6,15 +6,15 @@ class HTTP::CookieJar::AbstractSaver
 
     # Gets an implementation class by the name, optionally trying to
     # load "http/cookie_jar/*_saver" if not found.  If loading fails,
-    # KeyError is raised.
+    # IndexError is raised.
     def implementation(symbol)
       @@class_map.fetch(symbol)
-    rescue KeyError
+    rescue IndexError
       begin
         require 'http/cookie_jar/%s_saver' % symbol
         @@class_map.fetch(symbol)
-      rescue LoadError, KeyError => e
-        raise KeyError, 'cookie saver unavailable: %s' % symbol.inspect
+      rescue LoadError, IndexError => e
+        raise IndexError, 'cookie saver unavailable: %s' % symbol.inspect
       end
     end
 
