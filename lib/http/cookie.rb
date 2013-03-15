@@ -7,6 +7,17 @@ module HTTP
   autoload :CookieJar, 'http/cookie_jar'
 end
 
+# In Ruby < 1.9.3 URI() does not accept an URI object.
+if RUBY_VERSION < "1.9.3"
+  begin
+    URI(URI(''))
+  rescue
+    def URI(url)
+      url.is_a?(URI) ? url : URI.parse(url)
+    end
+  end
+end
+
 # This class is used to represent an HTTP Cookie.
 class HTTP::Cookie
   # Maximum number of bytes per cookie (RFC 6265 6.1 requires 4096 at least)
@@ -25,16 +36,6 @@ class HTTP::Cookie
     expires     created_at  accessed_at
   ]
 
-  # In Ruby < 1.9.3 URI() does not accept an URI object.
-  if RUBY_VERSION < "1.9.3"
-    module URIFix
-      def URI(url)
-        url.is_a?(URI) ? url : Kernel::URI(url)
-      end
-      private :URI
-    end
-  end
-
   if String.respond_to?(:try_convert)
     def check_string_type(object)
       String.try_convert(object)
@@ -51,8 +52,6 @@ class HTTP::Cookie
     end
     private :check_string_type
   end
-
-  include URIFix if defined?(URIFix)
 
   attr_reader :name, :domain, :path, :origin
   attr_accessor :secure, :httponly, :value, :version
