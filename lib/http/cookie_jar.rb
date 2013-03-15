@@ -67,21 +67,19 @@ class HTTP::CookieJar
 
   # Iterates over all cookies that are not expired.
   #
-  # Available option keywords are below:
+  # An optional argument +uri+ specifies a URI/URL indicating the
+  # destination of the cookies being selected.  Every cookie yielded
+  # should be good to send to the given URI,
+  # i.e. cookie.valid_for_uri?(uri) evaluates to true.
   #
-  # * +uri+
-  #
-  #   Specify a URI/URL indicating the destination of the cookies
-  #   being selected.  Every cookie yielded should be good to send to
-  #   the given URI, i.e. cookie.valid_for_uri?(uri) evaluates to
-  #   true.
-  #
-  #   If (and only if) this option is given, last access time of each
-  #   cookie is updated to the current time.
+  # If (and only if) the +uri+ option is given, last access time of
+  # each cookie is updated to the current time.
   def each(uri = nil, &block)
     block_given? or return enum_for(__method__, uri)
 
     if uri
+      uri = URI(uri)
+      return self unless URI::HTTP === uri && uri.host
       block = proc { |cookie|
         yield cookie if cookie.valid_for_uri?(uri)
       }

@@ -51,7 +51,6 @@ class HTTP::CookieJar
 
     def each(uri = nil)
       if uri
-        uri = URI(uri)
         thost = DomainName.new(uri.host)
         tpath = HTTP::Cookie.normalize_path(uri.path)
         @jar.each { |domain, paths|
@@ -83,6 +82,7 @@ class HTTP::CookieJar
           }
         }
       end
+      self
     end
 
     def clear

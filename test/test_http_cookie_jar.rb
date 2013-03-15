@@ -276,6 +276,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_raises(ArgumentError) {
       @jar.add(HTTP::Cookie.new(cookie_values(:origin => url)))
     }
+
+    assert_equal(0, @jar.cookies(url).length)
   end
 
   def test_clear
