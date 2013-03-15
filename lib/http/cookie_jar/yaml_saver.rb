@@ -13,11 +13,18 @@ class HTTP::CookieJar::YAMLSaver < HTTP::CookieJar::AbstractSaver
 
   def load(io, jar)
     begin
-      YAML.load(io)
+      data = YAML.load(io)
     rescue ArgumentError
+      @logger.warn "unloadable YAML cookie data discarded" if @logger
+      return
+    end
+
+    unless data.instance_of?(Array)
       @logger.warn "incompatible YAML cookie data discarded" if @logger
       return
-    end.each { |cookie|
+    end
+
+    data.each { |cookie|
       jar.add(cookie)
     }
   end
