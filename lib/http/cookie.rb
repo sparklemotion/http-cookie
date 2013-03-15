@@ -72,6 +72,10 @@ class HTTP::Cookie
   # is called if defined.  Each key can be either a symbol or a
   # string, downcased or not.
   #
+  # This methods accepts any attribute name for which a setter method
+  # is defined.  Beware, however, any error (typically ArgumentError)
+  # a setter method raises will be passed through.
+  #
   # e.g.
   #     new("uid", "a12345")
   #     new("uid", "a12345", :domain => 'example.org',
@@ -149,7 +153,9 @@ class HTTP::Cookie
 
     # Parses a Set-Cookie header value +set_cookie+ into an array of
     # Cookie objects.  Parts (separated by commas) that are malformed
-    # are ignored.
+    # or invalid are silently ignored.  For example, a cookie that a
+    # given origin is not allowed to issue is not included in the
+    # resulted array.
     #
     # If a block is given, each cookie object is passed to the block.
     #
@@ -301,10 +307,13 @@ class HTTP::Cookie
     raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#set_domain() is #domain=().'
   end
 
+  # Sets the path attribute.
   def path=(path)
     @path = HTTP::Cookie.normalize_path(path)
   end
 
+  # Sets the origin of the cookie.  This initializes the `domain` and
+  # `path` attribute values if unknown yet.
   def origin=(origin)
     @origin.nil? or
       raise ArgumentError, "origin cannot be changed once it is set"
@@ -316,6 +325,8 @@ class HTTP::Cookie
     @origin = origin
   end
 
+  # Sets the expires attribute.  A `Time` object, a string
+  # representation of date/time, and `nil` are good values to set.
   def expires=(t)
     case t
     when nil, Time
@@ -325,11 +336,14 @@ class HTTP::Cookie
     end
   end
 
+  # Tests if this cookie is expired by now, or by a given time.
   def expired?(time = Time.now)
     return false unless @expires
     time > @expires
   end
 
+  # Expires this cookie by setting the expires attribute value to a
+  # past date.
   def expire
     @expires = UNIX_EPOCH
     self
@@ -339,6 +353,8 @@ class HTTP::Cookie
   alias httponly? httponly
   alias session? session
 
+  # Tests if it is OK to accept this cookie if it is sent from a given
+  # +uri.
   def acceptable_from_uri?(uri)
     uri = URI(uri)
     return false unless URI::HTTP === uri && uri.host
@@ -358,6 +374,8 @@ class HTTP::Cookie
     end
   end
 
+  # Tests if it is OK to send this cookie to a given +uri+, A runtime
+  # error is raised if the cookie's domain is unknown.
   def valid_for_uri?(uri)
     if @domain.nil?
       raise "cannot tell if this cookie is valid because the domain is unknown"

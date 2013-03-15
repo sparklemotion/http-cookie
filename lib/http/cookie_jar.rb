@@ -10,6 +10,9 @@ class HTTP::CookieJar
 
   attr_reader :store
 
+  # Generates a new cookie jar.  The default store class is `:hash`,
+  # which maps to `HTTP::CookieJar::HashStore`.  Any given options are
+  # passed through to the initializer of the specified store class.
   def initialize(store = :hash, options = nil)
     case store
     when Symbol
@@ -27,7 +30,9 @@ class HTTP::CookieJar
     @store = other.instance_eval { @store.dup }
   end
 
-  # Add a +cookie+ to the jar and return self.
+  # Adds a +cookie+ to the jar and return self.  If a given cookie has
+  # no domain or path attribute values and the origin is unknown,
+  # ArgumentError is raised.
   def add(cookie, *_)
     _.empty? or
       raise ArgumentError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#add(uri, cookie) is #add(cookie) after setting cookie.origin = uri.'
@@ -46,7 +51,7 @@ class HTTP::CookieJar
     raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#add!() is #add().'
   end
 
-  # Fetch the cookies that should be used for the URL/URI.
+  # Gets an array of cookies that should be sent for the URL/URI.
   def cookies(url)
     now = Time.now
     each(url).select { |cookie|
@@ -54,8 +59,8 @@ class HTTP::CookieJar
     }.sort
   end
 
-  # Tests if the jar is empty.  If url is given, tests if there is no
-  # cookie for the URL.
+  # Tests if the jar is empty.  If +url+ is given, tests if there is
+  # no cookie for the URL.
   def empty?(url = nil)
     if url
       each(url) { return false }
@@ -94,9 +99,9 @@ class HTTP::CookieJar
   #   jar.save(filename_or_io, **options)
   #   jar.save(filename_or_io, format = :yaml, **options)
   #
-  # Save the cookie jar into a file or an IO in the format specified
-  # and return self.  If the given object responds to #write it is
-  # taken as an IO, or taken as a filename otherwise.
+  # Saves the cookie jar into a file or an IO in the format specified
+  # and return self.  If a given object responds to #write it is taken
+  # as an IO, or taken as a filename otherwise.
   #
   # Available option keywords are below:
   #
@@ -160,9 +165,9 @@ class HTTP::CookieJar
   #   jar.load(filename_or_io, **options)
   #   jar.load(filename_or_io, format = :yaml, **options)
   #
-  # Load cookies recorded in a file or an IO in the format specified
-  # into the jar and return self.  If the given object responds to
-  # #read it is taken as an IO, or taken as a filename otherwise.
+  # Loads cookies recorded in a file or an IO in the format specified
+  # into the jar and return self.  If a given object responds to #read
+  # it is taken as an IO, or taken as a filename otherwise.
   #
   # Available option keywords are below:
   #
@@ -212,7 +217,7 @@ class HTTP::CookieJar
     self
   end
 
-  # Clear the cookie jar and return self.
+  # Clears the cookie jar and return self.
   def clear
     @store.clear
     self
@@ -223,7 +228,7 @@ class HTTP::CookieJar
     raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#clear!() is #clear().'
   end
 
-  # Remove expired cookies and return self.
+  # Removes expired cookies and return self.
   def cleanup(session = false)
     @store.cleanup session
     self
