@@ -1,4 +1,5 @@
 require File.expand_path('helper', File.dirname(__FILE__))
+require 'tmpdir'
 
 class TestHTTPCookieJar < Test::Unit::TestCase
   def setup
@@ -366,7 +367,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
     assert_equal(3, @jar.cookies(url).length)
 
-    Dir.tmpdir do |dir|
+    Dir.mktmpdir do |dir|
       @jar.save(File.join(dir, "cookies.txt"), :cookiestxt)
 
       jar = HTTP::CookieJar.new
