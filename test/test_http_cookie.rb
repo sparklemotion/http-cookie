@@ -48,10 +48,10 @@ class TestHTTPCookie < Test::Unit::TestCase
     dates.each do |date|
       cookie = "PREF=1; expires=#{date}"
       silently do
-        HTTP::Cookie.parse(cookie, :origin => url) { |c|
+        assert_equal 1, HTTP::Cookie.parse(cookie, :origin => url) { |c|
           assert c.expires, "Tried parsing: #{date}"
           assert_equal(true, c.expires < yesterday)
-        }
+        }.size
       end
     end
   end
@@ -61,10 +61,10 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     uri = URI.parse 'http://example'
 
-    HTTP::Cookie.parse cookie_str, :origin => uri do |cookie|
+    assert_equal 1, HTTP::Cookie.parse(cookie_str, :origin => uri) { |cookie|
       assert_equal 'a', cookie.name
       assert_equal 'b', cookie.value
-    end
+    }.size
   end
 
   def test_parse_no_space
@@ -72,12 +72,12 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     uri = URI.parse 'http://example'
 
-    HTTP::Cookie.parse cookie_str, :origin => uri do |cookie|
+    assert_equal 1, HTTP::Cookie.parse(cookie_str, :origin => uri) { |cookie|
       assert_equal 'foo',               cookie.name
       assert_equal 'bar',               cookie.value
       assert_equal '/',                 cookie.path
       assert_equal Time.at(1320539286), cookie.expires
-    end
+    }.size
   end
 
   def test_parse_too_long_cookie
@@ -99,28 +99,28 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     uri = URI.parse 'http://example'
 
-    HTTP::Cookie.parse cookie_str, :origin => uri do |cookie|
+    assert_equal 1, HTTP::Cookie.parse(cookie_str, :origin => uri) { |cookie|
       assert_equal 'quoted', cookie.name
       assert_equal '"value"', cookie.value
-    end
+    }.size
   end
 
   def test_parse_weird_cookie
     cookie = 'n/a, ASPSESSIONIDCSRRQDQR=FBLDGHPBNDJCPCGNCPAENELB; path=/'
     url = URI.parse('http://www.searchinnovation.com/')
-    HTTP::Cookie.parse(cookie, :origin => url) { |c|
+    assert_equal 1, HTTP::Cookie.parse(cookie, :origin => url) { |c|
       assert_equal('ASPSESSIONIDCSRRQDQR', c.name)
       assert_equal('FBLDGHPBNDJCPCGNCPAENELB', c.value)
-    }
+    }.size
   end
 
   def test_double_semicolon
     double_semi = 'WSIDC=WEST;; domain=.williams-sonoma.com; path=/'
     url = URI.parse('http://williams-sonoma.com/')
-    HTTP::Cookie.parse(double_semi, :origin => url) { |cookie|
+    assert_equal 1, HTTP::Cookie.parse(double_semi, :origin => url) { |cookie|
       assert_equal('WSIDC', cookie.name)
       assert_equal('WEST', cookie.value)
-    }
+    }.size
   end
 
   def test_parse_bad_version
@@ -149,9 +149,9 @@ class TestHTTPCookie < Test::Unit::TestCase
     silently do
       dates.each do |date|
         cookie = "PREF=1; expires=#{date}"
-        HTTP::Cookie.parse(cookie, :origin => url) { |c|
+        assert_equal 1, HTTP::Cookie.parse(cookie, :origin => url) { |c|
           assert_equal(true, c.expires.nil?)
-        }
+        }.size
       end
     end
   end
