@@ -180,14 +180,14 @@ class HTTP::Cookie
       date ||= Time.now
 
       [].tap { |cookies|
-        set_cookie.split(/,(?=[^;,]*=)|,$/).each { |c|
+        # The expires attribute may include a comma in the value.
+        set_cookie.split(/,(?=[^;,]*=|\s*\z)/).each { |c|
           if c.bytesize > MAX_LENGTH
             logger.warn("Cookie definition too long: #{c}") if logger
             next
           end
 
-          cookie_elem = c.split(/;+/)
-          first_elem = cookie_elem.shift
+          first_elem, *cookie_elem = c.split(/;+/)
           first_elem.strip!
           key, value = first_elem.split(/\=/, 2)
 
