@@ -139,8 +139,8 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_parse_date_fail
     url = URI.parse('http://localhost/')
 
-    dates = [ 
-              "20/06/95 21:07",
+    dates = [
+      "20/06/95 21:07",
     ]
 
     silently do
@@ -623,4 +623,3 @@ class TestHTTPCookie < Test::Unit::TestCase
     }
   end
 end
-
