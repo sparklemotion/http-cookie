@@ -1,5 +1,6 @@
 require 'http/cookie/version'
 require 'time'
+require 'uri'
 require 'webrick/httputils'
 require 'domain_name'
 
