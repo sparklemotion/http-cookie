@@ -23,8 +23,8 @@ class HTTP::CookieJar::CookiestxtSaver < HTTP::CookieJar::AbstractSaver
 
   def default_options
     {
-      header: "# HTTP Cookie File",
-      linefeed: "\n",
+      :header => "# HTTP Cookie File",
+      :linefeed => "\n",
     }
   end
 
