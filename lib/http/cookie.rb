@@ -1,7 +1,6 @@
 require 'http/cookie/version'
 require 'time'
 require 'uri'
-require 'webrick/httputils'
 require 'domain_name'
 
 module HTTP
@@ -203,7 +202,10 @@ class HTTP::Cookie
             pair.strip!
             key, value = pair.split(/=/, 2) #/)
             next unless key
-            value = WEBrick::HTTPUtils.dequote(value.strip) if value
+            case value # may be nil
+            when /\A"(.*)"\z/
+              value = $1.gsub(/\\(.)/, "\\1")
+            end
 
             case key.downcase
             when 'domain'

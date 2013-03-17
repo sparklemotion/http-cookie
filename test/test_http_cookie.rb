@@ -95,13 +95,14 @@ class TestHTTPCookie < Test::Unit::TestCase
 
   def test_parse_quoted
     cookie_str =
-      "quoted=\"value\"; Expires=Sun, 06 Nov 2011 00:11:18 GMT; Path=/"
+      "quoted=\"value\"; Expires=Sun, 06 Nov 2011 00:11:18 GMT; Path=/; comment=\"comment is \\\"comment\\\"\""
 
     uri = URI.parse 'http://example'
 
     assert_equal 1, HTTP::Cookie.parse(cookie_str, :origin => uri) { |cookie|
       assert_equal 'quoted', cookie.name
       assert_equal '"value"', cookie.value
+      assert_equal 'comment is "comment"', cookie.comment
     }.size
   end
 
