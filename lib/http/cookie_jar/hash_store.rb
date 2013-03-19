@@ -114,7 +114,7 @@ class HTTP::CookieJar
         if (debt = domain_cookies.size - HTTP::Cookie::MAX_COOKIES_PER_DOMAIN) > 0
           domain_cookies.sort_by!(&:created_at)
           domain_cookies.slice!(0, debt).each { |cookie|
-            add(cookie.expire)
+            add(cookie.expire!)
           }
         end
 
@@ -124,7 +124,7 @@ class HTTP::CookieJar
       if (debt = all_cookies.size - HTTP::Cookie::MAX_COOKIES_TOTAL) > 0
         all_cookies.sort_by!(&:created_at)
         all_cookies.slice!(0, debt).each { |cookie|
-          add(cookie.expire)
+          add(cookie.expire!)
         }
       end
 

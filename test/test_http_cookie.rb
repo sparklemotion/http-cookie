@@ -514,7 +514,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal false, cookie.expired?
     assert_equal true, cookie.expired?(cookie.expires + 1)
     assert_equal false, cookie.expired?(cookie.expires - 1)
-    cookie.expire
+    cookie.expire!
     assert_equal true, cookie.expired?
   end
 

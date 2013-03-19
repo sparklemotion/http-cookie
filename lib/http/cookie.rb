@@ -503,7 +503,7 @@ class HTTP::Cookie
 
   # Expires this cookie by setting the expires attribute value to a
   # past date.
-  def expire
+  def expire!
     self.expires = UNIX_EPOCH
     self
   end
