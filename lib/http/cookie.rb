@@ -505,7 +505,7 @@ class HTTP::Cookie
     map.each { |key, value|
       case key
       when *PERSISTENT_PROPERTIES
-        send(:"#{key}=", value)
+        __send__(:"#{key}=", value)
       end
     }
   end
