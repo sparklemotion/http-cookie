@@ -473,6 +473,9 @@ class HTTP::Cookie
     @expires = t
   end
 
+  alias expires_at expires
+  alias expires_at= expires=
+
   attr_reader :max_age
 
   # See #max_age.
