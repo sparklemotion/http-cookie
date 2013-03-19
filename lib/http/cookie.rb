@@ -594,6 +594,13 @@ class HTTP::Cookie
     string
   end
 
+  def inspect
+    '#<%s:' % self.class << PERSISTENT_PROPERTIES.map { |key|
+      '%s=%s' % [key, instance_variable_get(:"@#{key}").inspect]
+    }.join(', ') << ' origin=%s>' % [@origin ? @origin.to_s : 'nil']
+
+  end
+
   # Compares the cookie with another.  When there are many cookies with
   # the same name for a URL, the value of the smallest must be used.
   def <=>(other)
