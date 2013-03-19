@@ -261,6 +261,8 @@ class HTTP::Cookie
           cookie.httponly ||= false
 
           # RFC 6265 4.1.2.2
+          # The Max-Age attribute has precedence over the Expires
+          # attribute.
           cookie.expires    = date + cookie.max_age if cookie.max_age
           cookie.session    = !cookie.expires
 
@@ -281,6 +283,7 @@ class HTTP::Cookie
     end
   end
 
+  # Sets the cookie name.
   def name=(name)
     if name.nil? || name.empty?
       raise ArgumentError, "cookie name cannot be empty"
@@ -316,7 +319,7 @@ class HTTP::Cookie
     raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#set_domain() is #domain=().'
   end
 
-  # Sets the path attribute.
+  # Sets the path attribute value.
   def path=(path)
     @path = HTTP::Cookie.normalize_path(path)
   end
@@ -334,7 +337,7 @@ class HTTP::Cookie
     @origin = origin
   end
 
-  # Sets the expires attribute.  A `Time` object, a string
+  # Sets the expires attribute value.  A `Time` object, a string
   # representation of date/time, and `nil` are good values to set.
   def expires=(t)
     case t
