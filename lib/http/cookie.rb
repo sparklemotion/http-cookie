@@ -421,6 +421,8 @@ class HTTP::Cookie
 
   # See #path.
   def path=(path)
+    path = check_string_type(path) or
+      raise TypeError, "#{path.class} is not a String"
     @path = HTTP::Cookie.normalize_path(path)
   end
 
