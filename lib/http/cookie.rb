@@ -1,3 +1,4 @@
+# :markup: markdown
 require 'http/cookie/version'
 require 'time'
 require 'uri'
@@ -7,11 +8,12 @@ module HTTP
   autoload :CookieJar, 'http/cookie_jar'
 end
 
-# In Ruby < 1.9.3 URI() does not accept an URI object.
+# In Ruby < 1.9.3 URI() does not accept a URI object.
 if RUBY_VERSION < "1.9.3"
   begin
     URI(URI(''))
   rescue
+    # :nodoc:
     def URI(url)
       url.is_a?(URI) ? url : URI.parse(url)
     end
@@ -20,13 +22,17 @@ end
 
 # This class is used to represent an HTTP Cookie.
 class HTTP::Cookie
-  # Maximum number of bytes per cookie (RFC 6265 6.1 requires 4096 at least)
+  # Maximum number of bytes per cookie (RFC 6265 6.1 requires 4096 at
+  # least)
   MAX_LENGTH = 4096
-  # Maximum number of cookies per domain (RFC 6265 6.1 requires 50 at least)
+  # Maximum number of cookies per domain (RFC 6265 6.1 requires 50 at
+  # least)
   MAX_COOKIES_PER_DOMAIN = 50
-  # Maximum number of cookies total (RFC 6265 6.1 requires 3000 at least)
+  # Maximum number of cookies total (RFC 6265 6.1 requires 3000 at
+  # least)
   MAX_COOKIES_TOTAL = 3000
 
+  # :stopdoc:
   UNIX_EPOCH = Time.at(0)
 
   PERSISTENT_PROPERTIES = %w[
@@ -52,31 +58,91 @@ class HTTP::Cookie
     end
     private :check_string_type
   end
+  # :startdoc:
 
-  attr_reader :name, :value, :domain, :path, :origin
-  attr_accessor :secure, :httponly, :version
-  attr_reader :domain_name, :expires, :max_age
-  attr_accessor :comment
+  # The cookie name.  It may not be nil or empty.
+  #
+  # Trying to set a value with the normal setter method will raise
+  # ArgumentError only when it contains any of these characters:
+  # control characters (\x00-\x1F and \x7F), space and separators
+  # `,;\"=`.
+  #
+  # Note that RFC 6265 4.1.1 lists more characters disallowed for use
+  # in a cookie name, which are these: `<>@:/[]?{}`.  Using these
+  # characters will reduce interoperability.
+  #
+  # :attr_accessor: name
 
-  attr_reader :session
+  # The cookie value.
+  #
+  # Trying to set a value with the normal setter method will raise an
+  # ArgumentError only when it contains any of these characters:
+  # control characters (\x00-\x1F and \x7F).
+  #
+  # Note that RFC 6265 4.1.1 lists more characters disallowed for use
+  # in a cookie value, which are these: ` ",;\`.  Using these
+  # characters will reduce interoperability.
+  #
+  # :attr_accessor: value
 
-  attr_accessor :created_at
-  attr_accessor :accessed_at
+  # The cookie domain.
+  #
+  # Setting a domain with a leading dot implies that the #for_domain
+  # flag should be turned on.  The setter accepts a `DomainName`
+  # object as well as a string-like.
+  #
+  # :attr_accessor: domain
+
+  # The path attribute value.
+  #
+  # The setter treats an empty path ("") as the root path ("/").
+  #
+  # :attr_accessor: path
+
+  # The origin of the cookie.
+  #
+  # Setting this will initialize the #domain and #path attribute
+  # values if unknown yet.
+  #
+  # :attr_accessor: origin
+
+  # The Expires attribute value as a Time object.
+  #
+  # The setter method accepts a Time object, a string representation
+  # of date/time, or `nil`.
+  #
+  # Note that #max_age and #expires are mutually exclusive.  Setting
+  # \#max_age resets #expires to nil, and vice versa.
+  #
+  # :attr_accessor: expires
+
+  # The Max-Age attribute value as an integer, the number of seconds
+  # before expiration.
+  #
+  # The setter method accepts an integer, or a string-like that
+  # represents an integer which will be stringified and then
+  # integerized using #to_i.
+  #
+  # Note that #max_age and #expires are mutually exclusive.  Setting
+  # \#max_age resets #expires to nil, and vice versa.
+  #
+  # :attr_accessor: max_age
 
   # :call-seq:
   #     new(name, value)
   #     new(name, value, attr_hash)
   #     new(attr_hash)
   #
-  # Creates a cookie object.  For each key of +attr_hash+, the setter
+  # Creates a cookie object.  For each key of `attr_hash`, the setter
   # is called if defined.  Each key can be either a symbol or a
   # string, downcased or not.
   #
   # This methods accepts any attribute name for which a setter method
-  # is defined.  Beware, however, any error (typically ArgumentError)
-  # a setter method raises will be passed through.
+  # is defined.  Beware, however, any error (typically
+  # `ArgumentError`) a setter method raises will be passed through.
   #
   # e.g.
+  #
   #     new("uid", "a12345")
   #     new("uid", "a12345", :domain => 'example.org',
   #                          :for_domain => true, :expired => Time.now + 7*86400)
@@ -130,12 +196,6 @@ class HTTP::Cookie
     end
   end
 
-  # If this flag is true, this cookie will be sent to any host in the
-  # +domain+.  If it is false, this cookie will be sent only to the
-  # host indicated by the +domain+.
-  attr_accessor :for_domain
-  alias for_domain? for_domain
-
   class << self
     # Normalizes a given path.  If it is empty or it is a relative
     # path, the root path '/' is returned.
@@ -148,7 +208,7 @@ class HTTP::Cookie
       path.start_with?('/') ? path : '/'
     end
 
-    # Parses a Set-Cookie header value +set_cookie+ into an array of
+    # Parses a Set-Cookie header value `set_cookie` into an array of
     # Cookie objects.  Parts (separated by commas) that are malformed
     # or invalid are silently ignored.  For example, a cookie that a
     # given origin is not allowed to issue is not included in the
@@ -162,13 +222,15 @@ class HTTP::Cookie
     #
     # Available option keywords are below:
     #
-    # * +origin+
-    #   The cookie's origin URI/URL
-    # * +date+
-    #   The base date used for interpreting Max-Age attribute values
+    # `origin`
+    # : The cookie's origin URI/URL
+    #
+    # `date`
+    # : The base date used for interpreting Max-Age attribute values
     #   instead of the current time
-    # * +logger+
-    #   Logger object useful for debugging
+    #
+    # `logger`
+    # : Logger object useful for debugging
     def parse(set_cookie, options = nil, *_, &block)
       _.empty? && !options.is_a?(String) or
         raise ArgumentError, 'HTTP::Cookie equivalent for Mechanize::Cookie.parse(uri, set_cookie[, log]) is HTTP::Cookie.parse(set_cookie, :origin => uri[, :logger => log]).'
@@ -285,7 +347,9 @@ class HTTP::Cookie
     end
   end
 
-  # Sets the cookie name.
+  attr_reader :name
+
+  # See #name.
   def name=(name)
     name = check_string_type(name) or
       raise TypeError, "#{name.class} is not a String"
@@ -300,6 +364,9 @@ class HTTP::Cookie
     @name = name
   end
 
+  attr_reader :value
+
+  # See #value.
   def value=(value)
     value = check_string_type(value) or
       raise TypeError, "#{value.class} is not a String"
@@ -312,8 +379,9 @@ class HTTP::Cookie
     @value = value
   end
 
-  # Sets the domain attribute.  A leading dot in +domain+ implies
-  # turning the +for_domain?+ flag on.
+  attr_reader :domain
+
+  # See #domain.
   def domain=(domain)
     if DomainName === domain
       @domain_name = domain
@@ -338,13 +406,27 @@ class HTTP::Cookie
     raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#set_domain() is #domain=().'
   end
 
-  # Sets the path attribute value.
+  # Returns the domain attribute value as a DomainName object.
+  attr_reader :domain_name
+
+  # The domain flag.
+  #
+  # If this flag is true, this cookie will be sent to any host in the
+  # \#domain, including the host domain itself.  If it is false, this
+  # cookie will be sent only to the host indicated by the #domain.
+  attr_accessor :for_domain
+  alias for_domain? for_domain
+
+  attr_reader :path
+
+  # See #path.
   def path=(path)
     @path = HTTP::Cookie.normalize_path(path)
   end
 
-  # Sets the origin of the cookie.  This initializes the `domain` and
-  # `path` attribute values if unknown yet.
+  attr_reader :origin
+
+  # See #origin.
   def origin=(origin)
     @origin.nil? or
       raise ArgumentError, "origin cannot be changed once it is set"
@@ -356,11 +438,28 @@ class HTTP::Cookie
     @origin = origin
   end
 
-  # Sets the Expires attribute value, accepting a `Time` object, a
-  # string representation of date/time, or `nil`.
+  # The secure flag.
   #
-  # Note that max_age and expires are mutually exclusive.  Setting
-  # `max_age` resets `expires` to nil, and vice versa.
+  # A cookie with this flag on should only be sent via a secure
+  # protocol like HTTPS.
+  attr_accessor :secure
+  alias secure? secure
+
+  # The HttpOnly flag.
+  #
+  # A cookie with this flag on should be hidden from a client script.
+  attr_accessor :httponly
+  alias httponly? httponly
+
+  # The session flag.
+  #
+  # A cookie with this flag on should be hidden from a client script.
+  attr_reader :session
+  alias session? session
+
+  attr_reader :expires
+
+  # See #expires.
   def expires=(t)
     case t
     when nil, Time
@@ -374,12 +473,7 @@ class HTTP::Cookie
 
   attr_reader :max_age
 
-  # Sets the Max-Age attribute, accepting an integer, or a string-like
-  # that represents an integer which will be stringified and then
-  # integerized using #to_i.
-  #
-  # Note that max_age and expires are mutually exclusive.  Setting
-  # `max_age` resets `expires` to nil, and vice versa.
+  # See #max_age.
   def max_age=(sec)
     @expires = nil
     case sec
@@ -409,12 +503,21 @@ class HTTP::Cookie
     self
   end
 
-  alias secure? secure
-  alias httponly? httponly
-  alias session? session
+  # The version attribute.  The only known version of the cookie
+  # format is 0.
+  attr_accessor :version
+
+  # The comment attribute.
+  attr_accessor :comment
+
+  # The time this cookie was created at.
+  attr_accessor :created_at
+
+  # The time this cookie was last accessed at.
+  attr_accessor :accessed_at
 
   # Tests if it is OK to accept this cookie if it is sent from a given
-  # +uri.
+  # `uri`.
   def acceptable_from_uri?(uri)
     uri = URI(uri)
     return false unless URI::HTTP === uri && uri.host
@@ -434,7 +537,7 @@ class HTTP::Cookie
     end
   end
 
-  # Tests if it is OK to send this cookie to a given +uri+, A runtime
+  # Tests if it is OK to send this cookie to a given `uri`.  A runtime
   # error is raised if the cookie's domain is unknown.
   def valid_for_uri?(uri)
     if @domain.nil?
