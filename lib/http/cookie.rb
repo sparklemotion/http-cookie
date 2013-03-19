@@ -190,6 +190,12 @@ class HTTP::Cookie
           first_elem, *cookie_elem = c.split(/;+/)
           first_elem.strip!
           key, value = first_elem.split(/\=/, 2)
+          # RFC 6265 2.2
+          # A cookie-value may be DQUOTE'd.
+          case value
+          when /\A"(.*)"\z/
+            value = $1.gsub(/\\(.)/, "\\1")
+          end
 
           begin
             cookie = new(key, value.dup)

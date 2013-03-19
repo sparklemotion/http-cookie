@@ -101,7 +101,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     assert_equal 1, HTTP::Cookie.parse(cookie_str, :origin => uri) { |cookie|
       assert_equal 'quoted', cookie.name
-      assert_equal '"value"', cookie.value
+      assert_equal 'value', cookie.value
       assert_equal 'comment is "comment"', cookie.comment
     }.size
   end
