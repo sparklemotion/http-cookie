@@ -83,7 +83,7 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_parse_too_long_cookie
     uri = URI.parse 'http://example'
 
-    cookie_str = "foo=#{'クッキー' * 340}; path=/ab/"
+    cookie_str = "foo=#{'Cookie' * 680}; path=/ab/"
     assert_equal(HTTP::Cookie::MAX_LENGTH - 1, cookie_str.bytesize)
 
     assert_equal 1, HTTP::Cookie.parse(cookie_str, :origin => uri).size
