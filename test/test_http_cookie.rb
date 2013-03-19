@@ -462,6 +462,37 @@ class TestHTTPCookie < Test::Unit::TestCase
    }.merge(options)
   end
 
+  def test_bad_name
+    [
+      "a\tb", "a\vb", "a\rb", "a\nb", 'a b',
+      "a\\b", 'a"b', # 'a:b', 'a/b', 'a[b]',
+      'a=b', 'a,b', 'a;b',
+    ].each { |name|
+      assert_raises(ArgumentError) {
+        HTTP::Cookie.new(cookie_values(:name => name))
+      }
+      cookie = HTTP::Cookie.new(cookie_values)
+      assert_raises(ArgumentError) {
+        cookie.name = name
+      }
+    }
+  end
+
+  def test_bad_value
+    [
+      "a\tb", "a\vb", "a\rb", "a\nb",
+      "a\\b", 'a"b', # 'a:b', 'a/b', 'a[b]',
+    ].each { |name|
+      assert_raises(ArgumentError) {
+        HTTP::Cookie.new(cookie_values(:name => name))
+      }
+      cookie = HTTP::Cookie.new(cookie_values)
+      assert_raises(ArgumentError) {
+        cookie.name = name
+      }
+    }
+  end
+
   def test_compare
     time = Time.now
     cookies = [

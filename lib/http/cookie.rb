@@ -53,8 +53,8 @@ class HTTP::Cookie
     private :check_string_type
   end
 
-  attr_reader :name, :domain, :path, :origin
-  attr_accessor :secure, :httponly, :value, :version
+  attr_reader :name, :value, :domain, :path, :origin
+  attr_accessor :secure, :httponly, :version
   attr_reader :domain_name, :expires, :max_age
   attr_accessor :comment
 
@@ -287,12 +287,29 @@ class HTTP::Cookie
 
   # Sets the cookie name.
   def name=(name)
-    if name.nil? || name.empty?
+    name = check_string_type(name) or
+      raise TypeError, "#{name.class} is not a String"
+    if name.empty?
       raise ArgumentError, "cookie name cannot be empty"
-    elsif name.match(/[\x00-\x1F=\x7F]/)
-      raise ArgumentError, "cookie name cannot contain a control character or an equal sign"
+    elsif name.match(/[\x00-\x20\x7F,;\\"=]/)
+      raise ArgumentError, "invalid cookie name"
     end
+    # RFC 6265 4.1.1
+    # cookie-name may not match:
+    # /[\x00-\x20\x7F()<>@,;:\\"\/\[\]?={}]/
     @name = name
+  end
+
+  def value=(value)
+    value = check_string_type(value) or
+      raise TypeError, "#{value.class} is not a String"
+    if value.match(/[\x00-\x1F\x7F]/)
+      raise ArgumentError, "invalid cookie value"
+    end
+    # RFC 6265 4.1.1
+    # cookie-name may not match:
+    # /[^\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]/
+    @value = value
   end
 
   # Sets the domain attribute.  A leading dot in +domain+ implies
