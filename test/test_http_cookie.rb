@@ -364,13 +364,14 @@ class TestHTTPCookie < Test::Unit::TestCase
 
   def test_set_cookie_value
     url = URI.parse('http://rubyforge.org/')
-    cookie_params = @cookie_params.merge('secure' => 'secure')
+    cookie_params = @cookie_params.merge('secure' => 'secure', 'max-age' => 'Max-Age=1000')
     cookie_value = 'foo=bar'
+    date = Time.at(Time.now.to_i)
 
     cookie_params.keys.combine.each do |keys|
       cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
-      cookie2, = HTTP::Cookie.parse(cookie.set_cookie_value, :origin => url)
+      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url, :date => date)
+      cookie2, = HTTP::Cookie.parse(cookie.set_cookie_value, :origin => url, :date => date)
 
       assert_equal(cookie.name, cookie2.name)
       assert_equal(cookie.value, cookie2.value)
@@ -378,6 +379,13 @@ class TestHTTPCookie < Test::Unit::TestCase
       assert_equal(cookie.for_domain?, cookie2.for_domain?)
       assert_equal(cookie.path, cookie2.path)
       assert_equal(cookie.expires, cookie2.expires)
+      if keys.include?('max-age')
+        assert_equal(date + 1000, cookie2.expires)
+      elsif keys.include?('expires')
+        assert_equal(@expires, cookie2.expires)
+      else
+        assert_equal(nil, cookie2.expires)
+      end
       assert_equal(cookie.secure?, cookie2.secure?)
       assert_equal(cookie.httponly?, cookie2.httponly?)
     end
@@ -468,6 +476,29 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal false, cookie.expired?(cookie.expires - 1)
     cookie.expire
     assert_equal true, cookie.expired?
+  end
+
+  def test_session
+    cookie = HTTP::Cookie.new(cookie_values)
+
+    assert_equal false, cookie.session?
+    assert_equal nil, cookie.max_age
+
+    cookie.expires = nil
+    assert_equal true, cookie.session?
+    assert_equal nil, cookie.max_age
+
+    cookie.expires = Time.now + 3600
+    assert_equal false, cookie.session?
+    assert_equal nil, cookie.max_age
+
+    cookie.max_age = 3600
+    assert_equal false, cookie.session?
+    assert_equal nil, cookie.expires
+
+    cookie.max_age = nil
+    assert_equal true, cookie.session?
+    assert_equal nil, cookie.expires
   end
 
   def test_equal

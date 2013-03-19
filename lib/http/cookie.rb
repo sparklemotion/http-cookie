@@ -55,10 +55,10 @@ class HTTP::Cookie
 
   attr_reader :name, :domain, :path, :origin
   attr_accessor :secure, :httponly, :value, :version
-  attr_reader :domain_name, :expires
-  attr_accessor :comment, :max_age
+  attr_reader :domain_name, :expires, :max_age
+  attr_accessor :comment
 
-  attr_accessor :session
+  attr_reader :session
 
   attr_accessor :created_at
   attr_accessor :accessed_at
@@ -89,6 +89,7 @@ class HTTP::Cookie
       @secure = @httponly =
       @expires = @max_age =
       @comment = nil
+    @session = true
 
     @created_at = @accessed_at = Time.now
     case args.size
@@ -156,6 +157,10 @@ class HTTP::Cookie
     # or invalid are silently ignored.  For example, a cookie that a
     # given origin is not allowed to issue is not included in the
     # resulted array.
+    #
+    # Any Max-Age attribute value found is converted to an expires
+    # value computing from the current time so that expiration check
+    # (#expired?) can be performed.
     #
     # If a block is given, each cookie object is passed to the block.
     #
@@ -226,7 +231,10 @@ class HTTP::Cookie
               next unless value && !value.empty?
               cookie.path = value
             when 'expires'
-              next unless value && !value.empty?
+              # RFC 6265 4.1.2.2
+              # The Max-Age attribute has precedence over the Expires
+              # attribute.
+              next unless value && !value.empty? && cookie.max_age.nil?
               begin
                 cookie.expires = Time.parse(value)
               rescue
@@ -260,11 +268,9 @@ class HTTP::Cookie
           cookie.secure   ||= false
           cookie.httponly ||= false
 
-          # RFC 6265 4.1.2.2
-          # The Max-Age attribute has precedence over the Expires
-          # attribute.
-          cookie.expires    = date + cookie.max_age if cookie.max_age
-          cookie.session    = !cookie.expires
+          # Have `expires` set instead of `max_age`, so that
+          # expiration check (`expired?`) can be performed.
+          cookie.expires = date + cookie.max_age if cookie.max_age
 
           if origin
             begin
@@ -337,14 +343,43 @@ class HTTP::Cookie
     @origin = origin
   end
 
-  # Sets the expires attribute value.  A `Time` object, a string
-  # representation of date/time, and `nil` are good values to set.
+  # Sets the Expires attribute value, accepting a `Time` object, a
+  # string representation of date/time, or `nil`.
+  #
+  # Note that max_age and expires are mutually exclusive.  Setting
+  # `max_age` resets `expires` to nil, and vice versa.
   def expires=(t)
     case t
     when nil, Time
-      @expires = t
     else
-      @expires = Time.parse(t)
+      t = Time.parse(t)
+    end
+    @max_age = nil
+    @session = t.nil?
+    @expires = t
+  end
+
+  attr_reader :max_age
+
+  # Sets the Max-Age attribute, accepting an integer, or a string-like
+  # that represents an integer which will be stringified and then
+  # integerized using #to_i.
+  #
+  # Note that max_age and expires are mutually exclusive.  Setting
+  # `max_age` resets `expires` to nil, and vice versa.
+  def max_age=(sec)
+    @expires = nil
+    case sec
+    when Integer, nil
+    else
+      str = check_string_type(sec) or
+        raise TypeError, "#{sec.class} is not an Integer or String"
+      sec = str.to_i
+    end
+    if @session = sec.nil?
+      @max_age = nil
+    else
+      @max_age = sec
     end
   end
 
@@ -357,7 +392,7 @@ class HTTP::Cookie
   # Expires this cookie by setting the expires attribute value to a
   # past date.
   def expire
-    @expires = UNIX_EPOCH
+    self.expires = UNIX_EPOCH
     self
   end
 
@@ -421,8 +456,10 @@ class HTTP::Cookie
     if (HTTP::Cookie.normalize_path(origin) + './').path != @path
       string << "; path=#{@path}"
     end
-    if @expires
-      string << "; expires=#{@expires.httpdate}"
+    if @max_age
+      string << "; Max-Age=#{@max_age}"
+    elsif @expires
+      string << "; Expires=#{@expires.httpdate}"
     end
     if @comment
       string << "; comment=#{@comment}"
