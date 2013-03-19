@@ -137,8 +137,6 @@ class HTTP::Cookie
   alias for_domain? for_domain
 
   class << self
-    include URIFix if defined?(URIFix)
-
     # Normalizes a given path.  If it is empty, the root path '/' is
     # returned.  If a URI object is given, returns a new URI object
     # with the path part normalized.
