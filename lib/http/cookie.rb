@@ -137,17 +137,15 @@ class HTTP::Cookie
   alias for_domain? for_domain
 
   class << self
-    # Normalizes a given path.  If it is empty, the root path '/' is
-    # returned.  If a URI object is given, returns a new URI object
-    # with the path part normalized.
-    def normalize_path(uri)
-      # Currently does not replace // to /
-      case uri
-      when URI
-        uri.path.empty? ? uri + '/' : uri
-      else
-        uri.empty? ? '/' : uri
-      end
+    # Normalizes a given path.  If it is empty or it is a relative
+    # path, the root path '/' is returned.
+    #
+    # If a URI object is given, returns a new URI object with the path
+    # part normalized.
+    def normalize_path(path)
+      return path + normalize_path(path.path) if URI === path
+      # RFC 6265 5.1.4
+      path.start_with?('/') ? path : '/'
     end
 
     # Parses a Set-Cookie header value +set_cookie+ into an array of

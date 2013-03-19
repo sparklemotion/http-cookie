@@ -248,12 +248,14 @@ class TestHTTPCookie < Test::Unit::TestCase
       "no_path1=no_path; Expires=Sun, 06 Nov 2011 00:29:52 GMT, no_expires=nope; Path=/, " \
       "no_path2=no_path; Expires=Sun, 06 Nov 2011 00:29:52 GMT; no_expires=nope; Path, " \
       "no_path3=no_path; Expires=Sun, 06 Nov 2011 00:29:52 GMT; no_expires=nope; Path=, " \
+      "rel_path1=rel_path; Expires=Sun, 06 Nov 2011 00:29:52 GMT; no_expires=nope; Path=foo/bar, " \
+      "rel_path1=rel_path; Expires=Sun, 06 Nov 2011 00:29:52 GMT; no_expires=nope; Path=foo, " \
       "no_domain1=no_domain; Expires=Sun, 06 Nov 2011 00:29:53 GMT; no_expires=nope, " \
       "no_domain2=no_domain; Expires=Sun, 06 Nov 2011 00:29:53 GMT; no_expires=nope; Domain, " \
       "no_domain3=no_domain; Expires=Sun, 06 Nov 2011 00:29:53 GMT; no_expires=nope; Domain="
 
     cookies = HTTP::Cookie.parse cookie_str, :origin => url
-    assert_equal 13, cookies.length
+    assert_equal 15, cookies.length
 
     name = cookies.find { |c| c.name == 'name' }
     assert_equal "Aaron",             name.value
@@ -273,6 +275,13 @@ class TestHTTPCookie < Test::Unit::TestCase
     no_path_cookies = cookies.select { |c| c.value == 'no_path' }
     assert_equal 3, no_path_cookies.size
     no_path_cookies.each { |c|
+      assert_equal "/",                 c.path,    c.name
+      assert_equal Time.at(1320539392), c.expires, c.name
+    }
+
+    rel_path_cookies = cookies.select { |c| c.value == 'rel_path' }
+    assert_equal 2, rel_path_cookies.size
+    rel_path_cookies.each { |c|
       assert_equal "/",                 c.path,    c.name
       assert_equal Time.at(1320539392), c.expires, c.name
     }
