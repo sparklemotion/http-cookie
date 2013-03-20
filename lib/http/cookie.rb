@@ -152,12 +152,12 @@ class HTTP::Cookie
     @version = 0     # Netscape Cookie
 
     @origin = @domain = @path =
-      @secure = @httponly =
       @expires = @max_age =
       @comment = nil
+    @secure = @httponly = false
     @session = true
-
     @created_at = @accessed_at = Time.now
+
     case args.size
     when 2
       self.name, self.value = *args
