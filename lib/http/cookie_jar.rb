@@ -224,7 +224,7 @@ class HTTP::CookieJar
   end
 
   # Used to exist in Mechanize::CookieJar.  Use #clear().
-  def clear!(*args)
+  def clear!
     raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#clear!() is #clear().'
   end
 
