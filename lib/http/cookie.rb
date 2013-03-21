@@ -196,6 +196,8 @@ class HTTP::Cookie
     end
   end
 
+  autoload :Scanner, 'http/cookie/scanner'
+
   class << self
     # Normalizes a given path.  If it is empty or it is a relative
     # path, the root path '/' is returned.
@@ -243,88 +245,40 @@ class HTTP::Cookie
       date ||= Time.now
 
       [].tap { |cookies|
-        # The expires attribute may include a comma in the value.
-        set_cookie.split(/,(?=[^;,]*=|\s*\z)/).each { |c|
-          if c.bytesize > MAX_LENGTH
-            logger.warn("Cookie definition too long: #{c}") if logger
-            next
-          end
+        s = Scanner.new(set_cookie, logger)
+        until s.eos?
+          name, value, attrs = s.scan_cookie
+          break if name.nil? || name.empty?
 
-          first_elem, *cookie_elem = c.split(/;+/)
-          first_elem.strip!
-          key, value = first_elem.split(/\=/, 2)
-          # RFC 6265 2.2
-          # A cookie-value may be DQUOTE'd.
-          case value
-          when /\A"(.*)"\z/
-            value = $1.gsub(/\\(.)/, "\\1")
-          end
-
-          begin
-            cookie = new(key, value.dup)
-          rescue
-            logger.warn("Couldn't parse key/value: #{first_elem}") if logger
-            next
-          end
-
-          cookie_elem.each do |pair|
-            pair.strip!
-            key, value = pair.split(/=/, 2) #/)
-            next unless key
-            case value # may be nil
-            when /\A"(.*)"\z/
-              value = $1.gsub(/\\(.)/, "\\1")
-            end
-
-            case key.downcase
-            when 'domain'
-              next unless value && !value.empty?
-              begin
-                cookie.domain = value
+          cookie = new(name, value)
+          attrs.each { |aname, avalue|
+            begin
+              case aname
+              when 'domain'
+                cookie.domain = avalue
                 cookie.for_domain = true
-              rescue
-                logger.warn("Couldn't parse domain: #{value}") if logger
+              when 'path'
+                cookie.path = avalue
+              when 'expires'
+                # RFC 6265 4.1.2.2
+                # The Max-Age attribute has precedence over the Expires
+                # attribute.
+                cookie.expires = avalue unless cookie.max_age
+              when 'max-age'
+                cookie.max_age = avalue
+              when 'comment'
+                cookie.comment = avalue
+              when 'version'
+                cookie.version = avalue
+              when 'secure'
+                cookie.secure = avalue
+              when 'httponly'
+                cookie.httponly = avalue
               end
-            when 'path'
-              next unless value && !value.empty?
-              cookie.path = value
-            when 'expires'
-              # RFC 6265 4.1.2.2
-              # The Max-Age attribute has precedence over the Expires
-              # attribute.
-              next unless value && !value.empty? && cookie.max_age.nil?
-              begin
-                cookie.expires = Time.parse(value)
-              rescue
-                logger.warn("Couldn't parse expires: #{value}") if logger
-              end
-            when 'max-age'
-              next unless value && !value.empty?
-              begin
-                cookie.max_age = Integer(value)
-              rescue
-                logger.warn("Couldn't parse max age '#{value}'") if logger
-              end
-            when 'comment'
-              next unless value
-              cookie.comment = value
-            when 'version'
-              next unless value
-              begin
-                cookie.version = Integer(value)
-              rescue
-                logger.warn("Couldn't parse version '#{value}'") if logger
-                cookie.version = nil
-              end
-            when 'secure'
-              cookie.secure = true
-            when 'httponly'
-              cookie.httponly = true
+            rescue => e
+              logger.warn("Couldn't parse #{aname} '#{avalue}': #{e}") if logger
             end
-          end
-
-          cookie.secure   ||= false
-          cookie.httponly ||= false
+          }
 
           # Have `expires` set instead of `max_age`, so that
           # expiration check (`expired?`) can be performed.
@@ -342,7 +296,7 @@ class HTTP::Cookie
           yield cookie if block_given?
 
           cookies << cookie
-        }
+        end
       }
     end
   end
@@ -570,12 +524,12 @@ class HTTP::Cookie
     origin = origin ? URI(origin) : @origin or
       raise "origin must be specified to produce a value for Set-Cookie"
 
-    string = cookie_value
+    string = "#{@name}=#{Scanner.quote(@value)}"
     if @for_domain || @domain != DomainName.new(origin.host).hostname
-      string << "; domain=#{@domain}"
+      string << "; Domain=#{@domain}"
     end
     if (HTTP::Cookie.normalize_path(origin) + './').path != @path
-      string << "; path=#{@path}"
+      string << "; Path=#{@path}"
     end
     if @max_age
       string << "; Max-Age=#{@max_age}"
@@ -583,13 +537,13 @@ class HTTP::Cookie
       string << "; Expires=#{@expires.httpdate}"
     end
     if @comment
-      string << "; comment=#{@comment}"
+      string << "; Comment=#{Scanner.quote(@comment)}"
     end
     if @httponly
       string << "; HttpOnly"
     end
     if @secure
-      string << "; secure"
+      string << "; Secure"
     end
     string
   end

@@ -33,7 +33,7 @@ class TestHTTPCookie < Test::Unit::TestCase
               "Fri, 17 Mar 89 4:01:33",
               "Fri, 17 Mar 89 4:01 GMT",
               "Mon Jan 16 16:12 PDT 1989",
-              "Mon Jan 16 16:12 +0130 1989",
+              #"Mon Jan 16 16:12 +0130 1989",
               "6 May 1992 16:41-JST (Wednesday)",
               #"22-AUG-1993 10:59:12.82",
               "22-AUG-1993 10:59pm",
@@ -42,7 +42,7 @@ class TestHTTPCookie < Test::Unit::TestCase
               #"Friday, August 04, 1995 3:54 PM",
               #"06/21/95 04:24:34 PM",
               #"20/06/95 21:07",
-              "95-06-08 19:32:48 EDT",
+              #"95-06-08 19:32:48 EDT",
     ]
 
     dates.each do |date|
@@ -373,31 +373,32 @@ class TestHTTPCookie < Test::Unit::TestCase
 
   def test_set_cookie_value
     url = URI.parse('http://rubyforge.org/')
-    cookie_params = @cookie_params.merge('secure' => 'secure', 'max-age' => 'Max-Age=1000')
-    cookie_value = 'foo=bar'
-    date = Time.at(Time.now.to_i)
 
-    cookie_params.keys.combine.each do |keys|
-      cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url, :date => date)
-      cookie2, = HTTP::Cookie.parse(cookie.set_cookie_value, :origin => url, :date => date)
+    ['foo=bar', 'foo="bar"', 'foo="ba\"r baz"'].each { |cookie_value|
+      cookie_params = @cookie_params.merge('secure' => 'secure', 'max-age' => 'Max-Age=1000')
+      date = Time.at(Time.now.to_i)
+      cookie_params.keys.combine.each do |keys|
+        cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
+        cookie, = HTTP::Cookie.parse(cookie_text, :origin => url, :date => date)
+        cookie2, = HTTP::Cookie.parse(cookie.set_cookie_value, :origin => url, :date => date)
 
-      assert_equal(cookie.name, cookie2.name)
-      assert_equal(cookie.value, cookie2.value)
-      assert_equal(cookie.domain, cookie2.domain)
-      assert_equal(cookie.for_domain?, cookie2.for_domain?)
-      assert_equal(cookie.path, cookie2.path)
-      assert_equal(cookie.expires, cookie2.expires)
-      if keys.include?('max-age')
-        assert_equal(date + 1000, cookie2.expires)
-      elsif keys.include?('expires')
-        assert_equal(@expires, cookie2.expires)
-      else
-        assert_equal(nil, cookie2.expires)
+        assert_equal(cookie.name, cookie2.name)
+        assert_equal(cookie.value, cookie2.value)
+        assert_equal(cookie.domain, cookie2.domain)
+        assert_equal(cookie.for_domain?, cookie2.for_domain?)
+        assert_equal(cookie.path, cookie2.path)
+        assert_equal(cookie.expires, cookie2.expires)
+        if keys.include?('max-age')
+          assert_equal(date + 1000, cookie2.expires)
+        elsif keys.include?('expires')
+          assert_equal(@expires, cookie2.expires)
+        else
+          assert_equal(nil, cookie2.expires)
+        end
+        assert_equal(cookie.secure?, cookie2.secure?)
+        assert_equal(cookie.httponly?, cookie2.httponly?)
       end
-      assert_equal(cookie.secure?, cookie2.secure?)
-      assert_equal(cookie.httponly?, cookie2.httponly?)
-    end
+    }
   end
 
   def test_parse_cookie_no_spaces
