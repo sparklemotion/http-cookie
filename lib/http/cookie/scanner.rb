@@ -79,6 +79,26 @@ class HTTP::Cookie::Scanner < StringScanner
     [name, value]
   end
 
+  if Time.respond_to?(:strptime)
+    def tuple_to_time(day_of_month, month, year, time)
+      Time.strptime(
+        '%02d %s %04d %02d:%02d:%02d UTC' % [day_of_month, month, year, *time],
+        '%d %b %Y %T %Z'
+      ).tap { |date|
+        date.day == day_of_month or return nil
+      }
+    end
+  else
+    def tuple_to_time(day_of_month, month, year, time)
+      Time.parse(
+        '%02d %s %04d %02d:%02d:%02d UTC' % [day_of_month, month, year, *time]
+      ).tap { |date|
+        date.day == day_of_month or return nil
+      }
+    end
+  end
+  private :tuple_to_time
+
   def parse_cookie_date(s)
     # RFC 6265 5.1.1
     time = day_of_month = month = year = nil
@@ -127,12 +147,7 @@ class HTTP::Cookie::Scanner < StringScanner
       return nil
     end
 
-    Time.strptime(
-      '%02d %s %04d %02d:%02d:%02d UTC' % [day_of_month, month, year, *time],
-      '%d %b %Y %T %Z'
-      ).tap { |date|
-      date.day == day_of_month or return nil
-    }
+    tuple_to_time(day_of_month, month, year, time)
   end
 
   def scan_cookie
