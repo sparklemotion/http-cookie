@@ -576,6 +576,32 @@ class TestHTTPCookie < Test::Unit::TestCase
     }
   end
 
+  def test_path
+    uri = URI.parse('http://example.com/foo/bar')
+
+    assert_equal '/foo/bar', uri.path
+
+    cookie_str = 'a=b'
+    cookie = HTTP::Cookie.parse(cookie_str, :origin => uri).first
+    assert '/foo/', cookie.path
+
+    cookie_str = 'a=b; path=/foo'
+    cookie = HTTP::Cookie.parse(cookie_str, :origin => uri).first
+    assert '/foo', cookie.path
+
+    uri = URI.parse('http://example.com')
+
+    assert_equal '', uri.path
+
+    cookie_str = 'a=b'
+    cookie = HTTP::Cookie.parse(cookie_str, :origin => uri).first
+    assert '/', cookie.path
+
+    cookie_str = 'a=b; path=/foo'
+    cookie = HTTP::Cookie.parse(cookie_str, :origin => uri).first
+    assert '/foo', cookie.path
+  end
+
   def test_domain_nil
     cookie = HTTP::Cookie.parse('a=b').first
     assert_raises(RuntimeError) {
