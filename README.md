@@ -111,6 +111,19 @@ equivalent using `HTTP::Cookie`:
         # after
         jar.save(file)
 
+- `Mechanize::CookieJar#jar`
+
+    There is no direct access to the internal hash in
+    `HTTP::CookieJar` since it has introduced an abstract storage
+    layer.  If you want to tweak the internals of the hash storage,
+    try creating a new storage class referring to the default storage
+    class `HTTP::CookieJar::HashStore`.
+
+    If you desperately need it you can access it by
+    `jar.store.instance_variable_get(:@jar)`, but there is no
+    guarantee that it will remain available in the future.
+
+
 `HTTP::Cookie`/`CookieJar` raise runtime errors to help migration, so
 after replacing the class names, try running your test code once to
 find out how to fix your code base.
@@ -128,7 +141,7 @@ Trying to load a YAML file saved by `HTTP::CookieJar` with
 `Mechanize::CookieJar` will fail in runtime error.
 
 On the other hand, there has been (and will ever be) no change in the
-cookies.txt format, so use it instead if compatibility is required.
+cookies.txt format, so use it instead if compatibility is significant.
 
 ## Contributing
 
