@@ -502,9 +502,10 @@ class TestHTTPCookie < Test::Unit::TestCase
       { :created_at => time },
       { :created_at => time, :path => '/foo/bar/' },
       { :created_at => time, :path => '/foo/' },
+      { :created_at => time, :path => '/foo' },
     ].map { |attrs| HTTP::Cookie.new(cookie_values(attrs)) }
 
-    assert_equal([3, 4, 1, 2, 0], cookies.sort.map { |i|
+    assert_equal([3, 4, 5, 1, 2, 0], cookies.sort.map { |i|
         cookies.find_index { |j| j.equal?(i) }
       })
   end
@@ -739,6 +740,28 @@ class TestHTTPCookie < Test::Unit::TestCase
           'file:///',
         ]
       },
+      HTTP::Cookie.parse('a6=b; path=/dir',
+        :origin => 'http://example.com/dir/file.html').first => {
+        true => [
+          'http://example.com/dir',
+          'http://example.com/dir/',
+          'http://example.com/dir/test.html',
+          'https://example.com/dir',
+          'https://example.com/dir/',
+          'https://example.com/dir/test.html',
+        ],
+        false => [
+          'file:///dir/test.html',
+          'http://example.com/dir2',
+          'http://example.com/dir2/test.html',
+          'http://www.example.com/dir/test.html',
+          'http://www.example.com/dir2/test.html',
+          'https://example.com/dir2',
+          'https://example.com/dir2/test.html',
+          'https://www.example.com/dir/test.html',
+          'https://www.example.com/dir2/test.html',
+        ]
+      },
     }.each { |cookie, hash|
       hash.each { |expected, urls|
         urls.each { |url|
@@ -747,5 +770,18 @@ class TestHTTPCookie < Test::Unit::TestCase
         }
       }
     }
+  end
+
+  def test_s_path_match?
+    assert_equal true,  HTTP::Cookie.path_match?('/admin/', '/admin/index')
+    assert_equal false, HTTP::Cookie.path_match?('/admin/', '/Admin/index')
+    assert_equal true,  HTTP::Cookie.path_match?('/admin/', '/admin/')
+    assert_equal false, HTTP::Cookie.path_match?('/admin/', '/admin')
+
+    assert_equal true,  HTTP::Cookie.path_match?('/admin', '/admin')
+    assert_equal false, HTTP::Cookie.path_match?('/admin', '/Admin')
+    assert_equal false, HTTP::Cookie.path_match?('/admin', '/admins')
+    assert_equal true,  HTTP::Cookie.path_match?('/admin', '/admin/')
+    assert_equal true,  HTTP::Cookie.path_match?('/admin', '/admin/index')
   end
 end

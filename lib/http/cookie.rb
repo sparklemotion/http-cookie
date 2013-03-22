@@ -198,15 +198,32 @@ class HTTP::Cookie
   autoload :Scanner, 'http/cookie/scanner'
 
   class << self
-    # Normalizes a given path.  If it is empty or it is a relative
-    # path, the root path '/' is returned.
+    # Tests if +target_path+ is under +base_path+ as described in RFC
+    # 6265 5.1.4.  +base_path+ must be an absolute path.
+    # +target_path+ may be empty, in which case it is treated as the
+    # root path.
     #
-    # If a URI object is given, returns a new URI object with the path
-    # part normalized.
-    def normalize_path(path)
-      return path + normalize_path(path.path) if URI === path
+    # e.g.
+    #
+    #         path_match?('/admin/', '/admin/index') == true
+    #         path_match?('/admin/', '/Admin/index') == false
+    #         path_match?('/admin/', '/admin/') == true
+    #         path_match?('/admin/', '/admin') == false
+    #
+    #         path_match?('/admin', '/admin') == true
+    #         path_match?('/admin', '/Admin') == false
+    #         path_match?('/admin', '/admins') == false
+    #         path_match?('/admin', '/admin/') == true
+    #         path_match?('/admin', '/admin/index') == true
+    def path_match?(base_path, target_path)
+      base_path.start_with?('/') or return false
       # RFC 6265 5.1.4
-      path.start_with?('/') ? path : '/'
+      bsize = base_path.size
+      tsize = target_path.size
+      return bsize == 1 if tsize == 0 # treat empty target_path as "/"
+      return false unless target_path.start_with?(base_path)
+      return true if bsize == tsize || base_path.end_with?('/')
+      target_path[bsize] == ?/
     end
 
     # Parses a Set-Cookie header value `set_cookie` into an array of
@@ -386,7 +403,7 @@ class HTTP::Cookie
   def path=(path)
     path = check_string_type(path) or
       raise TypeError, "#{path.class} is not a String"
-    @path = HTTP::Cookie.normalize_path(path)
+    @path = path.start_with?('/') ? path : '/'
   end
 
   attr_reader :origin
@@ -397,7 +414,7 @@ class HTTP::Cookie
       raise ArgumentError, "origin cannot be changed once it is set"
     origin = URI(origin)
     self.domain ||= origin.host
-    self.path   ||= (HTTP::Cookie.normalize_path(origin) + './').path
+    self.path   ||= (origin + './').path
     acceptable_from_uri?(origin) or
       raise ArgumentError, "unacceptable cookie sent from URI #{origin}"
     @origin = origin
@@ -513,7 +530,7 @@ class HTTP::Cookie
     end
     uri = URI(uri)
     return false if secure? && !(URI::HTTPS === uri)
-    acceptable_from_uri?(uri) && HTTP::Cookie.normalize_path(uri.path).start_with?(@path)
+    acceptable_from_uri?(uri) && HTTP::Cookie.path_match?(@path, uri.path)
   end
 
   # Returns a string for use in a Cookie header value,
@@ -537,7 +554,7 @@ class HTTP::Cookie
     if @for_domain || @domain != DomainName.new(origin.host).hostname
       string << "; Domain=#{@domain}"
     end
-    if (HTTP::Cookie.normalize_path(origin) + './').path != @path
+    if (origin + './').path != @path
       string << "; Path=#{@path}"
     end
     if @max_age

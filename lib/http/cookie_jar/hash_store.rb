@@ -54,11 +54,11 @@ class HTTP::CookieJar
     def each(uri = nil)
       if uri
         thost = DomainName.new(uri.host)
-        tpath = HTTP::Cookie.normalize_path(uri.path)
+        tpath = uri.path
         @jar.each { |domain, paths|
           next unless thost.cookie_domain?(domain)
           paths.each { |path, hash|
-            next unless tpath.start_with?(path)
+            next unless HTTP::Cookie.path_match?(path, tpath)
             hash.delete_if { |name, cookie|
               if cookie.expired?
                 true
