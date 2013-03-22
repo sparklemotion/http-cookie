@@ -33,10 +33,25 @@ class HTTP::CookieJar
   # Adds a +cookie+ to the jar and return self.  If a given cookie has
   # no domain or path attribute values and the origin is unknown,
   # ArgumentError is raised.
-  def add(cookie, *_)
-    _.empty? or
-      raise ArgumentError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#add(uri, cookie) is #add(cookie) after setting cookie.origin = uri.'
-
+  #
+  # ### Compatibility Note for Mechanize::Cookie users
+  #
+  # In HTTP::Cookie, each cookie object can store its origin URI
+  # (cf. #origin).  While the origin URI of a cookie can be set
+  # manually by #origin=, one is typically given in its generation.
+  # To be more specific, HTTP::Cookie.new and HTTP::Cookie.parse both
+  # take an :origin option.
+  #
+  #   `HTTP::Cookie.parse`.  Compare these:
+  #
+  #       # Mechanize::Cookie
+  #       jar.add(origin, cookie)
+  #       jar.add!(cookie)    # no acceptance check is performed
+  #
+  #       # HTTP::Cookie
+  #       jar.origin = origin # if it doesn't have one
+  #       jar.add(cookie)     # acceptance check is performed
+  def add(cookie)
     if cookie.domain.nil? || cookie.path.nil?
       raise ArgumentError, "a cookie with unknown domain or path cannot be added"
     end
@@ -45,11 +60,6 @@ class HTTP::CookieJar
     self
   end
   alias << add
-
-  # Used to exist in Mechanize::CookieJar.  Use #add().
-  def add!(cookie)
-    raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#add!() is #add().'
-  end
 
   # Gets an array of cookies that should be sent for the URL/URI.
   def cookies(url)
@@ -156,11 +166,6 @@ class HTTP::CookieJar
     self
   end
 
-  # Used to exist in Mechanize::CookieJar.  Use #save().
-  def save_as(*args)
-    raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#save_as() is #save().'
-  end
-
   # call-seq:
   #   jar.load(filename_or_io, **options)
   #   jar.load(filename_or_io, format = :yaml, **options)
@@ -221,11 +226,6 @@ class HTTP::CookieJar
   def clear
     @store.clear
     self
-  end
-
-  # Used to exist in Mechanize::CookieJar.  Use #clear().
-  def clear!
-    raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#clear!() is #clear().'
   end
 
   # Removes expired cookies and return self.

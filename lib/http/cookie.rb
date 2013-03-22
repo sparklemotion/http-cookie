@@ -233,10 +233,25 @@ class HTTP::Cookie
     #
     # `logger`
     # : Logger object useful for debugging
-    def parse(set_cookie, options = nil, *_, &block)
-      _.empty? && !options.is_a?(String) or
-        raise ArgumentError, 'HTTP::Cookie equivalent for Mechanize::Cookie.parse(uri, set_cookie[, log]) is HTTP::Cookie.parse(set_cookie, :origin => uri[, :logger => log]).'
-
+    #
+    # ### Compatibility Note for Mechanize::Cookie users
+    #
+    # * Order of parameters is a slightly different in
+    #   `HTTP::Cookie.parse`.  Compare these:
+    #
+    #       Mechanize::Cookie.parse(uri, set_cookie[, log])
+    #
+    #       HTTP::Cookie.parse(set_cookie, :origin => uri[, :logger => # log])
+    #
+    # * `HTTP::Cookie.parse` does not yield nil nor include nil in an
+    #   returned array.  It simply ignores unparsable parts.
+    #
+    # * `HTTP::Cookie.parse` is made to follow RFC 6265 to the extent
+    #   not terribly breaking interoperability with broken
+    #   implementations.  In particular, it is capable of parsing
+    #   cookie definitions containing double-quotes just as
+    #   naturally expected.
+    def parse(set_cookie, options = nil, &block)
       if options
         logger = options[:logger]
         origin = options[:origin] and origin = URI(origin)
@@ -353,11 +368,6 @@ class HTTP::Cookie
       @domain_name = DomainName.new(domain)
     end
     @domain = @domain_name.hostname
-  end
-
-  # Used to exist in Mechanize::CookieJar.  Use #domain=().
-  def set_domain(domain)
-    raise NoMethodError, 'HTTP::Cookie equivalent for Mechanize::CookieJar#set_domain() is #domain=().'
   end
 
   # Returns the domain attribute value as a DomainName object.
