@@ -95,9 +95,6 @@ class HTTP::CookieJar
     if uri
       uri = URI(uri)
       return self unless URI::HTTP === uri && uri.host
-      block = proc { |cookie|
-        yield cookie if cookie.valid_for_uri?(uri)
-      }
     end
 
     @store.each(uri, &block)
