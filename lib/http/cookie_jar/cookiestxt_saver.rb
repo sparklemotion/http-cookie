@@ -28,11 +28,14 @@ class HTTP::CookieJar::CookiestxtSaver < HTTP::CookieJar::AbstractSaver
     }
   end
 
+  HTTPONLY_PREFIX = '#HttpOnly_'
+  RE_HTTPONLY_PREFIX = /\A#{HTTPONLY_PREFIX}/
+
   # Serializes the cookie into a cookies.txt line.
   def cookie_to_record(cookie)
     cookie.instance_eval {
       [
-        dot_domain,
+        @httponly ? HTTPONLY_PREFIX + dot_domain : dot_domain,
         @for_domain ? True : False,
         @path,
         @secure ? True : False,
@@ -46,7 +49,15 @@ class HTTP::CookieJar::CookiestxtSaver < HTTP::CookieJar::AbstractSaver
   # Parses a line from cookies.txt and returns a cookie object if the
   # line represents a cookie record or returns nil otherwise.
   def parse_record(line)
-    return nil if line.match(/^#/)
+    case line
+    when RE_HTTPONLY_PREFIX
+      httponly = true
+      line = $'
+    when /\A#/
+      return nil
+    else
+      httponly = false
+    end
 
     domain,
     s_for_domain,	# Whether this cookie is for domain
@@ -68,6 +79,7 @@ class HTTP::CookieJar::CookiestxtSaver < HTTP::CookieJar::AbstractSaver
       :for_domain => s_for_domain == True,
       :path => path,
       :secure => s_secure == True,
+      :httponly => httponly,
       :expires => expires,
       :version => 0)
   end

@@ -360,12 +360,16 @@ class TestHTTPCookieJar < Test::Unit::TestCase
                                              :value => 'Foo#Baz',
                                              :path => '/foo/',
                                              :for_domain => false))
+    h_cookie = HTTP::Cookie.new(cookie_values(:name => 'Quux',
+                                              :value => 'Foo#Quux',
+                                              :httponly => true))
 
     @jar.add(cookie)
     @jar.add(s_cookie)
     @jar.add(cookie2)
+    @jar.add(h_cookie)
 
-    assert_equal(3, @jar.cookies(url).length)
+    assert_equal(4, @jar.cookies(url).length)
 
     Dir.mktmpdir do |dir|
       filename = File.join(dir, "cookies.txt")
@@ -375,11 +379,12 @@ class TestHTTPCookieJar < Test::Unit::TestCase
 
       assert_match(/^\.rubyforge\.org\t.*\tFoo\t/, content)
       assert_match(/^rubyforge\.org\t.*\tBaz\t/, content)
+      assert_match(/^#HttpOnly_\.rubyforge\.org\t/, content)
 
       jar = HTTP::CookieJar.new
       jar.load(filename, :cookiestxt) # HACK test the format
       cookies = jar.cookies(url)
-      assert_equal(2, cookies.length)
+      assert_equal(3, cookies.length)
       cookies.each { |cookie|
         case cookie.name
         when 'Foo'
@@ -388,18 +393,27 @@ class TestHTTPCookieJar < Test::Unit::TestCase
           assert_equal 'rubyforge.org', cookie.domain
           assert_equal true, cookie.for_domain
           assert_equal '/', cookie.path
+          assert_equal false, cookie.httponly?
         when 'Baz'
           assert_equal 'Foo#Baz', cookie.value
           assert_equal 'rubyforge.org', cookie.domain
           assert_equal false, cookie.for_domain
           assert_equal '/foo/', cookie.path
+          assert_equal false, cookie.httponly?
+        when 'Quux'
+          assert_equal 'Foo#Quux', cookie.value
+          assert_equal expires, cookie.expires
+          assert_equal 'rubyforge.org', cookie.domain
+          assert_equal true, cookie.for_domain
+          assert_equal '/', cookie.path
+          assert_equal true, cookie.httponly?
         else
           raise
         end
       }
     end
 
-    assert_equal(3, @jar.cookies(url).length)
+    assert_equal(4, @jar.cookies(url).length)
   end
 
   def test_expire_cookies
