@@ -32,7 +32,7 @@ class HTTP::CookieJar::CookiestxtSaver < HTTP::CookieJar::AbstractSaver
   def cookie_to_record(cookie)
     cookie.instance_eval {
       [
-        @domain,
+        dot_domain,
         @for_domain ? True : False,
         @path,
         @secure ? True : False,

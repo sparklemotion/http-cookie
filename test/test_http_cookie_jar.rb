@@ -368,10 +368,16 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal(3, @jar.cookies(url).length)
 
     Dir.mktmpdir do |dir|
-      @jar.save(File.join(dir, "cookies.txt"), :cookiestxt)
+      filename = File.join(dir, "cookies.txt")
+      @jar.save(filename, :cookiestxt)
+
+      content = File.read(filename)
+
+      assert_match(/^\.rubyforge\.org\t.*\tFoo\t/, content)
+      assert_match(/^rubyforge\.org\t.*\tBaz\t/, content)
 
       jar = HTTP::CookieJar.new
-      jar.load(File.join(dir, "cookies.txt"), :cookiestxt) # HACK test the format
+      jar.load(filename, :cookiestxt) # HACK test the format
       cookies = jar.cookies(url)
       assert_equal(2, cookies.length)
       cookies.each { |cookie|
