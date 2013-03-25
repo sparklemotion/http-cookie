@@ -63,8 +63,10 @@ class HTTP::CookieJar
               if cookie.expired?
                 true
               else
-                cookie.accessed_at = Time.now
-                yield cookie
+                if cookie.valid_for_uri?(uri)
+                  cookie.accessed_at = Time.now
+                  yield cookie
+                end
                 false
               end
             }
