@@ -386,6 +386,12 @@ class HTTP::Cookie
     @domain = @domain_name.hostname
   end
 
+  # Returns the domain, with a dot prefixed only if the domain flag is
+  # on.
+  def dot_domain
+    @for_domain ? '.' << @domain : @domain
+  end
+
   # Returns the domain attribute value as a DomainName object.
   attr_reader :domain_name
 

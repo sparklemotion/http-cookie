@@ -162,6 +162,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     assert_equal 'example.com', cookie.domain
     assert cookie.for_domain?
+    assert_equal '.example.com', cookie.dot_domain
   end
 
   def test_parse_domain_no_dot
@@ -173,6 +174,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     assert_equal 'example.com', cookie.domain
     assert cookie.for_domain?
+    assert_equal '.example.com', cookie.dot_domain
   end
 
   def test_parse_domain_none
@@ -184,6 +186,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     assert_equal 'example.com', cookie.domain
     assert !cookie.for_domain?
+    assert_equal 'example.com', cookie.dot_domain
   end
 
   def test_parse_max_age
