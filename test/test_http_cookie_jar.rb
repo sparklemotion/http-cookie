@@ -1,9 +1,28 @@
 require File.expand_path('helper', File.dirname(__FILE__))
 require 'tmpdir'
 
-class TestHTTPCookieJar < Test::Unit::TestCase
-  def setup
-    @jar = HTTP::CookieJar.new
+module TestHTTPCookieJar; end
+
+module TestHTTPCookieJar::Tests
+  def setup(options = nil, options2 = nil)
+    default_options = {
+      :store => :hash,
+      :gc_threshold => 150,
+    }
+    new_options  = default_options.merge(options || {})
+    new_options2 = new_options.merge(options2 || {})
+    @store_type = new_options[:store]
+    @gc_threshold = new_options[:gc_threshold]
+    @jar  = HTTP::CookieJar.new(new_options)
+    @jar2 = HTTP::CookieJar.new(new_options)
+  end
+
+  def hash_store?
+    @store_type == :hash
+  end
+
+  def mozilla_store?
+    @store_type == :mozilla
   end
 
   def cookie_values(options = {})
@@ -307,9 +326,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
       value = @jar.save(File.join(dir, "cookies.yml"))
       assert_same @jar, value
 
-      jar = HTTP::CookieJar.new
-      jar.load(File.join(dir, "cookies.yml"))
-      cookies = jar.cookies(url).sort_by { |cookie| cookie.name }
+      @jar2.load(File.join(dir, "cookies.yml"))
+      cookies = @jar2.cookies(url).sort_by { |cookie| cookie.name }
       assert_equal(2, cookies.length)
       assert_equal('Baz', cookies[0].name)
       assert_equal(false, cookies[0].for_domain)
@@ -338,9 +356,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     Dir.mktmpdir do |dir|
       @jar.save(File.join(dir, "cookies.yml"), :format => :yaml, :session => true)
 
-      jar = HTTP::CookieJar.new
-      jar.load(File.join(dir, "cookies.yml"))
-      assert_equal(3, jar.cookies(url).length)
+      @jar2.load(File.join(dir, "cookies.yml"))
+      assert_equal(3, @jar2.cookies(url).length)
     end
 
     assert_equal(3, @jar.cookies(url).length)
@@ -384,9 +401,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
       assert_match(/^rubyforge\.org\t.*\tBaz\t/, content)
       assert_match(/^#HttpOnly_\.rubyforge\.org\t/, content)
 
-      jar = HTTP::CookieJar.new
-      jar.load(filename, :cookiestxt) # HACK test the format
-      cookies = jar.cookies(url)
+      @jar2.load(filename, :cookiestxt) # HACK test the format
+      cookies = @jar2.cookies(url)
       assert_equal(4, cookies.length)
       cookies.each { |cookie|
         case cookie.name
@@ -541,12 +557,27 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal('Foo1 Foo2', @jar.cookies(surl).map { |c| c.name }.sort.join(' ') )
   end
 
-  def h_test_max_cookies(jar, slimit)
+  def _test_delete
+    nurl = URI 'http://rubyforge.org/login'
+    surl = URI 'https://rubyforge.org/login'
+
+    cookie1 = HTTP::Cookie.new(cookie_values(:name => 'Foo1', :origin => nurl))
+    cookie2 = HTTP::Cookie.new(cookie_values(:name => 'Foo1', :origin => surl))
+
+    @jar.add(nncookie)
+    @jar.add(sncookie)
+    @jar.add(nscookie)
+    @jar.add(sscookie)
+  end
+
+  def test_max_cookies
+    slimit = HTTP::Cookie::MAX_COOKIES_TOTAL + @gc_threshold
+
     limit_per_domain = HTTP::Cookie::MAX_COOKIES_PER_DOMAIN
     uri = URI('http://www.example.org/')
     date = Time.at(Time.now.to_i + 86400)
     (1..(limit_per_domain + 1)).each { |i|
-      jar << HTTP::Cookie.new(cookie_values(
+      @jar << HTTP::Cookie.new(cookie_values(
           :name => 'Foo%d' % i,
           :value => 'Bar%d' % i,
           :domain => uri.host,
@@ -557,11 +588,11 @@ class TestHTTPCookieJar < Test::Unit::TestCase
         cookie.created_at = i == 42 ? date - i : date
       }
     }
-    assert_equal limit_per_domain + 1, jar.to_a.size
-    jar.cleanup
-    count = jar.to_a.size
+    assert_equal limit_per_domain + 1, @jar.to_a.size
+    @jar.cleanup
+    count = @jar.to_a.size
     assert_equal limit_per_domain, count
-    assert_equal [*1..41] + [*43..(limit_per_domain + 1)], jar.map { |cookie|
+    assert_equal [*1..41] + [*43..(limit_per_domain + 1)], @jar.map { |cookie|
       cookie.name[/(\d+)$/].to_i
     }.sort
 
@@ -572,7 +603,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     (1..n).each { |i|
       (1..(limit_per_domain + 1)).each { |j|
         uri = URI('http://www%d.example.jp/' % i)
-        jar << HTTP::Cookie.new(cookie_values(
+        @jar << HTTP::Cookie.new(cookie_values(
             :name => 'Baz%d' % j,
             :value => 'www%d.example.jp' % j,
             :domain => uri.host,
@@ -587,40 +618,33 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     }
 
     assert_equal true, count > slimit
-    assert_equal true, jar.to_a.size <= slimit
-    jar.cleanup
-    assert_equal hlimit, jar.to_a.size
-    assert_equal false, jar.any? { |cookie|
+    assert_equal true, @jar.to_a.size <= slimit
+    @jar.cleanup
+    assert_equal hlimit, @jar.to_a.size
+    assert_equal false, @jar.any? { |cookie|
       cookie.domain == cookie.value
     }
   end
+end
 
-  def test_max_cookies_hashstore
-    gc_threshold = 150
-    h_test_max_cookies(
-      HTTP::CookieJar.new(
-        :store => :hash,
-        :gc_threshold => gc_threshold),
-      HTTP::Cookie::MAX_COOKIES_TOTAL + gc_threshold)
+module TestHTTPCookieJar
+  class WithHashStore < Test::Unit::TestCase
+    include Tests
   end
 
-  def test_max_cookies_mozillastore
-    gc_threshold = 150
-    h_test_max_cookies(
-      HTTP::CookieJar.new(
-        :store => :mozilla,
-        :gc_threshold => gc_threshold,
-        :filename => ":memory:"),
-      HTTP::Cookie::MAX_COOKIES_TOTAL + gc_threshold)
-    #Dir.mktmpdir { |dir|
-    #  h_test_max_cookies(
-    #    HTTP::CookieJar.new(
-    #      :store => :mozilla,
-    #      :gc_threshold => gc_threshold,
-    #      :filename => File.join(dir, "cookies.sqlite")),
-    #    HTTP::Cookie::MAX_COOKIES_TOTAL + gc_threshold)
-    #}
-  rescue IndexError
+  class WithMozillaStore < Test::Unit::TestCase
+    include Tests
+
+    def setup
+      super(
+        { :store => :mozilla, :filename => ":memory:" },
+        { :store => :mozilla, :filename => ":memory:" })
+    end
+  end if begin
+    require 'sqlite3'
+    true
+  rescue LoadError
     STDERR.puts 'sqlite3 missing?'
+    false
   end
 end
