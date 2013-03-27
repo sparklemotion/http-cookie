@@ -1,4 +1,8 @@
+require 'monitor'
+
 class HTTP::CookieJar::AbstractStore
+  include MonitorMixin
+
   class << self
     @@class_map = {}
 
@@ -31,6 +35,7 @@ class HTTP::CookieJar::AbstractStore
   private :default_options
 
   def initialize(options = nil)
+    super() # MonitorMixin
     options ||= {}
     @logger = options[:logger]
     # Initializes each instance variable of the same name as option
@@ -65,7 +70,13 @@ class HTTP::CookieJar::AbstractStore
   # If (and only if) the +uri+ option is given, last access time of
   # each cookie is updated to the current time.
   def each(uri = nil, &block)
-    raise
+    if uri
+      raise
+    else
+      synchronize {
+        raise
+      }
+    end
     self
   end
   include Enumerable

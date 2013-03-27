@@ -335,9 +335,6 @@ class HTTP::CookieJar
     end
 
     def cleanup(session = false)
-      now = Time.now
-      all_cookies = []
-
       @st_delete_expired ||=
         @db.prepare("DELETE FROM moz_cookies WHERE expiry < :expiry")
 
@@ -364,26 +361,31 @@ class HTTP::CookieJar
                      )
         SQL
 
-      @st_delete_expired.execute({ 'expiry' => now.to_i })
+      synchronize {
+        break if @gc_index == 0
 
-      @st_overusing_domains.execute({
-          'count' => HTTP::Cookie::MAX_COOKIES_PER_DOMAIN
-        }).each { |row|
-        domain, count = row['domain'], row['count']
+        @st_delete_expired.execute({ 'expiry' => Time.now.to_i })
 
-        @st_delete_per_domain_overuse.execute({
-            'domain' => domain,
-            'limit' => count - HTTP::Cookie::MAX_COOKIES_PER_DOMAIN,
-          })
+        @st_overusing_domains.execute({
+            'count' => HTTP::Cookie::MAX_COOKIES_PER_DOMAIN
+          }).each { |row|
+          domain, count = row['domain'], row['count']
+
+          @st_delete_per_domain_overuse.execute({
+              'domain' => domain,
+              'limit' => count - HTTP::Cookie::MAX_COOKIES_PER_DOMAIN,
+            })
+        }
+
+        overrun = count - HTTP::Cookie::MAX_COOKIES_TOTAL
+
+        if overrun > 0
+          @st_delete_total_overuse.execute({ 'limit' => overrun })
+        end
+
+        @gc_index = 0
       }
-
-      overrun = count - HTTP::Cookie::MAX_COOKIES_TOTAL
-
-      if overrun > 0
-        @st_delete_total_overuse.execute({ 'limit' => overrun })
-      end
-
-      @gc_index = 0
+      self
     end
   end
 end

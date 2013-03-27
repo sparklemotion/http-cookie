@@ -81,15 +81,17 @@ class HTTP::CookieJar
           }
         }
       else
-        @jar.each { |domain, paths|
-          paths.each { |path, hash|
-            hash.delete_if { |name, cookie|
-              if cookie.expired?(now)
-                true
-              else
-                yield cookie
-                false
-              end
+        synchronize {
+          @jar.each { |domain, paths|
+            paths.each { |path, hash|
+              hash.delete_if { |name, cookie|
+                if cookie.expired?(now)
+                  true
+                else
+                  yield cookie
+                  false
+                end
+              }
             }
           }
         }
@@ -109,45 +111,51 @@ class HTTP::CookieJar
     def cleanup(session = false)
       now = Time.now
       all_cookies = []
-      @jar.each { |domain, paths|
-        domain_cookies = []
 
-        paths.each { |path, hash|
-          hash.delete_if { |name, cookie|
-            if cookie.expired?(now) || (session && cookie.session?)
-              true
-            else
-              domain_cookies << cookie
-              false
-            end
+      synchronize {
+        break if @gc_index == 0
+
+        @jar.each { |domain, paths|
+          domain_cookies = []
+
+          paths.each { |path, hash|
+            hash.delete_if { |name, cookie|
+              if cookie.expired?(now) || (session && cookie.session?)
+                true
+              else
+                domain_cookies << cookie
+                false
+              end
+            }
           }
+
+          if (debt = domain_cookies.size - HTTP::Cookie::MAX_COOKIES_PER_DOMAIN) > 0
+            domain_cookies.sort_by!(&:created_at)
+            domain_cookies.slice!(0, debt).each { |cookie|
+              delete(cookie)
+            }
+          end
+
+          all_cookies.concat(domain_cookies)
         }
 
-        if (debt = domain_cookies.size - HTTP::Cookie::MAX_COOKIES_PER_DOMAIN) > 0
-          domain_cookies.sort_by!(&:created_at)
-          domain_cookies.slice!(0, debt).each { |cookie|
+        if (debt = all_cookies.size - HTTP::Cookie::MAX_COOKIES_TOTAL) > 0
+          all_cookies.sort_by!(&:created_at)
+          all_cookies.slice!(0, debt).each { |cookie|
             delete(cookie)
           }
         end
 
-        all_cookies.concat(domain_cookies)
-      }
-
-      if (debt = all_cookies.size - HTTP::Cookie::MAX_COOKIES_TOTAL) > 0
-        all_cookies.sort_by!(&:created_at)
-        all_cookies.slice!(0, debt).each { |cookie|
-          delete(cookie)
+        @jar.delete_if { |domain, paths|
+          paths.delete_if { |path, hash|
+            hash.empty?
+          }
+          paths.empty?
         }
-      end
 
-      @jar.delete_if { |domain, paths|
-        paths.delete_if { |path, hash|
-          hash.empty?
-        }
-        paths.empty?
+        @gc_index = 0
       }
-
-      @gc_index = 0
+      self
     end
   end
 end
