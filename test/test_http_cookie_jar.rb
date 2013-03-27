@@ -534,8 +534,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal('Foo1 Foo2', @jar.cookies(surl).map { |c| c.name }.sort.join(' ') )
   end
 
-  def test_max_cookies
-    jar = HTTP::CookieJar.new
+  def h_test_max_cookies(jar, slimit)
     limit_per_domain = HTTP::Cookie::MAX_COOKIES_PER_DOMAIN
     uri = URI('http://www.example.org/')
     date = Time.at(Time.now.to_i + 86400)
@@ -560,7 +559,6 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     }.sort
 
     hlimit = HTTP::Cookie::MAX_COOKIES_TOTAL
-    slimit = hlimit + HTTP::CookieJar::HashStore::GC_THRESHOLD
 
     n = hlimit / limit_per_domain * 2
 
@@ -587,6 +585,20 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     assert_equal hlimit, jar.to_a.size
     assert_equal false, jar.any? { |cookie|
       cookie.domain == cookie.value
+    }
+  end
+
+  def test_max_cookies_hashstore
+    h_test_max_cookies(
+      HTTP::CookieJar.new,
+      HTTP::Cookie::MAX_COOKIES_TOTAL + HTTP::CookieJar::HashStore::GC_THRESHOLD)
+  end
+
+  def test_max_cookies_mozillastore
+    Dir.mktmpdir { |dir|
+      h_test_max_cookies(
+        HTTP::CookieJar.new(:mozilla, :filename => File.join(dir, "cookies.sqlite")),
+        HTTP::Cookie::MAX_COOKIES_TOTAL + HTTP::CookieJar::MozillaStore::GC_THRESHOLD)
     }
   end
 end

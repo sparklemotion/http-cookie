@@ -13,6 +13,8 @@ class HTTP::CookieJar
   # Generates a new cookie jar.  The default store class is `:hash`,
   # which maps to `HTTP::CookieJar::HashStore`.  Any given options are
   # passed through to the initializer of the specified store class.
+  # For example, the `:mozilla` (`HTTP::CookieJar::MozillaStore`)
+  # store class requires a `:filename` option.
   def initialize(store = :hash, options = nil)
     case store
     when Symbol
