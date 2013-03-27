@@ -455,6 +455,19 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 'key', cookie.name
     assert_equal 'value', cookie.value
     assert_equal expires, cookie.expires
+    assert_equal false, cookie.for_domain?
+
+    cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', :expires => expires.dup, :domain => '.example.com')
+    assert_equal 'key', cookie.name
+    assert_equal 'value', cookie.value
+    assert_equal expires, cookie.expires
+    assert_equal true, cookie.for_domain?
+
+    cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', :expires => expires.dup, :domain => 'example.com', :for_domain => false)
+    assert_equal 'key', cookie.name
+    assert_equal 'value', cookie.value
+    assert_equal expires, cookie.expires
+    assert_equal false, cookie.for_domain?
 
     cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', :expires => expires.dup, :domain => 'example.org', :for_domain? => true)
     assert_equal 'key', cookie.name
@@ -685,9 +698,8 @@ class TestHTTPCookie < Test::Unit::TestCase
         :domain => 'uk',
         :for_domain => true,
         :origin => nil))
-    assert_equal true, cookie.for_domain?
+    assert_equal false, cookie.for_domain?
     assert_equal true, cookie.acceptable_from_uri?('http://uk/')
-    assert_equal true, cookie.for_domain? # bug: acceptable_from_uri? changed it to false
     assert_equal false, cookie.acceptable_from_uri?('http://foo.uk/')
   end
 

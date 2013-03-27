@@ -170,7 +170,7 @@ class HTTP::Cookie
       raise ArgumentError, "wrong number of arguments (#{args.size} for 1-3)"
     end
     for_domain = false
-    max_age = origin = nil
+    domain = max_age = origin = nil
     attr_hash.each_pair { |key, val|
       skey = key.to_s.downcase
       if skey.sub!(/\?\z/, '')
@@ -179,6 +179,8 @@ class HTTP::Cookie
       case skey
       when 'for_domain'
         for_domain = !!val
+      when 'domain'
+        domain = val
       when 'origin'
         origin = val
       when 'max_age'
@@ -193,6 +195,7 @@ class HTTP::Cookie
       raise ArgumentError, "at least name and value must be specified"
     end
     @for_domain = for_domain
+    self.domain = domain if domain
     self.origin = origin if origin
     self.max_age = max_age if max_age
   end
