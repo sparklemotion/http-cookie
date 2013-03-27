@@ -10,6 +10,15 @@ end
 
 class HTTP::CookieJar
   # A store class that uses a hash-based cookie store.
+  #
+  # In this store, cookies that share the same name, domain and path
+  # will overwrite each other regardless of the `for_domain` flag
+  # value.  This store is built after the storage model described in
+  # RFC 6265 5.3 where there is no mention of how the host-only-flag
+  # affects in storing cookies.  On the other hand, in MozillaStore
+  # two cookies with the same name, domain and path coexist as long as
+  # they differ in the `for_domain` flag value, which means they need
+  # to be expired individually.
   class HashStore < AbstractStore
     def default_options
       {
