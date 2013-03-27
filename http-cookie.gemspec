@@ -24,6 +24,7 @@ Gem::Specification.new do |gem|
   gem.extra_rdoc_files = ['README.md', 'LICENSE.txt']
 
   gem.add_runtime_dependency("domain_name", ["~> 0.5"])
+  gem.add_runtime_dependency("sqlite3", ["~> 1.3.3"])
   gem.add_development_dependency("bundler", [">= 1.2.0"])
   gem.add_development_dependency("test-unit", [">= 2.4.3"])
   gem.add_development_dependency("rake", [">= 0.9.2.2"])
