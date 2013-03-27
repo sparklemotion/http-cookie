@@ -63,6 +63,21 @@ class HTTP::CookieJar
       @gc_index = 0
     end
 
+    # The file name of the SQLite3 database given in initialization.
+    attr_reader :filename
+
+    # Closes the SQLite3 database.  After closing, any operation may
+    # raise an error.
+    def close
+      @db.close
+      self
+    end
+
+    # Tests if the SQLite3 database is closed.
+    def closed?
+      @db.closed?
+    end
+
     # Returns the schema version of the database.
     def schema_version
       @schema_version ||= @db.execute("PRAGMA user_version").first[0]
