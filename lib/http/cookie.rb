@@ -283,8 +283,8 @@ class HTTP::Cookie
             begin
               case aname
               when 'domain'
-                cookie.domain = avalue
                 cookie.for_domain = true
+                cookie.domain = avalue # This may negate @for_domain
               when 'path'
                 cookie.path = avalue
               when 'expires'
@@ -375,6 +375,10 @@ class HTTP::Cookie
         domain = $1
       end
       @domain_name = DomainName.new(domain)
+    end
+    # RFC 6265 5.3 5.
+    if @domain_name.domain.nil? # a public suffix or IP address
+      @for_domain = false
     end
     @domain = @domain_name.hostname
   end
@@ -514,16 +518,12 @@ class HTTP::Cookie
     host = DomainName.new(uri.host)
 
     # RFC 6265 5.3
-    # When the user agent "receives a cookie":
-    return @domain.nil? || host.hostname == @domain unless @for_domain
+    return true if host.hostname == @domain
 
-    if host.cookie_domain?(@domain_name)
-      true
-    elsif host.hostname == @domain
-      @for_domain = false
-      true
+    if @for_domain  # !host-only-flag
+      host.cookie_domain?(@domain_name)
     else
-      false
+      @domain.nil?
     end
   end
 
@@ -534,6 +534,7 @@ class HTTP::Cookie
       raise "cannot tell if this cookie is valid because the domain is unknown"
     end
     uri = URI(uri)
+    # RFC 6265 5.4
     return false if secure? && !(URI::HTTPS === uri)
     acceptable_from_uri?(uri) && HTTP::Cookie.path_match?(@path, uri.path)
   end
@@ -556,7 +557,7 @@ class HTTP::Cookie
       raise "origin must be specified to produce a value for Set-Cookie"
 
     string = "#{@name}=#{Scanner.quote(@value)}"
-    if @for_domain || @domain != DomainName.new(origin.host).hostname
+    if @for_domain
       string << "; Domain=#{@domain}"
     end
     if (origin + './').path != @path
