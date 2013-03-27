@@ -392,7 +392,7 @@ class HTTP::Cookie
   # Returns the domain attribute value as a DomainName object.
   attr_reader :domain_name
 
-  # The domain flag.
+  # The domain flag. (the opposite of host-only-flag)
   #
   # If this flag is true, this cookie will be sent to any host in the
   # \#domain, including the host domain itself.  If it is false, this
@@ -423,20 +423,20 @@ class HTTP::Cookie
     @origin = origin
   end
 
-  # The secure flag.
+  # The secure flag. (secure-only-flag)
   #
   # A cookie with this flag on should only be sent via a secure
   # protocol like HTTPS.
   attr_accessor :secure
   alias secure? secure
 
-  # The HttpOnly flag.
+  # The HttpOnly flag. (http-only-flag)
   #
   # A cookie with this flag on should be hidden from a client script.
   attr_accessor :httponly
   alias httponly? httponly
 
-  # The session flag.
+  # The session flag. (the opposite of persistent-flag)
   #
   # A cookie with this flag on should be hidden from a client script.
   attr_reader :session
