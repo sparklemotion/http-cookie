@@ -785,6 +785,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     ycookie = YAML.load(cookie.to_yaml)
     assert_equal false, ycookie.session?
     assert_equal nil, ycookie.max_age
+    assert_in_delta cookie.expires, ycookie.expires, 1
 
     cookie.expires = nil
     ycookie = YAML.load(cookie.to_yaml)
@@ -795,11 +796,12 @@ class TestHTTPCookie < Test::Unit::TestCase
     ycookie = YAML.load(cookie.to_yaml)
     assert_equal false, ycookie.session?
     assert_equal nil, ycookie.max_age
+    assert_in_delta cookie.expires, ycookie.expires, 1
 
     cookie.max_age = 3600
     ycookie = YAML.load(cookie.to_yaml)
     assert_equal false, ycookie.session?
-    assert_equal cookie.created_at + 3600, ycookie.expires
+    assert_in_delta cookie.created_at + 3600, ycookie.expires, 1
 
     cookie.max_age = nil
     ycookie = YAML.load(cookie.to_yaml)
