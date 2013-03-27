@@ -183,7 +183,7 @@ class HTTP::Cookie
         origin = val
       else
         setter = :"#{skey}="
-        send(setter, val) if respond_to?(setter)
+        __send__(setter, val) if respond_to?(setter)
       end
     }
     if @name.nil? || @value.nil?
