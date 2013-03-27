@@ -40,16 +40,17 @@ class HTTP::CookieJar
 
     def add(cookie)
       path_cookies = ((@jar[cookie.domain_name.hostname] ||= {})[cookie.path] ||= {})
-
-      if cookie.expired?
-        path_cookies.delete(cookie.name)
-      else
-        path_cookies[cookie.name] = cookie
-        cleanup if (@gc_index += 1) >= GC_THRESHOLD
-      end
-
+      path_cookies[cookie.name] = cookie
+      cleanup if (@gc_index += 1) >= GC_THRESHOLD
       self
     end
+
+    def delete(cookie)
+      path_cookies = ((@jar[cookie.domain_name.hostname] ||= {})[cookie.path] ||= {})
+      path_cookies.delete(cookie.name)
+      self
+    end
+    private :delete
 
     def each(uri = nil)
       if uri
@@ -118,7 +119,7 @@ class HTTP::CookieJar
         if (debt = domain_cookies.size - HTTP::Cookie::MAX_COOKIES_PER_DOMAIN) > 0
           domain_cookies.sort_by!(&:created_at)
           domain_cookies.slice!(0, debt).each { |cookie|
-            add(cookie.expire!)
+            delete(cookie)
           }
         end
 
@@ -128,7 +129,7 @@ class HTTP::CookieJar
       if (debt = all_cookies.size - HTTP::Cookie::MAX_COOKIES_TOTAL) > 0
         all_cookies.sort_by!(&:created_at)
         all_cookies.slice!(0, debt).each { |cookie|
-          add(cookie.expire!)
+          delete(cookie)
         }
       end
 
