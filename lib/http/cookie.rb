@@ -170,7 +170,7 @@ class HTTP::Cookie
       raise ArgumentError, "wrong number of arguments (#{args.size} for 1-3)"
     end
     for_domain = false
-    origin = nil
+    max_age = origin = nil
     attr_hash.each_pair { |key, val|
       skey = key.to_s.downcase
       if skey.sub!(/\?\z/, '')
@@ -181,6 +181,9 @@ class HTTP::Cookie
         for_domain = !!val
       when 'origin'
         origin = val
+      when 'max_age'
+        # Let max_age take precedence over expires
+        max_age = val if val
       else
         setter = :"#{skey}="
         __send__(setter, val) if respond_to?(setter)
@@ -190,9 +193,8 @@ class HTTP::Cookie
       raise ArgumentError, "at least name and value must be specified"
     end
     @for_domain = for_domain
-    if origin
-      self.origin = origin
-    end
+    self.origin = origin if origin
+    self.max_age = max_age if max_age
   end
 
   autoload :Scanner, 'http/cookie/scanner'
