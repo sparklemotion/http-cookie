@@ -53,6 +53,7 @@ class HTTP::CookieJar
     private :delete
 
     def each(uri = nil)
+      now = Time.now
       if uri
         thost = DomainName.new(uri.host)
         tpath = uri.path
@@ -61,11 +62,11 @@ class HTTP::CookieJar
           paths.each { |path, hash|
             next unless HTTP::Cookie.path_match?(path, tpath)
             hash.delete_if { |name, cookie|
-              if cookie.expired?
+              if cookie.expired?(now)
                 true
               else
                 if cookie.valid_for_uri?(uri)
-                  cookie.accessed_at = Time.now
+                  cookie.accessed_at = now
                   yield cookie
                 end
                 false
@@ -77,7 +78,7 @@ class HTTP::CookieJar
         @jar.each { |domain, paths|
           paths.each { |path, hash|
             hash.delete_if { |name, cookie|
-              if cookie.expired?
+              if cookie.expired?(now)
                 true
               else
                 yield cookie
@@ -100,14 +101,14 @@ class HTTP::CookieJar
     end
 
     def cleanup(session = false)
+      now = Time.now
       all_cookies = []
-
       @jar.each { |domain, paths|
         domain_cookies = []
 
         paths.each { |path, hash|
           hash.delete_if { |name, cookie|
-            if cookie.expired? || (session && cookie.session?)
+            if cookie.expired?(now) || (session && cookie.session?)
               true
             else
               domain_cookies << cookie
