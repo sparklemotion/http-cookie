@@ -9,11 +9,12 @@ end
 # :startdoc:
 
 class HTTP::CookieJar
+  # A store class that uses a hash of hashes.
   class HashStore < AbstractStore
-    GC_THRESHOLD = HTTP::Cookie::MAX_COOKIES_TOTAL / 20
-
     def default_options
-      {}
+      {
+        :gc_threshold => HTTP::Cookie::MAX_COOKIES_TOTAL / 20
+      }
     end
 
     def initialize(options = nil)
@@ -41,7 +42,7 @@ class HTTP::CookieJar
     def add(cookie)
       path_cookies = ((@jar[cookie.domain_name.hostname] ||= {})[cookie.path] ||= {})
       path_cookies[cookie.name] = cookie
-      cleanup if (@gc_index += 1) >= GC_THRESHOLD
+      cleanup if (@gc_index += 1) >= @gc_threshold
       self
     end
 

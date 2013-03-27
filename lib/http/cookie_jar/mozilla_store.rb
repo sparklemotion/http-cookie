@@ -5,10 +5,9 @@ class HTTP::CookieJar
   class MozillaStore < AbstractStore
     SCHEMA_VERSION = 5
 
-    GC_THRESHOLD = HTTP::Cookie::MAX_COOKIES_TOTAL / 20
-
     def default_options
       {
+        :gc_threshold => HTTP::Cookie::MAX_COOKIES_TOTAL / 20,
         :app_id => 0,
         :in_browser_element => false,
       }
@@ -170,7 +169,7 @@ class HTTP::CookieJar
           :isSecure => cookie.secure? ? 1 : 0,
           :isHttpOnly => cookie.httponly? ? 1 : 0,
         })
-      cleanup if (@gc_index += 1) >= GC_THRESHOLD
+      cleanup if (@gc_index += 1) >= @gc_threshold
 
       self
     end
