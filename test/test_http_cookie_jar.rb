@@ -363,13 +363,16 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     h_cookie = HTTP::Cookie.new(cookie_values(:name => 'Quux',
                                               :value => 'Foo#Quux',
                                               :httponly => true))
-
+    ma_cookie = HTTP::Cookie.new(cookie_values(:name => 'Maxage',
+                                               :value => 'Foo#Maxage',
+                                               :max_age => 15000))
     @jar.add(cookie)
     @jar.add(s_cookie)
     @jar.add(cookie2)
     @jar.add(h_cookie)
+    @jar.add(ma_cookie)
 
-    assert_equal(4, @jar.cookies(url).length)
+    assert_equal(5, @jar.cookies(url).length)
 
     Dir.mktmpdir do |dir|
       filename = File.join(dir, "cookies.txt")
@@ -384,7 +387,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
       jar = HTTP::CookieJar.new
       jar.load(filename, :cookiestxt) # HACK test the format
       cookies = jar.cookies(url)
-      assert_equal(3, cookies.length)
+      assert_equal(4, cookies.length)
       cookies.each { |cookie|
         case cookie.name
         when 'Foo'
@@ -407,13 +410,17 @@ class TestHTTPCookieJar < Test::Unit::TestCase
           assert_equal true, cookie.for_domain
           assert_equal '/', cookie.path
           assert_equal true, cookie.httponly?
+        when 'Maxage'
+          assert_equal 'Foo#Maxage', cookie.value
+          assert_equal nil, cookie.max_age
+          assert_in_delta ma_cookie.expires, cookie.expires, 1
         else
           raise
         end
       }
     end
 
-    assert_equal(4, @jar.cookies(url).length)
+    assert_equal(5, @jar.cookies(url).length)
   end
 
   def test_expire_cookies

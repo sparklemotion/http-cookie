@@ -200,18 +200,18 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie = HTTP::Cookie.parse('name=Akinori; max-age=3600', :origin => url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
-    cookie = HTTP::Cookie.parse('name=Akinori; max-age=3600', :origin => url, :date => base).first
+    cookie = HTTP::Cookie.parse('name=Akinori; max-age=3600', :origin => url, :created_at => base).first
     assert_equal base + 3600, cookie.expires
 
     # Max-Age has precedence over Expires
     cookie = HTTP::Cookie.parse("name=Akinori; max-age=3600; expires=#{date}", :origin => url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
-    cookie = HTTP::Cookie.parse("name=Akinori; max-age=3600; expires=#{date}", :origin => url, :date => base).first
+    cookie = HTTP::Cookie.parse("name=Akinori; max-age=3600; expires=#{date}", :origin => url, :created_at => base).first
     assert_equal base + 3600, cookie.expires
 
     cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}; max-age=3600", :origin => url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
-    cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}; max-age=3600", :origin => url, :date => base).first
+    cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}; max-age=3600", :origin => url, :created_at => base).first
     assert_equal base + 3600, cookie.expires
   end
 
@@ -382,8 +382,8 @@ class TestHTTPCookie < Test::Unit::TestCase
       date = Time.at(Time.now.to_i)
       cookie_params.keys.combine.each do |keys|
         cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-        cookie, = HTTP::Cookie.parse(cookie_text, :origin => url, :date => date)
-        cookie2, = HTTP::Cookie.parse(cookie.set_cookie_value, :origin => url, :date => date)
+        cookie, = HTTP::Cookie.parse(cookie_text, :origin => url, :created_at => date)
+        cookie2, = HTTP::Cookie.parse(cookie.set_cookie_value, :origin => url, :created_at => date)
 
         assert_equal(cookie.name, cookie2.name)
         assert_equal(cookie.value, cookie2.value)
@@ -539,7 +539,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie.max_age = 3600
     assert_equal false, cookie.session?
-    assert_equal nil, cookie.expires
+    assert_equal cookie.created_at + 3600, cookie.expires
 
     cookie.max_age = nil
     assert_equal true, cookie.session?
@@ -773,6 +773,38 @@ class TestHTTPCookie < Test::Unit::TestCase
         }
       }
     }
+  end
+
+  def test_yaml_expires
+    require 'yaml'
+    cookie = HTTP::Cookie.new(cookie_values)
+
+    assert_equal false, cookie.session?
+    assert_equal nil, cookie.max_age
+
+    ycookie = YAML.load(cookie.to_yaml)
+    assert_equal false, ycookie.session?
+    assert_equal nil, ycookie.max_age
+
+    cookie.expires = nil
+    ycookie = YAML.load(cookie.to_yaml)
+    assert_equal true, ycookie.session?
+    assert_equal nil, ycookie.max_age
+
+    cookie.expires = Time.now + 3600
+    ycookie = YAML.load(cookie.to_yaml)
+    assert_equal false, ycookie.session?
+    assert_equal nil, ycookie.max_age
+
+    cookie.max_age = 3600
+    ycookie = YAML.load(cookie.to_yaml)
+    assert_equal false, ycookie.session?
+    assert_equal cookie.created_at + 3600, ycookie.expires
+
+    cookie.max_age = nil
+    ycookie = YAML.load(cookie.to_yaml)
+    assert_equal true, ycookie.session?
+    assert_equal nil, ycookie.expires
   end
 
   def test_s_path_match?

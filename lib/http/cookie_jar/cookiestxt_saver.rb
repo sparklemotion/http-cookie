@@ -39,7 +39,7 @@ class HTTP::CookieJar::CookiestxtSaver < HTTP::CookieJar::AbstractSaver
         @for_domain ? True : False,
         @path,
         @secure ? True : False,
-        @expires.to_i,
+        expires.to_i,
         @name,
         @value
       ]

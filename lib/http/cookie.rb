@@ -38,7 +38,8 @@ class HTTP::Cookie
     name        value
     domain      for_domain  path
     secure      httponly
-    expires     created_at  accessed_at
+    expires     max_age
+    created_at  accessed_at
   ]
 
   if String.respond_to?(:try_convert)
@@ -110,8 +111,8 @@ class HTTP::Cookie
   # The setter method accepts a Time object, a string representation
   # of date/time, or `nil`.
   #
-  # Note that #max_age and #expires are mutually exclusive.  Setting
-  # \#max_age resets #expires to nil, and vice versa.
+  # Setting this value resets #max_age to nil.  When #max_age is
+  # non-nil, #expires returns `created_at + max_age`.
   #
   # :attr_accessor: expires
 
@@ -122,8 +123,7 @@ class HTTP::Cookie
   # represents an integer which will be stringified and then
   # integerized using #to_i.
   #
-  # Note that #max_age and #expires are mutually exclusive.  Setting
-  # \#max_age resets #expires to nil, and vice versa.
+  # This value is reset to nil when #expires= is called.
   #
   # :attr_accessor: max_age
 
@@ -232,10 +232,6 @@ class HTTP::Cookie
     # given origin is not allowed to issue is not included in the
     # resulted array.
     #
-    # Any Max-Age attribute value found is converted to an expires
-    # value computing from the current time so that expiration check
-    # (#expired?) can be performed.
-    #
     # If a block is given, each cookie object is passed to the block.
     #
     # Available option keywords are below:
@@ -243,9 +239,8 @@ class HTTP::Cookie
     # :origin
     # : The cookie's origin URI/URL
     #
-    # :date
-    # : The base date used for interpreting Max-Age attribute values
-    #   instead of the current time
+    # :created_at
+    # : The creation time of the cookies parsed.
     #
     # :logger
     # : Logger object useful for debugging
@@ -271,9 +266,8 @@ class HTTP::Cookie
       if options
         logger = options[:logger]
         origin = options[:origin] and origin = URI(origin)
-        date = options[:date]
+        created_at = options[:created_at]
       end
-      date ||= Time.now
 
       [].tap { |cookies|
         s = Scanner.new(set_cookie, logger)
@@ -282,6 +276,7 @@ class HTTP::Cookie
           break if name.nil? || name.empty?
 
           cookie = new(name, value)
+          cookie.created_at = created_at if created_at
           attrs.each { |aname, avalue|
             begin
               case aname
@@ -310,10 +305,6 @@ class HTTP::Cookie
               logger.warn("Couldn't parse #{aname} '#{avalue}': #{e}") if logger
             end
           }
-
-          # Have `expires` set instead of `max_age`, so that
-          # expiration check (`expired?`) can be performed.
-          cookie.expires = date + cookie.max_age if cookie.max_age
 
           if origin
             begin
@@ -445,7 +436,9 @@ class HTTP::Cookie
   attr_reader :session
   alias session? session
 
-  attr_reader :expires
+  def expires
+    @expires or @created_at && @max_age ? @created_at + @max_age : nil
+  end
 
   # See #expires.
   def expires=(t)
@@ -483,8 +476,11 @@ class HTTP::Cookie
 
   # Tests if this cookie is expired by now, or by a given time.
   def expired?(time = Time.now)
-    return false unless @expires
-    time > @expires
+    if expires = self.expires
+      expires <= time
+    else
+      false
+    end
   end
 
   # Expires this cookie by setting the expires attribute value to a
@@ -501,7 +497,8 @@ class HTTP::Cookie
   # The comment attribute.
   attr_accessor :comment
 
-  # The time this cookie was created at.
+  # The time this cookie was created at.  This value is used as a base
+  # date for interpreting the Max-Age attribute value.  See #expires.
   attr_accessor :created_at
 
   # The time this cookie was last accessed at.
@@ -618,11 +615,16 @@ class HTTP::Cookie
 
   # YAML deserialization helper for Psych.
   def yaml_initialize(tag, map)
+    expires = nil
     map.each { |key, value|
       case key
+      when 'expires'
+        # avoid clobbering max_age
+        expires = value
       when *PERSISTENT_PROPERTIES
         __send__(:"#{key}=", value)
       end
     }
+    self.expires = expires if self.max_age.nil?
   end
 end
