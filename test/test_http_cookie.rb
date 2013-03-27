@@ -177,6 +177,22 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal '.example.com', cookie.dot_domain
   end
 
+  def test_parse_public_suffix
+    cookie_str = 'a=b; domain=com'
+
+    cookie = HTTP::Cookie.parse(cookie_str).first
+    assert_equal('com', cookie.domain)
+    assert_equal(false, cookie.for_domain?)
+
+    cookie.origin = 'http://com/'
+    assert_equal('com', cookie.domain)
+    assert_equal(false, cookie.for_domain?)
+
+    assert_raises(ArgumentError) {
+      cookie.origin = 'http://example.com/'
+    }
+  end
+
   def test_parse_domain_none
     url = URI.parse('http://example.com/')
 
@@ -662,6 +678,17 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_raises(ArgumentError) {
       cookie.origin = URI.parse('http://example.org/')
     }
+  end
+
+  def test_acceptable_from_uri?
+    cookie = HTTP::Cookie.new(cookie_values(
+        :domain => 'uk',
+        :for_domain => true,
+        :origin => nil))
+    assert_equal true, cookie.for_domain?
+    assert_equal true, cookie.acceptable_from_uri?('http://uk/')
+    assert_equal true, cookie.for_domain? # bug: acceptable_from_uri? changed it to false
+    assert_equal false, cookie.acceptable_from_uri?('http://foo.uk/')
   end
 
   def test_valid_for_uri?
