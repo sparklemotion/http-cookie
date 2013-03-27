@@ -591,7 +591,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
   def test_max_cookies_hashstore
     gc_threshold = 150
     h_test_max_cookies(
-      HTTP::CookieJar.new(:hash,
+      HTTP::CookieJar.new(
+        :store => :hash,
         :gc_threshold => gc_threshold),
       HTTP::Cookie::MAX_COOKIES_TOTAL + gc_threshold)
   end
@@ -600,7 +601,8 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     gc_threshold = 150
     Dir.mktmpdir { |dir|
       h_test_max_cookies(
-        HTTP::CookieJar.new(:mozilla,
+        HTTP::CookieJar.new(
+          :store => :mozilla,
           :gc_threshold => gc_threshold,
           :filename => File.join(dir, "cookies.sqlite")),
         HTTP::Cookie::MAX_COOKIES_TOTAL + gc_threshold)

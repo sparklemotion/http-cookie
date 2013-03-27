@@ -10,18 +10,30 @@ class HTTP::CookieJar
 
   attr_reader :store
 
-  # Generates a new cookie jar.  The default store class is `:hash`,
-  # which maps to `HTTP::CookieJar::HashStore`.  Any given options are
-  # passed through to the initializer of the specified store class.
-  # For example, the `:mozilla` (`HTTP::CookieJar::MozillaStore`)
-  # store class requires a `:filename` option.
-  def initialize(store = :hash, options = nil)
-    case store
+  # Generates a new cookie jar.
+  #
+  # Available option keywords are as below:
+  #
+  # :store
+  # : The store class that backs this jar. (default: `:hash`)
+  # A symbol or an instance of a store class is accepted.  Symbols are
+  # mapped to store classes, like `:hash` to
+  # `HTTP::CookieJar::HashStore` and `:mozilla` to
+  # `HTTP::CookieJar::MozillaStore`.
+  #
+  # Any options given are passed through to the initializer of the
+  # specified store class.  For example, the `:mozilla`
+  # (`HTTP::CookieJar::MozillaStore`) store class requires a
+  # `:filename` option.  See individual store classes for details.
+  def initialize(options = nil)
+    opthash = {
+      :store => :hash,
+    }
+    opthash.update(options) if options
+    case store = opthash[:store]
     when Symbol
-      @store = AbstractStore.implementation(store).new(options)
+      @store = AbstractStore.implementation(store).new(opthash)
     when AbstractStore
-      options.empty? or
-        raise ArgumentError, 'wrong number of arguments (%d for 1)' % (1 + options.size)
       @store = store
     else
       raise TypeError, 'wrong object given as cookie store: %s' % store.inspect
