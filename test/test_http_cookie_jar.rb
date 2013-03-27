@@ -620,7 +620,7 @@ class TestHTTPCookieJar < Test::Unit::TestCase
     #      :filename => File.join(dir, "cookies.sqlite")),
     #    HTTP::Cookie::MAX_COOKIES_TOTAL + gc_threshold)
     #}
-  rescue LoadError
+  rescue IndexError
     STDERR.puts 'sqlite3 missing?'
   end
 end
