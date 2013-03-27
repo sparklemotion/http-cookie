@@ -57,7 +57,6 @@ class HTTP::CookieJar
       path_cookies.delete(cookie.name)
       self
     end
-    private :delete
 
     def each(uri = nil)
       now = Time.now

@@ -50,6 +50,11 @@ class HTTP::CookieJar::AbstractStore
     self
   end
 
+  def delete(cookie)
+    raise
+    self
+  end
+
   # Iterates over all cookies that are not expired.
   #
   # An optional argument +uri+ specifies a URI object indicating the
@@ -80,7 +85,7 @@ class HTTP::CookieJar::AbstractStore
     else
       select(&:expired?)
     end.each { |cookie|
-      add(cookie.expire)
+      delete(cookie)
     }
     # subclasses can optionally remove over-the-limit cookies.
     self

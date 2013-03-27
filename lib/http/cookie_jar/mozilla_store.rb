@@ -137,7 +137,8 @@ class HTTP::CookieJar
           st_update = @db.prepare("UPDATE moz_cookies SET baseDomain = :baseDomain WHERE id = :id")
 
           @db.execute("SELECT id, host FROM moz_cookies") { |row|
-            domain = DomainName.new(row[:host]).domain
+            domain_name = DomainName.new(row[:host])
+            domain = domain_name.domain || domain_name.hostname
             st_update.execute(:baseDomain => domain, :id => row[:id])
           }
 
@@ -214,6 +215,27 @@ class HTTP::CookieJar
       self
     end
 
+    def delete(cookie)
+      @st_delete ||=
+        @db.prepare(<<-'SQL')
+                     DELETE FROM moz_cookies
+                       WHERE appId = :appId AND
+                             inBrowserElement = :inBrowserElement AND
+                             name = :name AND
+                             host = :host AND
+                             path = :path
+                    SQL
+
+      @st_delete.execute({
+          :appId => @app_id,
+          :inBrowserElement => @in_browser_element ? 1 : 0,
+          :name => cookie.name,
+          :host => cookie.dot_domain,
+          :path => cookie.path,
+        })
+      self
+    end
+
     def each(uri = nil)
       now = Time.now
       if uri
@@ -230,10 +252,10 @@ class HTTP::CookieJar
             @db.prepare("UPDATE moz_cookies SET lastAccessed = :lastAccessed where id = :id")
 
         thost = DomainName.new(uri.host)
-        tpath = HTTP::Cookie.normalize_path(uri.path)
+        tpath = uri.path
 
         @st_cookies_for_domain.execute({
-            :baseDomain => thost.domain_name.domain,
+            :baseDomain => thost.domain || thost.hostname,
             :appId => @app_id,
             :inBrowserElement => @in_browser_element ? 1 : 0,
             :expiry => now.to_i,
