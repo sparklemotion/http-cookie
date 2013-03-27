@@ -1,7 +1,10 @@
+# :markup: markdown
 require 'http/cookie_jar'
 require 'sqlite3'
 
 class HTTP::CookieJar
+  # A store class that uses Mozilla compatible SQLite3 database as
+  # backing store.
   class MozillaStore < AbstractStore
     SCHEMA_VERSION = 5
 
@@ -26,6 +29,27 @@ class HTTP::CookieJar
       appId inBrowserElement
     ]
 
+    # Generates a Mozilla cookie store.  If the file does not exist,
+    # it is created.  If it does and its schema is old, it is
+    # automatically upgraded with a new schema keeping the existing
+    # data.
+    #
+    # Available option keywords are as below:
+    #
+    # :filename
+    # : A file name of the SQLite3 database to open.  This option is
+    # mandatory.
+    #
+    # :gc_threshold
+    # : GC threshold; A GC happens when this many times cookies have
+    # been stored (default: `HTTP::Cookie::MAX_COOKIES_TOTAL / 20`)
+    #
+    # :app_id
+    # : application ID (default: `0`) to have per application jar.
+    #
+    # :in_browser_element
+    # : a flag to tell if cookies are stored in an in browser
+    # element. (default: `false`)
     def initialize(options = nil)
       super
 
@@ -39,6 +63,7 @@ class HTTP::CookieJar
       @gc_index = 0
     end
 
+    # Returns the schema version of the database.
     def schema_version
       @schema_version ||= @db.execute("PRAGMA user_version").first[0]
     rescue SQLite3::SQLException

@@ -1,3 +1,4 @@
+# :markup: markdown
 require 'http/cookie'
 
 ##
@@ -44,7 +45,7 @@ class HTTP::CookieJar
     @store = other.instance_eval { @store.dup }
   end
 
-  # Adds a +cookie+ to the jar and return self.  If a given cookie has
+  # Adds a cookie to the jar and return self.  If a given cookie has
   # no domain or path attribute values and the origin is unknown,
   # ArgumentError is raised.
   #
@@ -83,7 +84,7 @@ class HTTP::CookieJar
     }.sort
   end
 
-  # Tests if the jar is empty.  If +url+ is given, tests if there is
+  # Tests if the jar is empty.  If `url` is given, tests if there is
   # no cookie for the URL.
   def empty?(url = nil)
     if url
@@ -96,12 +97,12 @@ class HTTP::CookieJar
 
   # Iterates over all cookies that are not expired.
   #
-  # An optional argument +uri+ specifies a URI/URL indicating the
+  # An optional argument `uri` specifies a URI/URL indicating the
   # destination of the cookies being selected.  Every cookie yielded
   # should be good to send to the given URI,
   # i.e. cookie.valid_for_uri?(uri) evaluates to true.
   #
-  # If (and only if) the +uri+ option is given, last access time of
+  # If (and only if) the `uri` option is given, last access time of
   # each cookie is updated to the current time.
   def each(uri = nil, &block)
     block_given? or return enum_for(__method__, uri)
@@ -126,16 +127,21 @@ class HTTP::CookieJar
   #
   # Available option keywords are below:
   #
-  # * +format+
-  #   [<tt>:yaml</tt>]
-  #     YAML structure (default)
-  #   [<tt>:cookiestxt</tt>]
-  #     Mozilla's cookies.txt format
-  # * +session+
-  #   [+true+]
-  #     Save session cookies as well.
-  #   [+false+]
-  #     Do not save session cookies. (default)
+  # * `:format`
+  #   <dl class="rdoc-list note-list">
+  #     <dt>:yaml</dt>
+  #     <dd>YAML structure (default)</dd>
+  #     <dt>:cookiestxt</dt>
+  #     <dd>: Mozilla's cookies.txt format</dd>
+  #   </dl>
+  #
+  # * `:session`
+  #   <dl class="rdoc-list note-list">
+  #     <dt>true</dt>
+  #     <dd>Save session cookies as well.</dd>
+  #     <dt>false</dt>
+  #     <dd>Do not save session cookies. (default)</dd>
+  #   </dl>
   #
   # All options given are passed through to the underlying cookie
   # saver module.
@@ -187,11 +193,13 @@ class HTTP::CookieJar
   #
   # Available option keywords are below:
   #
-  # * +format+
-  #   [<tt>:yaml</tt>]
-  #     YAML structure (default)
-  #   [<tt>:cookiestxt</tt>]
-  #     Mozilla's cookies.txt format
+  # * `:format`
+  #   <dl class="rdoc-list note-list">
+  #     <dt>:yaml</dt>
+  #     <dd>YAML structure (default)</dd>
+  #     <dt>:cookiestxt</dt>
+  #     <dd>: Mozilla's cookies.txt format</dd>
+  #   </dl>
   #
   # All options given are passed through to the underlying cookie
   # saver module.

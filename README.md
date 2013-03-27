@@ -114,10 +114,10 @@ equivalent using `HTTP::Cookie`:
 - `Mechanize::CookieJar#jar`
 
     There is no direct access to the internal hash in
-    `HTTP::CookieJar` since it has introduced an abstract storage
-    layer.  If you want to tweak the internals of the hash storage,
-    try creating a new storage class referring to the default storage
-    class `HTTP::CookieJar::HashStore`.
+    `HTTP::CookieJar` since it has introduced an abstract store layer.
+    If you want to tweak the internals of the hash store, try creating
+    a new store class referring to the default store class
+    `HTTP::CookieJar::HashStore`.
 
     If you desperately need it you can access it by
     `jar.store.instance_variable_get(:@jar)`, but there is no

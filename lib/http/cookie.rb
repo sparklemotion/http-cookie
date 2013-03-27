@@ -240,14 +240,14 @@ class HTTP::Cookie
     #
     # Available option keywords are below:
     #
-    # `origin`
+    # :origin
     # : The cookie's origin URI/URL
     #
-    # `date`
+    # :date
     # : The base date used for interpreting Max-Age attribute values
     #   instead of the current time
     #
-    # `logger`
+    # :logger
     # : Logger object useful for debugging
     #
     # ### Compatibility Note for Mechanize::Cookie users

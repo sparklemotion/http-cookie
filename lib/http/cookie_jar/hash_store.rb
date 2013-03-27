@@ -9,7 +9,7 @@ end
 # :startdoc:
 
 class HTTP::CookieJar
-  # A store class that uses a hash of hashes.
+  # A store class that uses a hash-based cookie store.
   class HashStore < AbstractStore
     def default_options
       {
@@ -17,20 +17,26 @@ class HTTP::CookieJar
       }
     end
 
+    # Generates a hash based cookie store.
+    #
+    # Available option keywords are as below:
+    #
+    # :gc_threshold
+    # : GC threshold; A GC happens when this many times cookies have
+    # been stored (default: `HTTP::Cookie::MAX_COOKIES_TOTAL / 20`)
     def initialize(options = nil)
       super
 
-      @jar = {}
-      # {
-      #   hostname => {
-      #     path => {
-      #       name => cookie,
-      #       ...
-      #     },
+      @jar = {
+      # hostname => {
+      #   path => {
+      #     name => cookie,
       #     ...
       #   },
       #   ...
-      # }
+      # },
+      # ...
+      }
 
       @gc_index = 0
     end
