@@ -11,19 +11,42 @@ class HTTP::CookieJar::YAMLSaver < HTTP::CookieJar::AbstractSaver
   def load(io, jar)
     begin
       data = YAML.load(io)
-    rescue ArgumentError
-      @logger.warn "unloadable YAML cookie data discarded" if @logger
-      return
+    rescue ArgumentError => e
+      case e.message
+      when %r{\Aundefined class/module Mechanize::}
+        # backward compatibility with Mechanize::Cookie
+        begin
+          io.rewind # hopefully
+          yaml = io.read
+          # a gross hack
+          yaml.gsub!(%r{^(    [^ ].*:) !ruby/object:Mechanize::Cookie$}, "\\1")
+          data = YAML.load(yaml)
+        rescue Errno::ESPIPE
+          @logger.warn "could not rewind the stream for conversion" if @logger
+        rescue ArgumentError
+        end
+      end
     end
 
-    unless data.instance_of?(Array)
+    case data
+    when Array
+      data.each { |cookie|
+        jar.add(cookie)
+      }
+    when Hash
+      # backward compatibility with Mechanize::Cookie
+      data.each { |domain, paths|
+        paths.each { |path, names|
+          names.each { |cookie_name, cookie_hash|
+            cookie = HTTP::Cookie.new(cookie_hash)
+            jar.add(cookie)
+          }
+        }
+      }
+    else
       @logger.warn "incompatible YAML cookie data discarded" if @logger
       return
     end
-
-    data.each { |cookie|
-      jar.add(cookie)
-    }
   end
 
   private
