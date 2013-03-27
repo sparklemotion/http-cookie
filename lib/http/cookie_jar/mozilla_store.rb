@@ -200,7 +200,7 @@ class HTTP::CookieJar
         ])
 
       @st_add.execute({
-          :baseDomain => cookie.domain_name.domain,
+          :baseDomain => cookie.domain_name.domain || cookie.domain,
           :appId => @app_id,
           :inBrowserElement => @in_browser_element ? 1 : 0,
           :name => cookie.name, :value => cookie.value,
