@@ -5,6 +5,9 @@ require 'sqlite3'
 class HTTP::CookieJar
   # A store class that uses Mozilla compatible SQLite3 database as
   # backing store.
+  #
+  # Session cookies are stored separately on memory and will not be
+  # stored persistently in the SQLite3 database.
   class MozillaStore < AbstractStore
     SCHEMA_VERSION = 5
 
@@ -55,6 +58,7 @@ class HTTP::CookieJar
 
       @filename = options[:filename] or raise ArgumentError, ':filename option is missing'
 
+      @sjar = HashStore.new
       @db = SQLite3::Database.new(@filename)
       @db.results_as_hash = true
 
@@ -188,9 +192,7 @@ class HTTP::CookieJar
       end
     end
 
-    public
-
-    def add(cookie)
+    def db_add(cookie)
       @st_add ||=
         @db.prepare('INSERT OR REPLACE INTO moz_cookies (%s) VALUES (%s)' % [
           ALL_COLUMNS.join(', '),
@@ -215,7 +217,7 @@ class HTTP::CookieJar
       self
     end
 
-    def delete(cookie)
+    def db_delete(cookie)
       @st_delete ||=
         @db.prepare(<<-'SQL')
                      DELETE FROM moz_cookies
@@ -234,6 +236,23 @@ class HTTP::CookieJar
           :path => cookie.path,
         })
       self
+    end
+
+    public
+
+    def add(cookie)
+      if cookie.session?
+        @sjar.add(cookie)
+        db_delete(cookie)
+      else
+        @sjar.delete(cookie)
+        db_add(cookie)
+      end
+    end
+
+    def delete(cookie)
+      @sjar.delete(cookie)
+      db_delete(cookie)
     end
 
     def each(uri = nil)
@@ -285,6 +304,7 @@ class HTTP::CookieJar
             yield cookie
           end
         }
+        @sjar.each(uri, &proc)
       else
         @st_all_cookies ||=
           @db.prepare(<<-'SQL')
@@ -313,12 +333,14 @@ class HTTP::CookieJar
 
           yield cookie
         }
+        @sjar.each(&proc)
       end
       self
     end
 
     def clear
       @db.execute("DELETE FROM moz_cookies")
+      @sjar.clear
       self
     end
 
@@ -331,7 +353,7 @@ class HTTP::CookieJar
     protected :count
 
     def empty?
-      count == 0
+      @sjar.empty? && count == 0
     end
 
     def cleanup(session = false)
