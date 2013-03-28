@@ -23,7 +23,7 @@ class HTTP::Cookie::Scanner < StringScanner
   class << self
     def quote(s)
       return s unless s.match(RE_BAD_CHAR)
-      '"' << s.gsub(RE_BAD_CHAR, "\\\\\\1") << '"'
+      '"' << s.gsub(/([\\"])/, "\\\\\\1") << '"'
     end
   end
 

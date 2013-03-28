@@ -390,6 +390,16 @@ class TestHTTPCookie < Test::Unit::TestCase
     end
   end
 
+  def test_cookie_value
+    [
+      ['foo="bar  baz"', 'bar  baz'],
+      ['foo="bar\"; \"baz"', 'bar"; "baz'],
+    ].each { |cookie_value, value|
+      cookie = HTTP::Cookie.new('foo', value)
+      assert_equal(cookie_value, cookie.cookie_value)
+    }
+  end
+
   def test_set_cookie_value
     url = URI.parse('http://rubyforge.org/')
 

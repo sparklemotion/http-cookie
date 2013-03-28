@@ -545,7 +545,7 @@ class HTTP::Cookie
   # Returns a string for use in a Cookie header value,
   # i.e. "name=value".
   def cookie_value
-    "#{@name}=#{@value}"
+    "#{@name}=#{Scanner.quote(@value)}"
   end
   alias to_s cookie_value
 
@@ -559,7 +559,7 @@ class HTTP::Cookie
     origin = origin ? URI(origin) : @origin or
       raise "origin must be specified to produce a value for Set-Cookie"
 
-    string = "#{@name}=#{Scanner.quote(@value)}"
+    string = cookie_value
     if @for_domain
       string << "; Domain=#{@domain}"
     end
