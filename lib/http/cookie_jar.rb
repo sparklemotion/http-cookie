@@ -117,6 +117,29 @@ class HTTP::CookieJar
   end
   include Enumerable
 
+  # Parses a Set-Cookie field value `set_cookie` sent from a URI
+  # `origin` and adds the cookies parsed as valid to the jar.  Returns
+  # an array of cookies that have been added.  If a block is given, it
+  # is called after each cookie is added.
+  #
+  # `jar.parse(set_cookie, origin)` is a shorthand for this:
+  #
+  #         HTTP::Cookie.parse(set_cookie, origin) { |cookie|
+  #           jar.add(cookie)
+  #         }
+  #
+  # See HTTP::Cookie.parse for available options.
+  def parse(set_cookie, origin, options = nil) # :yield: cookie
+    if block_given?
+      HTTP::Cookie.parse(set_cookie, origin, options) { |cookie|
+        add(cookie)
+        yield cookie
+      }
+    else
+      HTTP::Cookie.parse(set_cookie, origin, options, &method(:add))
+    end
+  end
+
   # call-seq:
   #   jar.save(filename_or_io, **options)
   #   jar.save(filename_or_io, format = :yaml, **options)
