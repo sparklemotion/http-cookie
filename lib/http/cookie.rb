@@ -413,6 +413,7 @@ class HTTP::Cookie
 
   # See #origin.
   def origin=(origin)
+    return origin if origin == @origin
     @origin.nil? or
       raise ArgumentError, "origin cannot be changed once it is set"
     origin = URI(origin)
