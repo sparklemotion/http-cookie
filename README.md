@@ -74,8 +74,8 @@ equivalent using `HTTP::Cookie`:
         cookies2 = Mechanize::Cookie.parse(uri, set_cookie2, log)
 
         # after
-        cookies1 = HTTP::Cookie.parse(set_cookie1, :origin => uri)
-        cookies2 = HTTP::Cookie.parse(set_cookie2, :origin => uri, :logger => log)
+        cookies1 = HTTP::Cookie.parse(set_cookie1, uri_or_url)
+        cookies2 = HTTP::Cookie.parse(set_cookie2, uri_or_url, :logger => log)
 
 - `Mechanize::Cookie#set_domain`
 

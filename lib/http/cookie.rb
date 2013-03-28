@@ -232,17 +232,14 @@ class HTTP::Cookie
     end
 
     # Parses a Set-Cookie header value `set_cookie` into an array of
-    # Cookie objects.  Parts (separated by commas) that are malformed
-    # or invalid are silently ignored.  For example, a cookie that a
-    # given origin is not allowed to issue is not included in the
-    # resulted array.
+    # Cookie objects taking `origin` as the source URI/URL.  Parts
+    # (separated by commas) that are malformed or invalid are silently
+    # ignored.  For example, cookies that a given origin is not
+    # allowed to issue are excluded from the resulted array.
     #
     # If a block is given, each cookie object is passed to the block.
     #
     # Available option keywords are below:
-    #
-    # :origin
-    # : The cookie's origin URI/URL
     #
     # :created_at
     # : The creation time of the cookies parsed.
@@ -257,7 +254,7 @@ class HTTP::Cookie
     #
     #         Mechanize::Cookie.parse(uri, set_cookie[, log])
     #
-    #         HTTP::Cookie.parse(set_cookie, :origin => uri[, :logger => # log])
+    #         HTTP::Cookie.parse(set_cookie, uri[, :logger => # log])
     #
     # * `HTTP::Cookie.parse` does not yield nil nor include nil in an
     #   returned array.  It simply ignores unparsable parts.
@@ -267,12 +264,12 @@ class HTTP::Cookie
     #   implementations.  In particular, it is capable of parsing
     #   cookie definitions containing double-quotes just as
     #   naturally expected.
-    def parse(set_cookie, options = nil, &block)
+    def parse(set_cookie, origin, options = nil, &block)
       if options
         logger = options[:logger]
-        origin = options[:origin] and origin = URI(origin)
         created_at = options[:created_at]
       end
+      origin = URI(origin)
 
       [].tap { |cookies|
         s = Scanner.new(set_cookie, logger)

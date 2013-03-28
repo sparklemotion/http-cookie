@@ -48,7 +48,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     dates.each do |date|
       cookie = "PREF=1; expires=#{date}"
       silently do
-        assert_equal 1, HTTP::Cookie.parse(cookie, :origin => url) { |c|
+        assert_equal 1, HTTP::Cookie.parse(cookie, url) { |c|
           assert c.expires, "Tried parsing: #{date}"
           assert_equal(true, c.expires < yesterday)
         }.size
@@ -61,7 +61,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     uri = URI.parse 'http://example'
 
-    assert_equal 1, HTTP::Cookie.parse(cookie_str, :origin => uri) { |cookie|
+    assert_equal 1, HTTP::Cookie.parse(cookie_str, uri) { |cookie|
       assert_equal 'a', cookie.name
       assert_equal 'b', cookie.value
     }.size
@@ -72,7 +72,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     uri = URI.parse 'http://example'
 
-    assert_equal 1, HTTP::Cookie.parse(cookie_str, :origin => uri) { |cookie|
+    assert_equal 1, HTTP::Cookie.parse(cookie_str, uri) { |cookie|
       assert_equal 'foo',               cookie.name
       assert_equal 'bar',               cookie.value
       assert_equal '/',                 cookie.path
@@ -86,11 +86,11 @@ class TestHTTPCookie < Test::Unit::TestCase
     cookie_str = "foo=#{'Cookie' * 680}; path=/ab/"
     assert_equal(HTTP::Cookie::MAX_LENGTH - 1, cookie_str.bytesize)
 
-    assert_equal 1, HTTP::Cookie.parse(cookie_str, :origin => uri).size
+    assert_equal 1, HTTP::Cookie.parse(cookie_str, uri).size
 
-    assert_equal 1, HTTP::Cookie.parse(cookie_str.sub(';', 'x;'), :origin => uri).size
+    assert_equal 1, HTTP::Cookie.parse(cookie_str.sub(';', 'x;'), uri).size
 
-    assert_equal 0, HTTP::Cookie.parse(cookie_str.sub(';', 'xx;'), :origin => uri).size
+    assert_equal 0, HTTP::Cookie.parse(cookie_str.sub(';', 'xx;'), uri).size
   end
 
   def test_parse_quoted
@@ -99,7 +99,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     uri = URI.parse 'http://example'
 
-    assert_equal 1, HTTP::Cookie.parse(cookie_str, :origin => uri) { |cookie|
+    assert_equal 1, HTTP::Cookie.parse(cookie_str, uri) { |cookie|
       assert_equal 'quoted', cookie.name
       assert_equal 'value', cookie.value
       assert_equal 'comment is "comment"', cookie.comment
@@ -109,7 +109,7 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_parse_weird_cookie
     cookie = 'n/a, ASPSESSIONIDCSRRQDQR=FBLDGHPBNDJCPCGNCPAENELB; path=/'
     url = URI.parse('http://www.searchinnovation.com/')
-    assert_equal 1, HTTP::Cookie.parse(cookie, :origin => url) { |c|
+    assert_equal 1, HTTP::Cookie.parse(cookie, url) { |c|
       assert_equal('ASPSESSIONIDCSRRQDQR', c.name)
       assert_equal('FBLDGHPBNDJCPCGNCPAENELB', c.value)
     }.size
@@ -118,7 +118,7 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_double_semicolon
     double_semi = 'WSIDC=WEST;; domain=.williams-sonoma.com; path=/'
     url = URI.parse('http://williams-sonoma.com/')
-    assert_equal 1, HTTP::Cookie.parse(double_semi, :origin => url) { |cookie|
+    assert_equal 1, HTTP::Cookie.parse(double_semi, url) { |cookie|
       assert_equal('WSIDC', cookie.name)
       assert_equal('WEST', cookie.value)
     }.size
@@ -127,13 +127,13 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_parse_bad_version
     bad_cookie = 'PRETANET=TGIAqbFXtt; Name=/PRETANET; Path=/; Version=1.2; Content-type=text/html; Domain=192.168.6.196; expires=Friday, 13-November-2026  23:01:46 GMT;'
     url = URI.parse('http://localhost/')
-    assert_equal 0, HTTP::Cookie.parse(bad_cookie, :origin => url).size
+    assert_equal 0, HTTP::Cookie.parse(bad_cookie, url).size
   end
 
   def test_parse_bad_max_age
     bad_cookie = 'PRETANET=TGIAqbFXtt; Name=/PRETANET; Path=/; Max-Age=1.2; Content-type=text/html; Domain=192.168.6.196; expires=Friday, 13-November-2026  23:01:46 GMT;'
     url = URI.parse('http://localhost/')
-    assert_equal 0, HTTP::Cookie.parse(bad_cookie, :origin => url).size
+    assert_equal 0, HTTP::Cookie.parse(bad_cookie, url).size
   end
 
   def test_parse_date_fail
@@ -146,7 +146,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     silently do
       dates.each do |date|
         cookie = "PREF=1; expires=#{date}"
-        assert_equal 1, HTTP::Cookie.parse(cookie, :origin => url) { |c|
+        assert_equal 1, HTTP::Cookie.parse(cookie, url) { |c|
           assert_equal(true, c.expires.nil?)
         }.size
       end
@@ -158,7 +158,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_str = 'a=b; domain=.example.com'
 
-    cookie = HTTP::Cookie.parse(cookie_str, :origin => url).first
+    cookie = HTTP::Cookie.parse(cookie_str, url).first
 
     assert_equal 'example.com', cookie.domain
     assert cookie.for_domain?
@@ -170,7 +170,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_str = 'a=b; domain=example.com'
 
-    cookie = HTTP::Cookie.parse(cookie_str, :origin => url).first
+    cookie = HTTP::Cookie.parse(cookie_str, url).first
 
     assert_equal 'example.com', cookie.domain
     assert cookie.for_domain?
@@ -178,9 +178,7 @@ class TestHTTPCookie < Test::Unit::TestCase
   end
 
   def test_parse_public_suffix
-    cookie_str = 'a=b; domain=com'
-
-    cookie = HTTP::Cookie.parse(cookie_str).first
+    cookie = HTTP::Cookie.new('a', 'b', :domain => 'com')
     assert_equal('com', cookie.domain)
     assert_equal(false, cookie.for_domain?)
 
@@ -198,7 +196,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_str = 'a=b;'
 
-    cookie = HTTP::Cookie.parse(cookie_str, :origin => url).first
+    cookie = HTTP::Cookie.parse(cookie_str, url).first
 
     assert_equal 'example.com', cookie.domain
     assert !cookie.for_domain?
@@ -211,23 +209,23 @@ class TestHTTPCookie < Test::Unit::TestCase
     epoch, date = 4485353164, 'Fri, 19 Feb 2112 19:26:04 GMT'
     base = Time.at(1363014000)
 
-    cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}", :origin => url).first
+    cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}", url).first
     assert_equal Time.at(epoch), cookie.expires
 
-    cookie = HTTP::Cookie.parse('name=Akinori; max-age=3600', :origin => url).first
+    cookie = HTTP::Cookie.parse('name=Akinori; max-age=3600', url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
-    cookie = HTTP::Cookie.parse('name=Akinori; max-age=3600', :origin => url, :created_at => base).first
+    cookie = HTTP::Cookie.parse('name=Akinori; max-age=3600', url, :created_at => base).first
     assert_equal base + 3600, cookie.expires
 
     # Max-Age has precedence over Expires
-    cookie = HTTP::Cookie.parse("name=Akinori; max-age=3600; expires=#{date}", :origin => url).first
+    cookie = HTTP::Cookie.parse("name=Akinori; max-age=3600; expires=#{date}", url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
-    cookie = HTTP::Cookie.parse("name=Akinori; max-age=3600; expires=#{date}", :origin => url, :created_at => base).first
+    cookie = HTTP::Cookie.parse("name=Akinori; max-age=3600; expires=#{date}", url, :created_at => base).first
     assert_equal base + 3600, cookie.expires
 
-    cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}; max-age=3600", :origin => url).first
+    cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}; max-age=3600", url).first
     assert_in_delta Time.now + 3600, cookie.expires, 1
-    cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}; max-age=3600", :origin => url, :created_at => base).first
+    cookie = HTTP::Cookie.parse("name=Akinori; expires=#{date}; max-age=3600", url, :created_at => base).first
     assert_equal base + 3600, cookie.expires
   end
 
@@ -241,7 +239,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       'name=Akinori; expires=',
       'name=Akinori; max-age=',
     ].each { |str|
-      cookie = HTTP::Cookie.parse(str, :origin => url).first
+      cookie = HTTP::Cookie.parse(str, url).first
       assert cookie.session?, str
     }
 
@@ -249,7 +247,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       'name=Akinori; expires=Mon, 19 Feb 2012 19:26:04 GMT',
       'name=Akinori; max-age=3600',
     ].each { |str|
-      cookie = HTTP::Cookie.parse(str, :origin => url).first
+      cookie = HTTP::Cookie.parse(str, url).first
       assert !cookie.session?, str
     }
   end
@@ -273,7 +271,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       "no_domain2=no_domain; Expires=Sun, 06 Nov 2011 00:29:53 GMT; no_expires=nope; Domain, " \
       "no_domain3=no_domain; Expires=Sun, 06 Nov 2011 00:29:53 GMT; no_expires=nope; Domain="
 
-    cookies = HTTP::Cookie.parse cookie_str, :origin => url
+    cookies = HTTP::Cookie.parse cookie_str, url
     assert_equal 15, cookies.length
 
     name = cookies.find { |c| c.name == 'name' }
@@ -323,7 +321,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_params.keys.combine.each do |keys|
       cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
+      cookie, = HTTP::Cookie.parse(cookie_text, url)
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
@@ -340,7 +338,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_params.keys.combine.each do |keys|
       cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
+      cookie, = HTTP::Cookie.parse(cookie_text, url)
 
       assert_equal('12345%7D=', cookie.to_s)
       assert_equal('', cookie.value)
@@ -360,7 +358,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     cookie_params.keys.combine.each do |keys|
       next if keys.include?('path')
       cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
+      cookie, = HTTP::Cookie.parse(cookie_text, url)
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
@@ -379,7 +377,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     cookie_params.keys.combine.each do |keys|
       next unless keys.include?('secure')
       cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
+      cookie, = HTTP::Cookie.parse(cookie_text, url)
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
@@ -408,8 +406,8 @@ class TestHTTPCookie < Test::Unit::TestCase
       date = Time.at(Time.now.to_i)
       cookie_params.keys.combine.each do |keys|
         cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
-        cookie, = HTTP::Cookie.parse(cookie_text, :origin => url, :created_at => date)
-        cookie2, = HTTP::Cookie.parse(cookie.set_cookie_value, :origin => url, :created_at => date)
+        cookie, = HTTP::Cookie.parse(cookie_text, url, :created_at => date)
+        cookie2, = HTTP::Cookie.parse(cookie.set_cookie_value, url, :created_at => date)
 
         assert_equal(cookie.name, cookie2.name)
         assert_equal(cookie.value, cookie2.value)
@@ -437,7 +435,7 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie_params.keys.combine.each do |keys|
       cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join(';')
-      cookie, = HTTP::Cookie.parse(cookie_text, :origin => url)
+      cookie, = HTTP::Cookie.parse(cookie_text, url)
 
       assert_equal('12345%7D=ASDFWEE345%3DASda', cookie.to_s)
       assert_equal('/', cookie.path)
@@ -625,11 +623,11 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal '/foo/bar', uri.path
 
     cookie_str = 'a=b'
-    cookie = HTTP::Cookie.parse(cookie_str, :origin => uri).first
+    cookie = HTTP::Cookie.parse(cookie_str, uri).first
     assert '/foo/', cookie.path
 
     cookie_str = 'a=b; path=/foo'
-    cookie = HTTP::Cookie.parse(cookie_str, :origin => uri).first
+    cookie = HTTP::Cookie.parse(cookie_str, uri).first
     assert '/foo', cookie.path
 
     uri = URI.parse('http://example.com')
@@ -637,16 +635,16 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal '', uri.path
 
     cookie_str = 'a=b'
-    cookie = HTTP::Cookie.parse(cookie_str, :origin => uri).first
+    cookie = HTTP::Cookie.parse(cookie_str, uri).first
     assert '/', cookie.path
 
     cookie_str = 'a=b; path=/foo'
-    cookie = HTTP::Cookie.parse(cookie_str, :origin => uri).first
+    cookie = HTTP::Cookie.parse(cookie_str, uri).first
     assert '/foo', cookie.path
   end
 
   def test_domain_nil
-    cookie = HTTP::Cookie.parse('a=b').first
+    cookie = HTTP::Cookie.new('a', 'b')
     assert_raises(RuntimeError) {
       cookie.valid_for_uri?('http://example.com/')
     }
@@ -656,7 +654,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     url = URI.parse('http://host.dom.example.com:8080/')
 
     cookie_str = 'a=b; domain=Example.Com'
-    cookie = HTTP::Cookie.parse(cookie_str, :origin => url).first
+    cookie = HTTP::Cookie.parse(cookie_str, url).first
     assert 'example.com', cookie.domain
 
     cookie.domain = DomainName(url.host)
@@ -676,8 +674,7 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_origin=
     url = URI.parse('http://example.com/path/')
 
-    cookie_str = 'a=b'
-    cookie = HTTP::Cookie.parse(cookie_str).first
+    cookie = HTTP::Cookie.new('a', 'b')
     cookie.origin = url
     assert_equal '/path/', cookie.path
     assert_equal 'example.com', cookie.domain
@@ -686,8 +683,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       cookie.origin = URI.parse('http://www.example.com/')
     }
 
-    cookie_str = 'a=b; domain=.example.com; path=/'
-    cookie = HTTP::Cookie.parse(cookie_str).first
+    cookie = HTTP::Cookie.new('a', 'b', :domain => '.example.com', :path => '/')
     cookie.origin = url
     assert_equal '/', cookie.path
     assert_equal 'example.com', cookie.domain
@@ -696,8 +692,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       cookie.origin = URI.parse('http://www.example.com/')
     }
 
-    cookie_str = 'a=b; domain=example.com'
-    cookie = HTTP::Cookie.parse(cookie_str).first
+    cookie = HTTP::Cookie.new('a', 'b', :domain => '.example.com')
     assert_raises(ArgumentError) {
       cookie.origin = URI.parse('http://example.org/')
     }
@@ -716,7 +711,7 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_valid_for_uri?
     {
       HTTP::Cookie.parse('a1=b',
-        :origin => 'http://example.com/dir/file.html').first => {
+        'http://example.com/dir/file.html').first => {
         true => [
           'http://example.com/dir/',
           'http://example.com/dir/test.html',
@@ -736,7 +731,7 @@ class TestHTTPCookie < Test::Unit::TestCase
         ]
       },
       HTTP::Cookie.parse('a2=b; path=/dir2/',
-        :origin => 'http://example.com/dir/file.html').first => {
+        'http://example.com/dir/file.html').first => {
         true => [
           'http://example.com/dir2/',
           'http://example.com/dir2/test.html',
@@ -756,7 +751,7 @@ class TestHTTPCookie < Test::Unit::TestCase
         ]
       },
       HTTP::Cookie.parse('a4=b; domain=example.com; path=/dir2/',
-        :origin => URI('http://example.com/dir/file.html')).first => {
+        URI('http://example.com/dir/file.html')).first => {
         true => [
           'https://example.com/dir2/test.html',
           'http://example.com/dir2/test.html',
@@ -772,7 +767,7 @@ class TestHTTPCookie < Test::Unit::TestCase
         ]
       },
       HTTP::Cookie.parse('a4=b; secure',
-        :origin => URI('https://example.com/dir/file.html')).first => {
+        URI('https://example.com/dir/file.html')).first => {
         true => [
           'https://example.com/dir/test.html',
         ],
@@ -784,7 +779,7 @@ class TestHTTPCookie < Test::Unit::TestCase
         ]
       },
       HTTP::Cookie.parse('a5=b',
-        :origin => URI('https://example.com/')).first => {
+        URI('https://example.com/')).first => {
         true => [
           'https://example.com',
         ],
@@ -793,7 +788,7 @@ class TestHTTPCookie < Test::Unit::TestCase
         ]
       },
       HTTP::Cookie.parse('a6=b; path=/dir',
-        :origin => 'http://example.com/dir/file.html').first => {
+        'http://example.com/dir/file.html').first => {
         true => [
           'http://example.com/dir',
           'http://example.com/dir/',
