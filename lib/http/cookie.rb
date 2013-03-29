@@ -249,12 +249,14 @@ class HTTP::Cookie
     #
     # ### Compatibility Note for Mechanize::Cookie users
     #
-    # * Order of parameters is a slightly different in
+    # * Order of parameters changed in
     #   `HTTP::Cookie.parse`.  Compare these:
     #
     #         Mechanize::Cookie.parse(uri, set_cookie[, log])
     #
     #         HTTP::Cookie.parse(set_cookie, uri[, :logger => # log])
+    #
+    # * `HTTP::Cookie.parse` does not accept nil for `set_cookie`.
     #
     # * `HTTP::Cookie.parse` does not yield nil nor include nil in an
     #   returned array.  It simply ignores unparsable parts.
