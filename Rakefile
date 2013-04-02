@@ -1,8 +1,8 @@
-require "bundler/gem_tasks"
+require 'bundler/gem_tasks'
 require 'rake/testtask'
 
 Rake::TestTask.new(:test) do |test|
-  test.ruby_opts << '-r./test/simplecov_start.rb' if defined?(SimbleCov)
+  test.ruby_opts << '-r./test/simplecov_start.rb' if RUBY_VERSION >= '1.9'
   test.pattern = 'test/**/test_*.rb'
   test.verbose = true
 end
