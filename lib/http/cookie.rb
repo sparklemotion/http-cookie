@@ -521,9 +521,10 @@ class HTTP::Cookie
     host = DomainName.new(uri.host)
 
     # RFC 6265 5.3
-    return true if host.hostname == @domain
-
-    if @for_domain  # !host-only-flag
+    case
+    when host.hostname == @domain
+      true
+    when @for_domain  # !host-only-flag
       host.cookie_domain?(@domain_name)
     else
       @domain.nil?
