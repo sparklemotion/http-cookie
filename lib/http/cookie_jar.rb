@@ -45,17 +45,16 @@ class HTTP::CookieJar
     @store = other.instance_eval { @store.dup }
   end
 
-  # Adds a cookie to the jar and return self.  If a given cookie has
-  # no domain or path attribute values and the origin is unknown,
-  # ArgumentError is raised.
+  # Adds a cookie to the jar and returns self.  A given cookie must
+  # have domain and path attributes set, or ArgumentError is raised.
   #
   # ### Compatibility Note for Mechanize::Cookie users
   #
   # In HTTP::Cookie, each cookie object can store its origin URI
   # (cf. #origin).  While the origin URI of a cookie can be set
   # manually by #origin=, one is typically given in its generation.
-  # To be more specific, HTTP::Cookie.new and HTTP::Cookie.parse both
-  # take an :origin option.
+  # To be more specific, HTTP::Cookie.new takes an `:origin` option
+  # and HTTP::Cookie.parse takes one via the second argument.
   #
   #   `HTTP::Cookie.parse`.  Compare these:
   #
@@ -64,8 +63,8 @@ class HTTP::CookieJar
   #       jar.add!(cookie)    # no acceptance check is performed
   #
   #       # HTTP::Cookie
-  #       jar.origin = origin # if it doesn't have one
-  #       jar.add(cookie)     # acceptance check is performed
+  #       jar.origin = origin # acceptance check is performed
+  #       jar.add(cookie)
   def add(cookie)
     if cookie.domain.nil? || cookie.path.nil?
       raise ArgumentError, "a cookie with unknown domain or path cannot be added"
@@ -145,8 +144,8 @@ class HTTP::CookieJar
   #   jar.save(filename_or_io, format = :yaml, **options)
   #
   # Saves the cookie jar into a file or an IO in the format specified
-  # and return self.  If a given object responds to #write it is taken
-  # as an IO, or taken as a filename otherwise.
+  # and returns self.  If a given object responds to #write it is
+  # taken as an IO, or taken as a filename otherwise.
   #
   # Available option keywords are below:
   #
@@ -211,8 +210,8 @@ class HTTP::CookieJar
   #   jar.load(filename_or_io, format = :yaml, **options)
   #
   # Loads cookies recorded in a file or an IO in the format specified
-  # into the jar and return self.  If a given object responds to #read
-  # it is taken as an IO, or taken as a filename otherwise.
+  # into the jar and returns self.  If a given object responds to
+  # #read it is taken as an IO, or taken as a filename otherwise.
   #
   # Available option keywords are below:
   #
@@ -264,13 +263,13 @@ class HTTP::CookieJar
     self
   end
 
-  # Clears the cookie jar and return self.
+  # Clears the cookie jar and returns self.
   def clear
     @store.clear
     self
   end
 
-  # Removes expired cookies and return self.
+  # Removes expired cookies and returns self.
   def cleanup(session = false)
     @store.cleanup session
     self

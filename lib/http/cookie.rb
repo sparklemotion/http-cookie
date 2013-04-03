@@ -102,7 +102,10 @@ class HTTP::Cookie
   # The origin of the cookie.
   #
   # Setting this will initialize the #domain and #path attribute
-  # values if unknown yet.
+  # values if unknown yet.  If the cookie already has a domain value
+  # set, it is checked against the origin URL to see if the origin is
+  # allowed to issue a cookie of the domain, and ArgumentError is
+  # raised if the check fails.
   #
   # :attr_accessor: origin
 
@@ -514,7 +517,7 @@ class HTTP::Cookie
   attr_accessor :accessed_at
 
   # Tests if it is OK to accept this cookie if it is sent from a given
-  # `uri`.
+  # URI/URL, `uri`.
   def acceptable_from_uri?(uri)
     uri = URI(uri)
     return false unless URI::HTTP === uri && uri.host
