@@ -610,7 +610,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       HTTP::Cookie.new(cookie_values(:value => 'bar')))
   end
 
-  def test_new_rejects_cookies_that_do_not_contain_an_embedded_dot
+  def test_new_tld_domain
     url = URI 'http://rubyforge.org/'
 
     tld_cookie1 = HTTP::Cookie.new(cookie_values(:domain => 'org', :origin => url))
@@ -707,6 +707,24 @@ class TestHTTPCookie < Test::Unit::TestCase
       end
     }
     assert 'example.com', cookie.domain
+
+    url = URI 'http://rubyforge.org/'
+
+    [nil, '', '.'].each { |d|
+      cookie = HTTP::Cookie.new('Foo', 'Bar', :path => '/')
+      cookie.domain = d
+      assert_equal nil, cookie.domain, "domain=#{d.inspect}"
+      assert_equal nil, cookie.domain_name, "domain=#{d.inspect}"
+      assert_raises(ArgumentError) {
+        cookie.acceptable?
+      }
+
+      cookie = HTTP::Cookie.new('Foo', 'Bar', :path => '/')
+      cookie.origin = url
+      cookie.domain = d
+      assert_equal url.host, cookie.domain, "domain=#{d.inspect}"
+      assert_equal true, cookie.acceptable?, "domain=#{d.inspect}"
+    }
   end
 
   def test_origin=

@@ -361,14 +361,27 @@ class HTTP::Cookie
 
   # See #domain.
   def domain=(domain)
-    if DomainName === domain
+    case domain
+    when nil
+      @for_domain = false
+      if @origin
+        @domain_name = DomainName.new(@origin.host)
+        @domain = @domain_name.hostname
+      else
+        @domain_name = @domain = nil
+      end
+      return nil
+    when DomainName
       @domain_name = domain
     else
       domain = check_string_type(domain) or
         raise TypeError, "#{domain.class} is not a String"
       if domain.start_with?('.')
-        @for_domain = true
+        for_domain = true
         domain = domain[1..-1]
+      end
+      if domain.empty?
+        return self.domain = nil
       end
       # Do we really need to support this?
       if domain.match(/\A([^:]+):[0-9]+\z/)
@@ -377,8 +390,10 @@ class HTTP::Cookie
       @domain_name = DomainName.new(domain)
     end
     # RFC 6265 5.3 5.
-    if @domain_name.domain.nil? # a public suffix or IP address
+    if domain_name.domain.nil? # a public suffix or IP address
       @for_domain = false
+    else
+      @for_domain = for_domain unless for_domain.nil?
     end
     @domain = @domain_name.hostname
   end
