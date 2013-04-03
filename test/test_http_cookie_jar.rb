@@ -284,9 +284,7 @@ module TestHTTPCookieJar
     def test_cookies_no_host
       url = URI 'file:///path/'
 
-      assert_raises(ArgumentError) {
-        @jar.add(HTTP::Cookie.new(cookie_values(:origin => url)))
-      }
+      @jar.add(HTTP::Cookie.new(cookie_values(:origin => url)))
 
       assert_equal(0, @jar.cookies(url).length)
     end

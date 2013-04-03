@@ -45,8 +45,9 @@ class HTTP::CookieJar
     @store = other.instance_eval { @store.dup }
   end
 
-  # Adds a cookie to the jar and returns self.  A given cookie must
-  # have domain and path attributes set, or ArgumentError is raised.
+  # Adds a cookie to the jar if it is acceptable, and returns self in
+  # any case.  A given cookie must have domain and path attributes
+  # set, or ArgumentError is raised.
   #
   # ### Compatibility Note for Mechanize::Cookie users
   #
@@ -63,14 +64,10 @@ class HTTP::CookieJar
   #       jar.add!(cookie)    # no acceptance check is performed
   #
   #       # HTTP::Cookie
-  #       jar.origin = origin # acceptance check is performed
-  #       jar.add(cookie)
+  #       jar.origin = origin
+  #       jar.add(cookie)     # acceptance check is performed
   def add(cookie)
-    if cookie.domain.nil? || cookie.path.nil?
-      raise ArgumentError, "a cookie with unknown domain or path cannot be added"
-    end
-
-    @store.add(cookie)
+    @store.add(cookie) if cookie.acceptable?
     self
   end
   alias << add

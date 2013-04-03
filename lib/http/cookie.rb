@@ -313,14 +313,9 @@ class HTTP::Cookie
             end
           }
 
-          if origin
-            begin
-              cookie.origin = origin
-            rescue => e
-              logger.warn("Invalid cookie for the origin: #{origin} (#{e})") if logger
-              next
-            end
-          end
+          cookie.origin = origin
+
+          cookie.acceptable? or next
 
           yield cookie if block_given?
 
@@ -422,10 +417,10 @@ class HTTP::Cookie
     @origin.nil? or
       raise ArgumentError, "origin cannot be changed once it is set"
     origin = URI(origin)
-    self.domain ||= origin.host
-    self.path   ||= (origin + './').path
-    acceptable_from_uri?(origin) or
-      raise ArgumentError, "unacceptable cookie sent from URI #{origin}"
+    if URI::HTTP === origin
+      self.domain ||= origin.host
+      self.path   ||= (origin + './').path
+    end
     @origin = origin
   end
 
@@ -531,6 +526,22 @@ class HTTP::Cookie
       host.cookie_domain?(@domain_name)
     else
       @domain.nil?
+    end
+  end
+
+  # Tests if it is OK to accept this cookie considering its origin.
+  # If either domain or path is missing, raises ArgumentError.  If
+  # origin is missing, returns true.
+  def acceptable?
+    case
+    when @domain.nil?
+      raise ArgumentError, "domain is missing"
+    when @path.nil?
+      raise ArgumentError, "path is missing"
+    when @origin.nil?
+      true
+    else
+      acceptable_from_uri?(@origin)
     end
   end
 

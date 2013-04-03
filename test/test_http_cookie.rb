@@ -450,6 +450,9 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 'key', cookie.name
     assert_equal 'value', cookie.value
     assert_equal nil, cookie.expires
+    assert_raises(ArgumentError) {
+      cookie.acceptable?
+    }
 
     # Minimum unit for the expires attribute is second
     expires = Time.at((Time.now + 3600).to_i)
@@ -458,24 +461,39 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 'key', cookie.name
     assert_equal 'value', cookie.value
     assert_equal expires, cookie.expires
+    assert_raises(ArgumentError) {
+      cookie.acceptable?
+    }
 
     cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', :expires => expires.dup)
     assert_equal 'key', cookie.name
     assert_equal 'value', cookie.value
     assert_equal expires, cookie.expires
     assert_equal false, cookie.for_domain?
+    assert_raises(ArgumentError) {
+      # domain and path are missing
+      cookie.acceptable?
+    }
 
     cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', :expires => expires.dup, :domain => '.example.com')
     assert_equal 'key', cookie.name
     assert_equal 'value', cookie.value
     assert_equal expires, cookie.expires
     assert_equal true, cookie.for_domain?
+    assert_raises(ArgumentError) {
+      # path is missing
+      cookie.acceptable?
+    }
 
     cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', :expires => expires.dup, :domain => 'example.com', :for_domain => false)
     assert_equal 'key', cookie.name
     assert_equal 'value', cookie.value
     assert_equal expires, cookie.expires
     assert_equal false, cookie.for_domain?
+    assert_raises(ArgumentError) {
+      # path is missing
+      cookie.acceptable?
+    }
 
     cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', :expires => expires.dup, :domain => 'example.org', :for_domain? => true)
     assert_equal 'key', cookie.name
@@ -483,6 +501,10 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal expires, cookie.expires
     assert_equal 'example.org', cookie.domain
     assert_equal true, cookie.for_domain?
+    assert_raises(ArgumentError) {
+      # path is missing
+      cookie.acceptable?
+    }
 
     assert_raises(ArgumentError) { HTTP::Cookie.new(:name => 'name') }
     assert_raises(ArgumentError) { HTTP::Cookie.new(:value => 'value') }
@@ -591,30 +613,46 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_new_rejects_cookies_that_do_not_contain_an_embedded_dot
     url = URI 'http://rubyforge.org/'
 
-    assert_raises(ArgumentError) {
-      tld_cookie = HTTP::Cookie.new(cookie_values(:domain => '.org', :origin => url))
-    }
-    assert_raises(ArgumentError) {
-      single_dot_cookie = HTTP::Cookie.new(cookie_values(:domain => '.', :origin => url))
-    }
+    tld_cookie1 = HTTP::Cookie.new(cookie_values(:domain => 'org', :origin => url))
+    assert_equal false, tld_cookie1.for_domain?
+    assert_equal 'org', tld_cookie1.domain
+    assert_equal false, tld_cookie1.acceptable?
+
+    tld_cookie2 = HTTP::Cookie.new(cookie_values(:domain => '.org', :origin => url))
+    assert_equal false, tld_cookie1.for_domain?
+    assert_equal 'org', tld_cookie2.domain
+    assert_equal false, tld_cookie2.acceptable?
+  end
+
+  def test_new_tld_domain_from_tld
+    url = URI 'http://org/'
+
+    tld_cookie1 = HTTP::Cookie.new(cookie_values(:domain => 'org', :origin => url))
+    assert_equal false, tld_cookie1.for_domain?
+    assert_equal 'org', tld_cookie1.domain
+    assert_equal true, tld_cookie1.acceptable?
+
+    tld_cookie2 = HTTP::Cookie.new(cookie_values(:domain => '.org', :origin => url))
+    assert_equal false, tld_cookie1.for_domain?
+    assert_equal 'org', tld_cookie2.domain
+    assert_equal true, tld_cookie2.acceptable?
   end
 
   def test_fall_back_rules_for_local_domains
     url = URI 'http://www.example.local'
 
-    assert_raises(ArgumentError) {
-      tld_cookie = HTTP::Cookie.new(cookie_values(:domain => '.local', :origin => url))
-    }
+    tld_cookie = HTTP::Cookie.new(cookie_values(:domain => '.local', :origin => url))
+    assert_equal false, tld_cookie.acceptable?
 
     sld_cookie = HTTP::Cookie.new(cookie_values(:domain => '.example.local', :origin => url))
+    assert_equal true, sld_cookie.acceptable?
   end
 
   def test_new_rejects_cookies_with_ipv4_address_subdomain
     url = URI 'http://192.168.0.1/'
 
-    assert_raises(ArgumentError) {
-      cookie = HTTP::Cookie.new(cookie_values(:domain => '.0.1', :origin => url))
-    }
+    cookie = HTTP::Cookie.new(cookie_values(:domain => '.0.1', :origin => url))
+    assert_equal false, cookie.acceptable?
   end
 
   def test_path
@@ -675,11 +713,15 @@ class TestHTTPCookie < Test::Unit::TestCase
     url = URI.parse('http://example.com/path/')
 
     cookie = HTTP::Cookie.new('a', 'b')
+    assert_raises(ArgumentError) {
+      cookie.origin = 123
+    }
     cookie.origin = url
     assert_equal '/path/', cookie.path
     assert_equal 'example.com', cookie.domain
     assert_equal false, cookie.for_domain
     assert_raises(ArgumentError) {
+      # cannot change the origin once set
       cookie.origin = URI.parse('http://www.example.com/')
     }
 
@@ -689,13 +731,21 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 'example.com', cookie.domain
     assert_equal true, cookie.for_domain
     assert_raises(ArgumentError) {
+      # cannot change the origin once set
       cookie.origin = URI.parse('http://www.example.com/')
     }
 
     cookie = HTTP::Cookie.new('a', 'b', :domain => '.example.com')
-    assert_raises(ArgumentError) {
-      cookie.origin = URI.parse('http://example.org/')
-    }
+    cookie.origin = URI.parse('http://example.org/')
+    assert_equal false, cookie.acceptable?
+
+    cookie = HTTP::Cookie.new('a', 'b', :domain => '.example.com')
+    cookie.origin = 'file:///tmp/test.html'
+    assert_equal nil, cookie.path
+
+    cookie = HTTP::Cookie.new('a', 'b', :domain => '.example.com', :path => '/')
+    cookie.origin = 'file:///tmp/test.html'
+    assert_equal false, cookie.acceptable?
   end
 
   def test_acceptable_from_uri?
