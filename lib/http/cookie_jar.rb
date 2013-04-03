@@ -132,7 +132,11 @@ class HTTP::CookieJar
         yield cookie
       }
     else
-      HTTP::Cookie.parse(set_cookie, origin, options, &method(:add))
+      HTTP::Cookie.parse(set_cookie, origin, options) { |cookie|
+        add(cookie)
+      }
+      # XXX: ruby 1.8 fails to call super from a proc'ized method
+      # HTTP::Cookie.parse(set_cookie, origin, options, &method(:add)
     end
   end
 
