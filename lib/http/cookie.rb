@@ -95,8 +95,8 @@ class HTTP::Cookie
   # The cookie domain.
   #
   # Setting a domain with a leading dot implies that the #for_domain
-  # flag should be turned on.  The setter accepts a `DomainName`
-  # object as well as a string-like.
+  # flag should be turned on.  The setter accepts a DomainName object
+  # as well as a string-like.
   #
   # :attr_accessor: domain
 
@@ -147,8 +147,8 @@ class HTTP::Cookie
   # string, downcased or not.
   #
   # This methods accepts any attribute name for which a setter method
-  # is defined.  Beware, however, any error (typically
-  # `ArgumentError`) a setter method raises will be passed through.
+  # is defined.  Beware, however, any error (typically ArgumentError)
+  # a setter method raises will be passed through.
   #
   # e.g.
   #
@@ -256,23 +256,22 @@ class HTTP::Cookie
     #
     # ### Compatibility Note for Mechanize::Cookie users
     #
-    # * Order of parameters changed in
-    #   `HTTP::Cookie.parse`.  Compare these:
+    # * Order of parameters changed in HTTP::Cookie.parse:
     #
     #         Mechanize::Cookie.parse(uri, set_cookie[, log])
     #
     #         HTTP::Cookie.parse(set_cookie, uri[, :logger => # log])
     #
-    # * `HTTP::Cookie.parse` does not accept nil for `set_cookie`.
+    # * HTTP::Cookie.parse does not accept nil for `set_cookie`.
     #
-    # * `HTTP::Cookie.parse` does not yield nil nor include nil in an
+    # * HTTP::Cookie.parse does not yield nil nor include nil in an
     #   returned array.  It simply ignores unparsable parts.
     #
-    # * `HTTP::Cookie.parse` is made to follow RFC 6265 to the extent
+    # * HTTP::Cookie.parse is made to follow RFC 6265 to the extent
     #   not terribly breaking interoperability with broken
     #   implementations.  In particular, it is capable of parsing
-    #   cookie definitions containing double-quotes just as
-    #   naturally expected.
+    #   cookie definitions containing double-quotes just as naturally
+    #   expected.
     def parse(set_cookie, origin, options = nil, &block)
       if options
         logger = options[:logger]

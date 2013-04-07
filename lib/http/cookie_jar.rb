@@ -19,13 +19,13 @@ class HTTP::CookieJar
   # : The store class that backs this jar. (default: `:hash`)
   # A symbol or an instance of a store class is accepted.  Symbols are
   # mapped to store classes, like `:hash` to
-  # `HTTP::CookieJar::HashStore` and `:mozilla` to
-  # `HTTP::CookieJar::MozillaStore`.
+  # HTTP::CookieJar::HashStore and `:mozilla` to
+  # HTTP::CookieJar::MozillaStore.
   #
   # Any options given are passed through to the initializer of the
   # specified store class.  For example, the `:mozilla`
-  # (`HTTP::CookieJar::MozillaStore`) store class requires a
-  # `:filename` option.  See individual store classes for details.
+  # (HTTP::CookieJar::MozillaStore) store class requires a `:filename`
+  # option.  See individual store classes for details.
   def initialize(options = nil)
     opthash = {
       :store => :hash,
@@ -56,8 +56,6 @@ class HTTP::CookieJar
   # manually by #origin=, one is typically given in its generation.
   # To be more specific, HTTP::Cookie.new takes an `:origin` option
   # and HTTP::Cookie.parse takes one via the second argument.
-  #
-  #   `HTTP::Cookie.parse`.  Compare these:
   #
   #       # Mechanize::Cookie
   #       jar.add(origin, cookie)
@@ -151,20 +149,22 @@ class HTTP::CookieJar
   # Available option keywords are below:
   #
   # * `:format`
-  #   <dl class="rdoc-list note-list">
-  #     <dt>:yaml</dt>
-  #     <dd>YAML structure (default)</dd>
-  #     <dt>:cookiestxt</dt>
-  #     <dd>: Mozilla's cookies.txt format</dd>
-  #   </dl>
+  #
+  #     <dl class="rdoc-list note-list">
+  #       <dt>:yaml</dt>
+  #       <dd>YAML structure (default)</dd>
+  #       <dt>:cookiestxt</dt>
+  #       <dd>: Mozilla's cookies.txt format</dd>
+  #     </dl>
   #
   # * `:session`
-  #   <dl class="rdoc-list note-list">
-  #     <dt>true</dt>
-  #     <dd>Save session cookies as well.</dd>
-  #     <dt>false</dt>
-  #     <dd>Do not save session cookies. (default)</dd>
-  #   </dl>
+  #
+  #     <dl class="rdoc-list note-list">
+  #       <dt>true</dt>
+  #       <dd>Save session cookies as well.</dd>
+  #       <dt>false</dt>
+  #       <dd>Do not save session cookies. (default)</dd>
+  #     </dl>
   #
   # All options given are passed through to the underlying cookie
   # saver module.
@@ -212,17 +212,18 @@ class HTTP::CookieJar
   #
   # Loads cookies recorded in a file or an IO in the format specified
   # into the jar and returns self.  If a given object responds to
-  # #read it is taken as an IO, or taken as a filename otherwise.
+  # \#read it is taken as an IO, or taken as a filename otherwise.
   #
   # Available option keywords are below:
   #
   # * `:format`
-  #   <dl class="rdoc-list note-list">
-  #     <dt>:yaml</dt>
-  #     <dd>YAML structure (default)</dd>
-  #     <dt>:cookiestxt</dt>
-  #     <dd>: Mozilla's cookies.txt format</dd>
-  #   </dl>
+  #
+  #     <dl class="rdoc-list note-list">
+  #       <dt>:yaml</dt>
+  #       <dd>YAML structure (default)</dd>
+  #       <dt>:cookiestxt</dt>
+  #       <dd>Mozilla's cookies.txt format</dd>
+  #     </dl>
   #
   # All options given are passed through to the underlying cookie
   # saver module.
