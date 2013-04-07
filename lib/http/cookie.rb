@@ -158,11 +158,8 @@ class HTTP::Cookie
   #     new("name" => "uid", "value" => "a12345", "Domain" => 'www.example.org')
   #
   def initialize(*args)
-    @version = 0     # Netscape Cookie
-
     @origin = @domain = @path =
-      @expires = @max_age =
-      @comment = nil
+      @expires = @max_age = nil
     @secure = @httponly = false
     @session = true
     @created_at = @accessed_at = Time.now
@@ -306,10 +303,6 @@ class HTTP::Cookie
                 cookie.expires = avalue unless cookie.max_age
               when 'max-age'
                 cookie.max_age = avalue
-              when 'comment'
-                cookie.comment = avalue
-              when 'version'
-                cookie.version = avalue
               when 'secure'
                 cookie.secure = avalue
               when 'httponly'
@@ -521,13 +514,6 @@ class HTTP::Cookie
     self
   end
 
-  # The version attribute.  The only known version of the cookie
-  # format is 0.
-  attr_accessor :version
-
-  # The comment attribute.
-  attr_accessor :comment
-
   # The time this cookie was created at.  This value is used as a base
   # date for interpreting the Max-Age attribute value.  See #expires.
   attr_accessor :created_at
@@ -609,9 +595,6 @@ class HTTP::Cookie
       string << "; Max-Age=#{@max_age}"
     elsif @expires
       string << "; Expires=#{@expires.httpdate}"
-    end
-    if @comment
-      string << "; Comment=#{Scanner.quote(@comment)}"
     end
     if @httponly
       string << "; HttpOnly"

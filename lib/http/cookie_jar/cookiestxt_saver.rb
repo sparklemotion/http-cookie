@@ -80,7 +80,6 @@ class HTTP::CookieJar::CookiestxtSaver < HTTP::CookieJar::AbstractSaver
       :path => path,
       :secure => s_secure == True,
       :httponly => httponly,
-      :expires => expires,
-      :version => 0)
+      :expires => expires)
   end
 end

@@ -77,6 +77,17 @@ equivalent using `HTTP::Cookie`:
         cookies1 = HTTP::Cookie.parse(set_cookie1, uri_or_url)
         cookies2 = HTTP::Cookie.parse(set_cookie2, uri_or_url, :logger => log)
 
+- `Mechanize::Cookie#version`, `#version=`
+
+    There is no longer a sense of version in HTTP cookie.  The only
+    version number that has ever been defined was zero, and there will
+    be no other version since the version attribute has been removed
+    in RFC 6265.
+
+- `Mechanize::Cookie#comment`, `#comment=`
+
+    Ditto.  The comment attribute has been removed in RFC 6265.
+
 - `Mechanize::Cookie#set_domain`
 
         # before
