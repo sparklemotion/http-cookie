@@ -195,7 +195,7 @@ class HTTP::Cookie
         origin = val
       when 'max_age'
         # Let max_age take precedence over expires
-        max_age = val if val
+        max_age = val
       else
         setter = :"#{skey}="
         __send__(setter, val) if respond_to?(setter)
@@ -494,6 +494,8 @@ class HTTP::Cookie
     else
       str = check_string_type(sec) or
         raise TypeError, "#{sec.class} is not an Integer or String"
+      /\A-?\d+\z/.match(str) or
+        raise ArgumentError, "invalid Max-Age: #{sec.inspect}"
       sec = str.to_i
     end
     if @session = sec.nil?
