@@ -126,14 +126,18 @@ class TestHTTPCookie < Test::Unit::TestCase
 
   def test_parse_bad_version
     bad_cookie = 'PRETANET=TGIAqbFXtt; Name=/PRETANET; Path=/; Version=1.2; Content-type=text/html; Domain=192.168.6.196; expires=Friday, 13-November-2026  23:01:46 GMT;'
-    url = URI.parse('http://localhost/')
-    assert_equal 0, HTTP::Cookie.parse(bad_cookie, url).size
+    url = URI.parse('http://192.168.6.196/')
+    cookies = HTTP::Cookie.parse(bad_cookie, url)
+    assert_equal 1, cookies.size
   end
 
   def test_parse_bad_max_age
-    bad_cookie = 'PRETANET=TGIAqbFXtt; Name=/PRETANET; Path=/; Max-Age=1.2; Content-type=text/html; Domain=192.168.6.196; expires=Friday, 13-November-2026  23:01:46 GMT;'
-    url = URI.parse('http://localhost/')
-    assert_equal 0, HTTP::Cookie.parse(bad_cookie, url).size
+    bad_cookie = 'PRETANET=TGIAqbFXtt; Name=/PRETANET; Path=/; Max-Age=forever; Content-type=text/html; Domain=192.168.6.196; expires=Friday, 13-November-2026  23:01:46 GMT;'
+    url = URI.parse('http://192.168.6.196/')
+    # A bad max-age is simply ignored
+    cookies = HTTP::Cookie.parse(bad_cookie, url)
+    assert_equal 1, cookies.size
+    assert_equal nil, cookies.first.max_age
   end
 
   def test_parse_date_fail
