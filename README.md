@@ -35,9 +35,7 @@ Or install it yourself as:
     jar.load(filename) if File.exist?(filename)
 
     # Store received cookies
-    HTTP::Cookie.parse(set_cookie_header_value, origin: uri) { |cookie|
-      jar << cookie
-    }
+    jar.parse(set_cookie_header_value, uri)
 
     # Get the value for the Cookie field of a request header
     cookie_header_value = jar.cookies(uri).join(', ')
