@@ -25,7 +25,7 @@ Or install it yourself as:
 ## Usage
 
     ########################
-    # Client side example
+    # Client side example 1
     ########################
 
     # Initialize a cookie jar
@@ -42,6 +42,21 @@ Or install it yourself as:
 
     # Save to a file
     jar.save(filename)
+
+    ########################
+    # Client side example 2
+    ########################
+
+    # Initialize a cookie jar using a Mozilla compatible SQLite3 backend
+    jar = HTTP::CookieJar.new(store: :mozilla, filename: 'cookies.sqlite')
+
+    # Store received cookies
+    jar.parse(set_cookie_header_value, uri)
+
+    # Get the value for the Cookie field of a request header
+    cookie_header_value = jar.cookies(uri).join(', ')
+
+    # There is no need for load & save.
 
 
     ########################
@@ -75,14 +90,17 @@ equivalent using HTTP::Cookie:
 
         # after
         cookies1 = HTTP::Cookie.parse(set_cookie1, uri_or_url)
-        cookies2 = HTTP::Cookie.parse(set_cookie2, uri_or_url, :logger => log)
+        cookies2 = HTTP::Cookie.parse(set_cookie2, uri_or_url, logger: log)
+        # or you can directly store parsed cookies in your jar
+        jar.parse(set_cookie1, uri_or_url)
+        jar.parse(set_cookie1, uri_or_url, logger: log)
 
 - Mechanize::Cookie#version, #version=
 
-    There is no longer a sense of version in HTTP cookie.  The only
-    version number that has ever been defined was zero, and there will
-    be no other version since the version attribute has been removed
-    in RFC 6265.
+    There is no longer a sense of version in the HTTP cookie
+    specification.  The only version number ever defined was zero, and
+    there will be no other version defined since the version attribute
+    has been removed in RFC 6265.
 
 - Mechanize::Cookie#comment, #comment=
 
