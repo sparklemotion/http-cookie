@@ -576,6 +576,23 @@ module TestHTTPCookieJar
       assert_equal(0, @jar.to_a.length)
     end
 
+    def test_accessed_at
+      orig = HTTP::Cookie.new(cookie_values)
+      @jar.add(orig)
+
+      time = Time.now
+
+      assert time > orig.accessed_at, "accessed_at is initialized to the current time"
+
+      cookie, = @jar.to_a
+
+      assert time > cookie.accessed_at, "accessed_at is not updated by each()"
+
+      cookie, = @jar.cookies("http://rubyforge.org/")
+
+      assert cookie.accessed_at > time, "accessed_at is not updated by each(url)"
+    end
+
     def test_max_cookies
       slimit = HTTP::Cookie::MAX_COOKIES_TOTAL + @gc_threshold
 
