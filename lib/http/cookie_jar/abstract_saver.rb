@@ -37,7 +37,7 @@ class HTTP::CookieJar::AbstractSaver
     # Initializes each instance variable of the same name as option
     # keyword.
     default_options.each_pair { |key, default|
-      instance_variable_set("@#{key}", options.key?(key) ? options[key] : default)
+      instance_variable_set("@#{key}", options.fetch(key, default))
     }
   end
 
