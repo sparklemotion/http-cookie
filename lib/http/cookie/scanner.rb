@@ -151,7 +151,7 @@ class HTTP::Cookie::Scanner < StringScanner
   end
 
   def scan_cookie
-    # cf. RFC 6265 5.2
+    # RFC 6265 4.1.1 & 5.2
     until eos?
       start = pos
       len = nil
@@ -171,6 +171,8 @@ class HTTP::Cookie::Scanner < StringScanner
 
       case
       when skip(/,/)
+        # The comma is used as separator for concatenating multiple
+        # values of a header.
         len = (pos - 1) - start
         break
       when skip(/;/)

@@ -69,10 +69,9 @@ class HTTP::Cookie
 
   # The cookie name.  It may not be nil or empty.
   #
-  # Trying to set a value with the normal setter method will raise
-  # ArgumentError only when it contains any of these characters:
-  # control characters (\x00-\x1F and \x7F), space and separators
-  # `,;\"=`.
+  # Assign a string containing any of the following characters will
+  # raise ArgumentError: control characters (`\x00-\x1F` and `\x7F`),
+  # space and separators `,;\"=`.
   #
   # Note that RFC 6265 4.1.1 lists more characters disallowed for use
   # in a cookie name, which are these: `<>@:/[]?{}`.  Using these
@@ -82,9 +81,8 @@ class HTTP::Cookie
 
   # The cookie value.
   #
-  # Trying to set a value with the normal setter method will raise an
-  # ArgumentError only when it contains any of these characters:
-  # control characters (\x00-\x1F and \x7F).
+  # Assign a string containing a control character (`\x00-\x1F` and
+  # `\x7F`) will raise ArgumentError.
   #
   # Note that RFC 6265 4.1.1 lists more characters disallowed for use
   # in a cookie value, which are these: ` ",;\`.  Using these
@@ -566,16 +564,15 @@ class HTTP::Cookie
     acceptable_from_uri?(uri) && HTTP::Cookie.path_match?(@path, uri.path)
   end
 
-  # Returns a string for use in a Cookie header value,
-  # i.e. "name=value".
+  # Returns a string for use in the Cookie header, i.e. `name=value`
+  # or `name="value"`.
   def cookie_value
     "#{@name}=#{Scanner.quote(@value)}"
   end
   alias to_s cookie_value
 
-  # Returns a string for use in a Set-Cookie header value.  If the
-  # cookie does not have an origin set, one must be given from the
-  # argument.
+  # Returns a string for use in the Set-Cookie header.  If the cookie
+  # does not have an origin set, one must be given from the argument.
   #
   # This method does not check if this cookie will be accepted from
   # the origin.
@@ -608,7 +605,6 @@ class HTTP::Cookie
     '#<%s:' % self.class << PERSISTENT_PROPERTIES.map { |key|
       '%s=%s' % [key, instance_variable_get(:"@#{key}").inspect]
     }.join(', ') << ' origin=%s>' % [@origin ? @origin.to_s : 'nil']
-
   end
 
   # Compares the cookie with another.  When there are many cookies with

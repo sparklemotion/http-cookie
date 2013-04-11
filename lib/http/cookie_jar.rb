@@ -169,7 +169,7 @@ class HTTP::CookieJar
   #       <dt>:yaml</dt>
   #       <dd>YAML structure (default)</dd>
   #       <dt>:cookiestxt</dt>
-  #       <dd>: Mozilla's cookies.txt format</dd>
+  #       <dd>Mozilla's cookies.txt format</dd>
   #     </dl>
   #
   # * `:session`
