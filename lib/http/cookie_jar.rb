@@ -88,8 +88,7 @@ class HTTP::CookieJar
   # Gets an array of cookies that should be sent for the URL/URI,
   # updating the access time of each cookie.
   def cookies(url)
-    now = Time.now
-    each(url).reject(&:expired?).sort
+    each(url).sort
   end
 
   # Tests if the jar is empty.  If `url` is given, tests if there is
