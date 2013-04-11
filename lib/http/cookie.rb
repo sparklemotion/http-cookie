@@ -313,9 +313,7 @@ class HTTP::Cookie
       origin = URI(origin)
 
       [].tap { |cookies|
-        s = Scanner.new(set_cookie, logger)
-        until s.eos?
-          name, value, attrs = s.scan_cookie
+        Scanner.new(set_cookie, logger).scan_set_cookie { |name, value, attrs|
           break if name.nil? || name.empty?
 
           cookie = new(name, value)
@@ -352,7 +350,24 @@ class HTTP::Cookie
           yield cookie if block_given?
 
           cookies << cookie
-        end
+        }
+      }
+    end
+
+    # Takes an array of cookies and returns a string for use in the
+    # Cookie header, like "name1=value2; name2=value2".
+    def cookie_value(cookies)
+      cookies.join('; ')
+    end
+
+    # Parses a Cookie header value into a hash of name-value string
+    # pairs.  The first appearance takes precedence if multiple pairs
+    # with the same name occur.
+    def cookie_value_to_hash(cookie_value)
+      {}.tap { |hash|
+        Scanner.new(cookie_value).scan_cookie { |name, value|
+          hash[name] ||= value
+        }
       }
     end
   end

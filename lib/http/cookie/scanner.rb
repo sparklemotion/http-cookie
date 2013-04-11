@@ -150,7 +150,14 @@ class HTTP::Cookie::Scanner < StringScanner
     tuple_to_time(day_of_month, month, year, time)
   end
 
-  def scan_cookie
+  def scan_set_cookie
+    unless block_given?
+      scan_set_cookie { |*values|
+        return values
+      }
+      return
+    end
+
     # RFC 6265 4.1.1 & 5.2
     until eos?
       start = pos
@@ -211,7 +218,29 @@ class HTTP::Cookie::Scanner < StringScanner
         next
       end
 
-      return [name, value, attrs] if value
+      yield name, value, attrs if value
+    end
+  end
+
+  def scan_cookie
+    unless block_given?
+      scan_cookie { |*values|
+        return values
+      }
+      return
+    end
+
+    # RFC 6265 4.1.1 & 5.4
+    until eos?
+      skip_wsp
+
+      name, value = scan_name_value
+
+      yield name, value if name && value
+
+      # The comma is used as separator for concatenating multiple
+      # values of a header.
+      skip(/[;,]/)
     end
   end
 end

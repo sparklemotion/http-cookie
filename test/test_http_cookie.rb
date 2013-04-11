@@ -400,6 +400,28 @@ class TestHTTPCookie < Test::Unit::TestCase
       cookie = HTTP::Cookie.new('foo', value)
       assert_equal(cookie_value, cookie.cookie_value)
     }
+
+    pairs = [
+      ['Foo', 'value1'],
+      ['Bar', 'value 2'],
+      ['Baz', 'value3'],
+      ['Bar', 'value"4'],
+    ]
+
+    cookie_value = HTTP::Cookie.cookie_value(pairs.map { |name, value|
+        HTTP::Cookie.new(:name => name, :value => value)
+      })
+
+    assert_equal 'Foo=value1; Bar="value 2"; Baz=value3; Bar="value\\"4"', cookie_value
+
+    hash = HTTP::Cookie.cookie_value_to_hash(cookie_value)
+
+    assert_equal 3, hash.size
+
+    hash.each_pair { |name, value|
+      _, pvalue = pairs.assoc(name)
+      assert_equal pvalue, value
+    }
   end
 
   def test_set_cookie_value
