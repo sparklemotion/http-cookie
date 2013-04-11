@@ -55,14 +55,14 @@ class HTTP::CookieJar
     end
 
     def add(cookie)
-      path_cookies = ((@jar[cookie.domain_name.hostname] ||= {})[cookie.path] ||= {})
+      path_cookies = ((@jar[cookie.domain] ||= {})[cookie.path] ||= {})
       path_cookies[cookie.name] = cookie
       cleanup if (@gc_index += 1) >= @gc_threshold
       self
     end
 
     def delete(cookie)
-      path_cookies = ((@jar[cookie.domain_name.hostname] ||= {})[cookie.path] ||= {})
+      path_cookies = ((@jar[cookie.domain] ||= {})[cookie.path] ||= {})
       path_cookies.delete(cookie.name)
       self
     end
