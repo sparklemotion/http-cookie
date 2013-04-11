@@ -510,11 +510,34 @@ class TestHTTPCookie < Test::Unit::TestCase
       cookie.acceptable?
     }
 
-    assert_raises(ArgumentError) { HTTP::Cookie.new(:name => 'name') }
+    assert_raises(ArgumentError) { HTTP::Cookie.new() }
     assert_raises(ArgumentError) { HTTP::Cookie.new(:value => 'value') }
     assert_raises(ArgumentError) { HTTP::Cookie.new('', 'value') }
     assert_raises(ArgumentError) { HTTP::Cookie.new('key=key', 'value') }
     assert_raises(ArgumentError) { HTTP::Cookie.new("key\tkey", 'value') }
+    assert_raises(ArgumentError) { HTTP::Cookie.new('key', 'value', 'something') }
+    assert_raises(ArgumentError) { HTTP::Cookie.new('key', 'value', {}, 'something') }
+
+    [
+      HTTP::Cookie.new(:name => 'name'),
+      HTTP::Cookie.new("key", nil, :for_domain => true),
+      HTTP::Cookie.new("key", nil),
+      HTTP::Cookie.new("key", :secure => true),
+      HTTP::Cookie.new("key"),
+    ].each { |cookie|
+      assert_equal '', cookie.value
+      assert_equal true, cookie.expired?
+    }
+
+    [
+      HTTP::Cookie.new(:name => 'name', :max_age => 3600),
+      HTTP::Cookie.new("key", nil, :expires => Time.now + 3600),
+      HTTP::Cookie.new("key", :expires => Time.now + 3600),
+      HTTP::Cookie.new("key", :expires => Time.now + 3600, :value => nil),
+    ].each { |cookie|
+      assert_equal '', cookie.value
+      assert_equal false, cookie.expired?
+    }
   end
 
   def cookie_values(options = {})
@@ -679,6 +702,22 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     cookie = HTTP::Cookie.new(cookie_values(:domain => '.0.1', :origin => url))
     assert_equal false, cookie.acceptable?
+  end
+
+  def test_value
+    cookie = HTTP::Cookie.new('name', 'value')
+    assert_equal 'value', cookie.value
+
+    cookie.value = 'new value'
+    assert_equal 'new value', cookie.value
+
+    assert_raises(ArgumentError) { cookie.value = "a\tb" }
+    assert_raises(ArgumentError) { cookie.value = "a\nb" }
+
+    assert_equal false, cookie.expired?
+    cookie.value = nil
+    assert_equal '', cookie.value
+    assert_equal true, cookie.expired?
   end
 
   def test_path

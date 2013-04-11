@@ -65,6 +65,23 @@ class HTTP::Cookie
     end
     private :check_string_type
   end
+
+  if Hash.respond_to?(:try_convert)
+    def check_hash_type(object)
+      Hash.try_convert(object)
+    end
+    private :check_hash_type
+  else
+    def check_hash_type(object)
+      if object.is_a?(Hash) ||
+          (object.respond_to?(:to_h) && (object = object.to_str).is_a?(Hash))
+        object
+      else
+        nil
+      end
+    end
+    private :check_hash_type
+  end
   # :startdoc:
 
   # The cookie name.  It may not be nil or empty.
@@ -83,6 +100,10 @@ class HTTP::Cookie
   #
   # Assign a string containing a control character (`\x00-\x1F` and
   # `\x7F`) will raise ArgumentError.
+  #
+  # Assigning nil sets the value to an empty string and the expiration
+  # date to the Unix epoch.  This is a handy way to make a cookie for
+  # expiration.
   #
   # Note that RFC 6265 4.1.1 lists more characters disallowed for use
   # in a cookie value, which are these: ` ",;\`.  Using these
@@ -136,9 +157,9 @@ class HTTP::Cookie
   # :attr_accessor: max_age
 
   # :call-seq:
-  #     new(name, value)
-  #     new(name, value, attr_hash)
-  #     new(attr_hash)
+  #     new(name, value = nil)
+  #     new(name, value = nil, **attr_hash)
+  #     new(**attr_hash)
   #
   # Creates a cookie object.  For each key of `attr_hash`, the setter
   # is called if defined.  Each key can be either a symbol or a
@@ -147,6 +168,9 @@ class HTTP::Cookie
   # This methods accepts any attribute name for which a setter method
   # is defined.  Beware, however, any error (typically ArgumentError)
   # a setter method raises will be passed through.
+  #
+  # If `value` is omitted or it is nil, an expiration cookie is
+  # created unless `max_age` or `expires` (`expires_at`) is given.
   #
   # e.g.
   #
@@ -158,21 +182,29 @@ class HTTP::Cookie
   def initialize(*args)
     @origin = @domain = @path =
       @expires = @max_age = nil
-    @secure = @httponly = false
+    @for_domain = @secure = @httponly = false
     @session = true
     @created_at = @accessed_at = Time.now
-
-    case args.size
-    when 2
-      self.name, self.value = *args
-      @for_domain = false
-      return
-    when 3
-      self.name, self.value, attr_hash = *args
+    case argc = args.size
     when 1
-      attr_hash = args.first
+      if attr_hash = check_hash_type(args.last)
+        args.pop
+      else
+        self.name, self.value = args # value is set to nil
+        return
+      end
+    when 2..3
+      if attr_hash = check_hash_type(args.last)
+        args.pop
+        self.name, value = args
+      else
+        argc == 2 or
+          raise ArgumentError, "wrong number of arguments (#{argc} for 1-3)"
+        self.name, self.value = args
+        return
+      end
     else
-      raise ArgumentError, "wrong number of arguments (#{args.size} for 1-3)"
+      raise ArgumentError, "wrong number of arguments (#{argc} for 1-3)"
     end
     for_domain = false
     domain = max_age = origin = nil
@@ -182,6 +214,8 @@ class HTTP::Cookie
         val = val ? true : false
       end
       case skey
+      when 'value'
+        value = val
       when 'for_domain'
         for_domain = !!val
       when 'domain'
@@ -196,13 +230,14 @@ class HTTP::Cookie
         __send__(setter, val) if respond_to?(setter)
       end
     }
-    if @name.nil? || @value.nil?
-      raise ArgumentError, "at least name and value must be specified"
+    if @name.nil?
+      raise ArgumentError, "name must be specified"
     end
     @for_domain = for_domain
     self.domain = domain if domain
     self.origin = origin if origin
     self.max_age = max_age if max_age
+    self.value = value.nil? && (@expires || @max_age) ? '' : value
   end
 
   autoload :Scanner, 'http/cookie/scanner'
@@ -343,6 +378,10 @@ class HTTP::Cookie
 
   # See #value.
   def value=(value)
+    if value.nil?
+      self.expires = UNIX_EPOCH
+      return @value = ''
+    end
     value = check_string_type(value) or
       raise TypeError, "#{value.class} is not a String"
     if value.match(/[\x00-\x1F\x7F]/)
