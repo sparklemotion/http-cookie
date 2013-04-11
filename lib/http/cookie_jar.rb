@@ -70,12 +70,11 @@ class HTTP::CookieJar
   end
   alias << add
 
-  # Gets an array of cookies that should be sent for the URL/URI.
+  # Gets an array of cookies that should be sent for the URL/URI,
+  # updating the access time of each cookie.
   def cookies(url)
     now = Time.now
-    each(url).select { |cookie|
-      !cookie.expired? && (cookie.accessed_at = now)
-    }.sort
+    each(url).reject(&:expired?).sort
   end
 
   # Tests if the jar is empty.  If `url` is given, tests if there is
