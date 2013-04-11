@@ -85,9 +85,10 @@ class HTTP::CookieJar
     self
   end
 
-  # Gets an array of cookies that should be sent for the URL/URI,
-  # updating the access time of each cookie.
-  def cookies(url)
+  # Gets an array of cookies sorted by the path and creation time.  If
+  # `url` is given, only ones that should be sent to the URL/URI are
+  # selected, with the access time of each of them updated.
+  def cookies(url = nil)
     each(url).sort
   end
 
