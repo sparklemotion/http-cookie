@@ -49,6 +49,10 @@ class HTTP::CookieJar
   # any case.  A given cookie must have domain and path attributes
   # set, or ArgumentError is raised.
   #
+  # Whether a cookie with the `for_domain` flag on overwrites another
+  # with the flag off or vice versa depends on the store used.  See
+  # individual store classes for that matter.
+  #
   # ### Compatibility Note for Mechanize::Cookie users
   #
   # In HTTP::Cookie, each cookie object can store its origin URI
