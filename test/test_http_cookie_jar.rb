@@ -554,17 +554,26 @@ module TestHTTPCookieJar
       assert_equal('Foo1 Foo2', @jar.cookies(surl).map { |c| c.name }.sort.join(' ') )
     end
 
-    def _test_delete
-      nurl = URI 'http://rubyforge.org/login'
-      surl = URI 'https://rubyforge.org/login'
+    def test_delete
+      cookie1 = HTTP::Cookie.new(cookie_values)
+      cookie2 = HTTP::Cookie.new(:name => 'Foo', :value => '',
+                                 :domain => 'rubyforge.org',
+                                 :for_domain => false,
+                                 :path => '/')
+      cookie3 = HTTP::Cookie.new(:name => 'Foo', :value => '',
+                                 :domain => 'rubyforge.org',
+                                 :for_domain => true,
+                                 :path => '/')
 
-      cookie1 = HTTP::Cookie.new(cookie_values(:name => 'Foo1', :origin => nurl))
-      cookie2 = HTTP::Cookie.new(cookie_values(:name => 'Foo1', :origin => surl))
+      @jar.add(cookie1)
+      @jar.delete(cookie2)
 
-      @jar.add(nncookie)
-      @jar.add(sncookie)
-      @jar.add(nscookie)
-      @jar.add(sscookie)
+      if mozilla_store?
+        assert_equal(1, @jar.to_a.length)
+        @jar.delete(cookie3)
+      end
+
+      assert_equal(0, @jar.to_a.length)
     end
 
     def test_max_cookies

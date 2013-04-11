@@ -74,6 +74,17 @@ class HTTP::CookieJar
   end
   alias << add
 
+  # Deletes a cookie that has the same name, domain and path as a
+  # given cookie from the jar and returns self.
+  #
+  # How the `for_domain` flag value affects the set of deleted cookies
+  # depends on the store used.  See individual store classes for that
+  # matter.
+  def delete(cookie)
+    @store.delete(cookie)
+    self
+  end
+
   # Gets an array of cookies that should be sent for the URL/URI,
   # updating the access time of each cookie.
   def cookies(url)
