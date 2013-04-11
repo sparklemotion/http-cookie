@@ -88,7 +88,8 @@ class HTTP::CookieJar
     end
   end
 
-  # Iterates over all cookies that are not expired.
+  # Iterates over all cookies that are not expired in no particular
+  # order.
   #
   # An optional argument `uri` specifies a URI/URL indicating the
   # destination of the cookies being selected.  Every cookie yielded
