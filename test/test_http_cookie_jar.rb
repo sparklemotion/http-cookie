@@ -582,15 +582,15 @@ module TestHTTPCookieJar
 
       time = Time.now
 
-      assert time > orig.accessed_at, "accessed_at is initialized to the current time"
+      assert_send [time, :>, orig.accessed_at], "accessed_at is initialized to the current time"
 
       cookie, = @jar.to_a
 
-      assert time > cookie.accessed_at, "accessed_at is not updated by each()"
+      assert_send [time, :>, cookie.accessed_at], "accessed_at is not updated by each()"
 
       cookie, = @jar.cookies("http://rubyforge.org/")
 
-      assert cookie.accessed_at > time, "accessed_at is not updated by each(url)"
+      assert_send [cookie.accessed_at, :>, time], "accessed_at is not updated by each(url)"
     end
 
     def test_max_cookies
@@ -640,8 +640,8 @@ module TestHTTPCookieJar
         }
       }
 
-      assert_equal true, count > slimit
-      assert_equal true, @jar.to_a.size <= slimit
+      assert_send [count, :>, slimit]
+      assert_send [@jar.to_a.size, :<=, slimit]
       @jar.cleanup
       assert_equal hlimit, @jar.to_a.size
       assert_equal false, @jar.any? { |cookie|

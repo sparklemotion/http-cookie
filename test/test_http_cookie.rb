@@ -50,7 +50,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       silently do
         assert_equal 1, HTTP::Cookie.parse(cookie, url) { |c|
           assert c.expires, "Tried parsing: #{date}"
-          assert_equal(true, c.expires < yesterday)
+          assert_send [c.expires, :<, yesterday]
         }.size
       end
     end
