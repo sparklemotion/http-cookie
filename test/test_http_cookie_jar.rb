@@ -577,13 +577,15 @@ module TestHTTPCookieJar
       orig = HTTP::Cookie.new(cookie_values)
       @jar.add(orig)
 
-      time = Time.now
+      time = orig.accessed_at
 
-      assert_send [time, :>, orig.accessed_at], "accessed_at is initialized to the current time"
+      assert_in_delta 1.0, time, Time.now, "accessed_at is initialized to the current time"
 
       cookie, = @jar.to_a
 
-      assert_send [time, :>, cookie.accessed_at], "accessed_at is not updated by each()"
+      assert_equal time, cookie.accessed_at, "accessed_at is not updated by each()"
+
+      sleep 0.1
 
       cookie, = @jar.cookies("http://rubyforge.org/")
 
