@@ -163,7 +163,7 @@ class HTTP::Cookie
   #
   # Creates a cookie object.  For each key of `attr_hash`, the setter
   # is called if defined.  Each key can be either a symbol or a
-  # string, downcased or not.
+  # string of downcased attribute names.
   #
   # This methods accepts any attribute name for which a setter method
   # is defined.  Beware, however, any error (typically ArgumentError)
@@ -209,25 +209,45 @@ class HTTP::Cookie
     for_domain = false
     domain = max_age = origin = nil
     attr_hash.each_pair { |key, val|
-      skey = key.to_s.downcase
-      if skey.sub!(/\?\z/, '')
-        val = val ? true : false
-      end
-      case skey
-      when 'value'
+      case key.to_sym
+      when :name
+        self.name = val
+      when :value
         value = val
-      when 'for_domain'
-        for_domain = !!val
-      when 'domain'
+      when :domain
         domain = val
-      when 'origin'
+      when :path
+        self.path = val
+      when :origin
         origin = val
-      when 'max_age'
+      when :for_domain, :for_domain?
+        for_domain = val
+      when :max_age
         # Let max_age take precedence over expires
         max_age = val
+      when :expires, :expires_at
+        self.expires = val
+      when :httponly, :httponly?
+        @httponly = val
+      when :secure, :secure?
+        @secure = val
+      when /[A-Z]/
+        warn "keyword should be downcased: #{key}" if $VERBOSE
+        key = key.downcase
+        redo
+      when Symbol
+        setter = :"#{key}="
+        if respond_to?(setter)
+          __send__(setter, val)
+        else
+          warn "unknown keyword: #{key}" if $VERBOSE
+        end
+      when String
+        key = key.to_sym
+        redo
       else
-        setter = :"#{skey}="
-        __send__(setter, val) if respond_to?(setter)
+        key = key.to_s
+        redo
       end
     }
     if @name.nil?
