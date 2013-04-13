@@ -574,7 +574,7 @@ module TestHTTPCookieJar
     end
 
     def test_accessed_at
-      orig = HTTP::Cookie.new(cookie_values)
+      orig = HTTP::Cookie.new(cookie_values(:expires => nil))
       @jar.add(orig)
 
       time = orig.accessed_at
@@ -584,8 +584,6 @@ module TestHTTPCookieJar
       cookie, = @jar.to_a
 
       assert_equal time, cookie.accessed_at, "accessed_at is not updated by each()"
-
-      sleep 0.1
 
       cookie, = @jar.cookies("http://rubyforge.org/")
 
