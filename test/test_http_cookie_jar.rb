@@ -310,7 +310,6 @@ module TestHTTPCookieJar
       cookie = HTTP::Cookie.new(cookie_values(:origin => url))
       s_cookie = HTTP::Cookie.new(cookie_values(:name => 'Bar',
           :expires => nil,
-          :session => true,
           :origin => url))
 
       @jar.add(cookie)
@@ -341,8 +340,7 @@ module TestHTTPCookieJar
       # Add one cookie with an expiration date in the future
       cookie = HTTP::Cookie.new(cookie_values)
       s_cookie = HTTP::Cookie.new(cookie_values(:name => 'Bar',
-          :expires => nil,
-          :session => true))
+          :expires => nil))
 
       @jar.add(cookie)
       @jar.add(s_cookie)
@@ -368,8 +366,7 @@ module TestHTTPCookieJar
       cookie = HTTP::Cookie.new(cookie_values)
       expires = cookie.expires
       s_cookie = HTTP::Cookie.new(cookie_values(:name => 'Bar',
-          :expires => nil,
-          :session => true))
+          :expires => nil))
       cookie2 = HTTP::Cookie.new(cookie_values(:name => 'Baz',
           :value => 'Foo#Baz',
           :path => '/foo/',
