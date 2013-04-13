@@ -713,6 +713,7 @@ class HTTP::Cookie
   # YAML deserialization helper for Psych.
   def yaml_initialize(tag, map)
     expires = nil
+    @origin = nil
     map.each { |key, value|
       case key
       when 'expires'
