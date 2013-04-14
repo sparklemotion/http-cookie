@@ -360,6 +360,46 @@ module TestHTTPCookieJar
       assert_equal(3, @jar.cookies(url).length)
     end
 
+    def test_save_load_signature
+      Dir.mktmpdir { |dir|
+        filename = File.join(dir, "cookies.yml")
+
+        @jar.save(filename, :format => :cookiestxt, :session => true)
+        @jar.save(filename, :format => :cookiestxt, :session => true)
+        @jar.save(filename, :format => :cookiestxt)
+        @jar.save(filename, :cookiestxt, :session => true)
+        @jar.save(filename, :cookiestxt)
+        @jar.save(filename, :session => true)
+        @jar.save(filename)
+        assert_raises(ArgumentError) {
+          @jar.save()
+        }
+        assert_raises(ArgumentError) {
+          @jar.save(filename, { :format => :cookiestxt }, { :session => true })
+        }
+        assert_raises(ArgumentError) {
+          @jar.save(filename, :cookiestxt, { :session => true }, { :format => :cookiestxt })
+        }
+
+        @jar.load(filename, :format => :cookiestxt, :linefeed => "\n")
+        @jar.load(filename, :format => :cookiestxt, :linefeed => "\n")
+        @jar.load(filename, :format => :cookiestxt)
+        @jar.load(filename, :cookiestxt, :linefeed => "\n")
+        @jar.load(filename, :cookiestxt)
+        @jar.load(filename, :linefeed => "\n")
+        @jar.load(filename)
+        assert_raises(ArgumentError) {
+          @jar.load()
+        }
+        assert_raises(ArgumentError) {
+          @jar.load(filename, { :format => :cookiestxt }, { :linefeed => "\n" })
+        }
+        assert_raises(ArgumentError) {
+          @jar.load(filename, :cookiestxt, { :linefeed => "\n" }, { :format => :cookiestxt })
+        }
+      }
+    end
+
     def test_save_session_cookies_yaml
       url = URI 'http://rubyforge.org/'
 
@@ -383,7 +423,6 @@ module TestHTTPCookieJar
 
       assert_equal(3, @jar.cookies(url).length)
     end
-
 
     def test_save_and_read_cookiestxt
       url = URI 'http://rubyforge.org/foo/'
@@ -416,6 +455,13 @@ module TestHTTPCookieJar
         @jar.save(filename, :cookiestxt)
 
         content = File.read(filename)
+
+        filename2 = File.join(dir, "cookies2.txt")
+        open(filename2, 'w') { |w|
+          w.puts '# HTTP Cookie File'
+          @jar.save(w, :cookiestxt, :header => nil)
+        }
+        assert_equal content, File.read(filename2)
 
         assert_match(/^\.rubyforge\.org\t.*\tFoo\t/, content)
         assert_match(/^rubyforge\.org\t.*\tBaz\t/, content)

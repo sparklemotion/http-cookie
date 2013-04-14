@@ -54,6 +54,25 @@ class TestHTTPCookie < Test::Unit::TestCase
         }.size
       end
     end
+
+    [
+      ["PREF=1; expires=Wed, 01 Jan 100 12:34:56 GMT", nil],
+      ["PREF=1; expires=Sat, 01 Jan 1600 12:34:56 GMT", nil],
+      ["PREF=1; expires=Tue, 01 Jan 69 12:34:56 GMT", 2069],
+      ["PREF=1; expires=Thu, 01 Jan 70 12:34:56 GMT", 1970],
+      ["PREF=1; expires=Wed, 01 Jan 20 12:34:56 GMT", 2020],
+      ["PREF=1; expires=Sat, 01 Jan 2020 12:34:60 GMT", nil],
+      ["PREF=1; expires=Sat, 01 Jan 2020 12:60:56 GMT", nil],
+      ["PREF=1; expires=Sat, 01 Jan 2020 24:00:00 GMT", nil],
+      ["PREF=1; expires=Sat, 32 Jan 2020 12:34:56 GMT", nil],
+    ].each { |set_cookie, year|
+      cookie, = HTTP::Cookie.parse(set_cookie, url)
+      if year
+        assert_equal year, cookie.expires.year, "#{set_cookie}: expires in #{year}"
+      else
+        assert_equal nil, cookie.expires, "#{set_cookie}: invalid expiry date"
+      end
+    }
   end
 
   def test_parse_empty
@@ -103,6 +122,12 @@ class TestHTTPCookie < Test::Unit::TestCase
       assert_equal 'quoted', cookie.name
       assert_equal 'value', cookie.value
     }.size
+  end
+
+  def test_parse_no_nothing
+    cookie = '; "", ;'
+    url = URI.parse('http://www.example.com/')
+    assert_equal 0, HTTP::Cookie.parse(cookie, url).size
   end
 
   def test_parse_no_name
