@@ -126,10 +126,13 @@ class HTTP::CookieJar
   end
   include Enumerable
 
-  # Parses a Set-Cookie field value `set_cookie` sent from a URI
-  # `origin` and adds the cookies parsed as valid to the jar.  Returns
-  # an array of cookies that have been added.  If a block is given, it
-  # is called after each cookie is added.
+  # Parses a Set-Cookie field value `set_cookie` assuming that it is
+  # sent from a source URL/URI `origin`, and adds the cookies parsed
+  # as valid and considered acceptable to the jar.  Returns an array
+  # of cookies that have been added.
+  #
+  # If a block is given, it is called for each cookie and the cookie
+  # is added only if the block returns a true value.
   #
   # `jar.parse(set_cookie, origin)` is a shorthand for this:
   #
@@ -140,16 +143,15 @@ class HTTP::CookieJar
   # See HTTP::Cookie.parse for available options.
   def parse(set_cookie, origin, options = nil) # :yield: cookie
     if block_given?
-      HTTP::Cookie.parse(set_cookie, origin, options) { |cookie|
-        add(cookie)
-        yield cookie
+      HTTP::Cookie.parse(set_cookie, origin, options).tap { |cookies|
+        cookies.select! { |cookie|
+          yield(cookie) && add(cookie)
+        }
       }
     else
       HTTP::Cookie.parse(set_cookie, origin, options) { |cookie|
         add(cookie)
       }
-      # XXX: ruby 1.8 fails to call super from a proc'ized method
-      # HTTP::Cookie.parse(set_cookie, origin, options, &method(:add)
     end
   end
 

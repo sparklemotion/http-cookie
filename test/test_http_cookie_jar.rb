@@ -645,6 +645,30 @@ module TestHTTPCookieJar
         cookie.domain == cookie.value
       }
     end
+
+    def test_parse
+      set_cookie = [
+        "name=Akinori; Domain=rubyforge.org; Expires=Sun, 08 Aug 2076 19:00:00 GMT; Path=/",
+        "country=Japan; Domain=rubyforge.org; Expires=Sun, 08 Aug 2076 19:00:00 GMT; Path=/",
+        "city=Tokyo; Domain=rubyforge.org; Expires=Sun, 08 Aug 2076 19:00:00 GMT; Path=/",
+      ].join(', ')
+
+      cookies = @jar.parse(set_cookie, 'http://rubyforge.org/')
+      assert_equal %w[Akinori Japan Tokyo], cookies.map { |c| c.value }
+      assert_equal %w[Tokyo Japan Akinori], @jar.to_a.sort_by { |c| c.name }.map { |c| c.value }
+    end
+
+    def test_parse_with_block
+      set_cookie = [
+        "name=Akinori; Domain=rubyforge.org; Expires=Sun, 08 Aug 2076 19:00:00 GMT; Path=/",
+        "country=Japan; Domain=rubyforge.org; Expires=Sun, 08 Aug 2076 19:00:00 GMT; Path=/",
+        "city=Tokyo; Domain=rubyforge.org; Expires=Sun, 08 Aug 2076 19:00:00 GMT; Path=/",
+      ].join(', ')
+
+      cookies = @jar.parse(set_cookie, 'http://rubyforge.org/') { |c| c.name != 'city' }
+      assert_equal %w[Akinori Japan], cookies.map { |c| c.value }
+      assert_equal %w[Japan Akinori], @jar.to_a.sort_by { |c| c.name }.map { |c| c.value }
+    end
   end
 
   class WithHashStore < Test::Unit::TestCase
