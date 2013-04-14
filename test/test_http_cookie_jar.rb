@@ -13,7 +13,7 @@ module TestHTTPCookieJar
       @store_type = new_options[:store]
       @gc_threshold = new_options[:gc_threshold]
       @jar  = HTTP::CookieJar.new(new_options)
-      @jar2 = HTTP::CookieJar.new(new_options)
+      @jar2 = HTTP::CookieJar.new(new_options2)
     end
 
     def hash_store?
