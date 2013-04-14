@@ -12,6 +12,32 @@ class Array
   end unless method_defined?(:select!)
 end
 
+class Hash
+  class << self
+    def try_convert(object)
+      if object.is_a?(Hash) ||
+          (object.respond_to?(:to_h) && (object = object.to_str).is_a?(Hash))
+        object
+      else
+        nil
+      end
+    end unless method_defined?(:try_convert)
+  end
+end
+
+class String
+  class << self
+    def try_convert(object)
+      if object.is_a?(String) ||
+          (object.respond_to?(:to_str) && (object = object.to_str).is_a?(String))
+        object
+      else
+        nil
+      end
+    end unless method_defined?(:try_convert)
+  end
+end
+
 # In Ruby < 1.9.3 URI() does not accept a URI object.
 if RUBY_VERSION < "1.9.3"
   require 'uri'

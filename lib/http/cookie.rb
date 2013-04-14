@@ -31,40 +31,6 @@ class HTTP::Cookie
     expires     max_age
     created_at  accessed_at
   ]
-
-  if String.respond_to?(:try_convert)
-    def check_string_type(object)
-      String.try_convert(object)
-    end
-    private :check_string_type
-  else
-    def check_string_type(object)
-      if object.is_a?(String) ||
-          (object.respond_to?(:to_str) && (object = object.to_str).is_a?(String))
-        object
-      else
-        nil
-      end
-    end
-    private :check_string_type
-  end
-
-  if Hash.respond_to?(:try_convert)
-    def check_hash_type(object)
-      Hash.try_convert(object)
-    end
-    private :check_hash_type
-  else
-    def check_hash_type(object)
-      if object.is_a?(Hash) ||
-          (object.respond_to?(:to_h) && (object = object.to_str).is_a?(Hash))
-        object
-      else
-        nil
-      end
-    end
-    private :check_hash_type
-  end
   # :startdoc:
 
   # The cookie name.  It may not be nil or empty.
@@ -170,14 +136,14 @@ class HTTP::Cookie
     @created_at = @accessed_at = Time.now
     case argc = args.size
     when 1
-      if attr_hash = check_hash_type(args.last)
+      if attr_hash = Hash.try_convert(args.last)
         args.pop
       else
         self.name, self.value = args # value is set to nil
         return
       end
     when 2..3
-      if attr_hash = check_hash_type(args.last)
+      if attr_hash = Hash.try_convert(args.last)
         args.pop
         self.name, value = args
       else
@@ -378,7 +344,7 @@ class HTTP::Cookie
 
   # See #name.
   def name=(name)
-    name = check_string_type(name) or
+    name = String.try_convert(name) or
       raise TypeError, "#{name.class} is not a String"
     if name.empty?
       raise ArgumentError, "cookie name cannot be empty"
@@ -399,7 +365,7 @@ class HTTP::Cookie
       self.expires = UNIX_EPOCH
       return @value = ''
     end
-    value = check_string_type(value) or
+    value = String.try_convert(value) or
       raise TypeError, "#{value.class} is not a String"
     if value.match(/[\x00-\x1F\x7F]/)
       raise ArgumentError, "invalid cookie value"
@@ -427,7 +393,7 @@ class HTTP::Cookie
     when DomainName
       @domain_name = domain
     else
-      domain = check_string_type(domain) or
+      domain = String.try_convert(domain) or
         raise TypeError, "#{domain.class} is not a String"
       if domain.start_with?('.')
         for_domain = true
@@ -472,7 +438,7 @@ class HTTP::Cookie
 
   # See #path.
   def path=(path)
-    path = check_string_type(path) or
+    path = String.try_convert(path) or
       raise TypeError, "#{path.class} is not a String"
     @path = path.start_with?('/') ? path : '/'
   end
@@ -538,7 +504,7 @@ class HTTP::Cookie
     case sec
     when Integer, nil
     else
-      str = check_string_type(sec) or
+      str = String.try_convert(sec) or
         raise TypeError, "#{sec.class} is not an Integer or String"
       /\A-?\d+\z/.match(str) or
         raise ArgumentError, "invalid Max-Age: #{sec.inspect}"
