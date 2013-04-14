@@ -38,7 +38,7 @@ Or install it yourself as:
     jar.parse(set_cookie_header_value, uri)
 
     # Get the value for the Cookie field of a request header
-    cookie_header_value = jar.cookies(uri).join(', ')
+    cookie_header_value = HTTP::Cookie.cookie_value(jar.cookies(uri))
 
     # Save to a file
     jar.save(filename)
@@ -54,23 +54,31 @@ Or install it yourself as:
     jar.parse(set_cookie_header_value, uri)
 
     # Get the value for the Cookie field of a request header
-    cookie_header_value = jar.cookies(uri).join(', ')
+    cookie_header_value = HTTP::Cookie.cookie_value(jar.cookies(uri))
 
-    # There is no need for load & save.
+    # There is no need for load & save in this backend.
 
 
     ########################
     # Server side example
     ########################
 
-    # Generate a cookie
-    cookies = HTTP::Cookie.new("uid", "a12345", domain: 'example.org',
+    # Generate a domain cookie
+    cookie2 = HTTP::Cookie.new("uid", "u12345", domain: 'example.org',
                                                 for_domain: true,
                                                 path: '/',
                                                 max_age: 7*86400)
 
-    # Get the value for the Set-Cookie field of a response header
-    set_cookie_header_value = cookies.set_cookie_value(my_url)
+    # Generate a host-only cookie
+    cookie1 = HTTP::Cookie.new("aid", "a12345", origin: my_url,
+                                                path: '/',
+                                                max_age: 7*86400)
+
+    # Set the Set-Cookie response header value
+    header['Set-Cookie'] = [
+      cookie1.set_cookie_value,
+      cookie2.set_cookie_value,
+    ]
 
 
 ## Incompatibilities with Mechanize::Cookie/CookieJar
