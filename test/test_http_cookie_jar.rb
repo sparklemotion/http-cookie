@@ -2,6 +2,24 @@ require File.expand_path('helper', File.dirname(__FILE__))
 require 'tmpdir'
 
 module TestHTTPCookieJar
+  class TestBasic < Test::Unit::TestCase
+    def test_store
+      jar = HTTP::CookieJar.new(:store => :hash)
+      assert_instance_of HTTP::CookieJar::HashStore, jar.store
+
+      assert_raises(IndexError) {
+        jar = HTTP::CookieJar.new(:store => :nonexistent)
+      }
+
+      jar = HTTP::CookieJar.new(:store => HTTP::CookieJar::HashStore.new)
+      assert_instance_of HTTP::CookieJar::HashStore, jar.store
+
+      assert_raises(TypeError) {
+        jar = HTTP::CookieJar.new(:store => HTTP::CookieJar::HashStore)
+      }
+    end
+  end
+
   module Tests
     def setup(options = nil, options2 = nil)
       default_options = {
