@@ -3,27 +3,10 @@ require 'http/cookie/version'
 require 'time'
 require 'uri'
 require 'domain_name'
+require 'http/cookie/ruby_compat'
 
 module HTTP
   autoload :CookieJar, 'http/cookie_jar'
-end
-
-# In Ruby < 1.9.3 URI() does not accept a URI object.
-if RUBY_VERSION < "1.9.3"
-  begin
-    URI(URI(''))
-  rescue
-    def URI(url) # :nodoc:
-      case url
-      when URI
-        url
-      when String
-        URI.parse(url)
-      else
-        raise ArgumentError, 'bad argument (expected URI object or URI string)'
-      end
-    end
-  end
 end
 
 # This class is used to represent an HTTP Cookie.

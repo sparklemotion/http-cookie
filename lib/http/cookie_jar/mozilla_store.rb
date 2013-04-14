@@ -255,7 +255,7 @@ class HTTP::CookieJar
       db_delete(cookie)
     end
 
-    def each(uri = nil)
+    def each(uri = nil, &block)
       now = Time.now
       if uri
         @st_cookies_for_domain ||=
@@ -304,7 +304,7 @@ class HTTP::CookieJar
             yield cookie
           end
         }
-        @sjar.each(uri, &proc)
+        @sjar.each(uri, &block)
       else
         @st_all_cookies ||=
           @db.prepare(<<-'SQL')
@@ -333,7 +333,7 @@ class HTTP::CookieJar
 
           yield cookie
         }
-        @sjar.each(&proc)
+        @sjar.each(&block)
       end
       self
     end
