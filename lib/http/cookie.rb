@@ -291,11 +291,10 @@ class HTTP::Cookie
       target_path[bsize] == ?/
     end
 
-    # Parses a Set-Cookie header value `set_cookie` into an array of
-    # Cookie objects taking `origin` as the source URI/URL.  Parts
-    # (separated by commas) that are malformed or invalid are silently
-    # ignored.  For example, cookies that a given origin is not
-    # allowed to issue are excluded from the resulted array.
+    # Parses a Set-Cookie header value `set_cookie` assuming that it
+    # is sent from a source URI/URL `origin`, and returns an array of
+    # Cookie objects.  Parts (separated by commas) that are malformed
+    # or considered unacceptable are silently ignored.
     #
     # If a block is given, each cookie object is passed to the block.
     #
