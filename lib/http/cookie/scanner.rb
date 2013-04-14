@@ -143,7 +143,8 @@ class HTTP::Cookie::Scanner < StringScanner
       year += 2000
     end
 
-    if (time <=> [23,59,59]) > 0
+    hh, mm, ss = time
+    if hh > 23 || mm > 59 || ss > 59
       return nil
     end
 
