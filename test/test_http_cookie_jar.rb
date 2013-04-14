@@ -321,6 +321,14 @@ module TestHTTPCookieJar
       assert_equal(0, @jar.cookies(url).length)
     end
 
+    def test_save_nonexistent_saver
+      Dir.mktmpdir { |dir|
+        assert_raises(ArgumentError) {
+          @jar.save(File.join(dir, "file"), :nonexistent)
+        }
+      }
+    end
+
     def test_save_cookies_yaml
       url = URI 'http://rubyforge.org/'
 

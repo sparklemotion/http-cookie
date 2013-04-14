@@ -105,6 +105,12 @@ class TestHTTPCookie < Test::Unit::TestCase
     }.size
   end
 
+  def test_parse_no_name
+    cookie = '=no-name; path=/'
+    url = URI.parse('http://www.example.com/')
+    assert_equal 0, HTTP::Cookie.parse(cookie, url).size
+  end
+
   def test_parse_weird_cookie
     cookie = 'n/a, ASPSESSIONIDCSRRQDQR=FBLDGHPBNDJCPCGNCPAENELB; path=/'
     url = URI.parse('http://www.searchinnovation.com/')
@@ -425,10 +431,10 @@ class TestHTTPCookie < Test::Unit::TestCase
   end
 
   def test_set_cookie_value
-    url = URI.parse('http://rubyforge.org/')
+    url = URI.parse('http://rubyforge.org/path/')
 
     ['foo=bar', 'foo="bar"', 'foo="ba\"r baz"'].each { |cookie_value|
-      cookie_params = @cookie_params.merge('secure' => 'secure', 'max-age' => 'Max-Age=1000')
+      cookie_params = @cookie_params.merge('path' => '/path/', 'secure' => 'secure', 'max-age' => 'Max-Age=1000')
       date = Time.at(Time.now.to_i)
       cookie_params.keys.combine.each do |keys|
         cookie_text = [cookie_value, *keys.map { |key| cookie_params[key] }].join('; ')
