@@ -593,21 +593,25 @@ class HTTP::Cookie
   end
   alias to_s cookie_value
 
-  # Returns a string for use in the Set-Cookie header.  If the cookie
-  # does not have an origin set, one must be given from the argument.
-  #
-  # This method does not check if this cookie will be accepted from
-  # the origin.
-  def set_cookie_value(origin = nil)
-    origin = origin ? URI(origin) : @origin or
-      raise "origin must be specified to produce a value for Set-Cookie"
-
+  # Returns a string for use in the Set-Cookie header.  If necessary
+  # information like a path or domain (when `for_domain` is set) is
+  # missing, RuntimeError is raised.  It is always the best to set an
+  # origin before calling this method.
+  def set_cookie_value
     string = cookie_value
     if @for_domain
-      string << "; Domain=#{@domain}"
+      if @domain
+        string << "; Domain=#{@domain}"
+      else
+        raise "for_domain is specified but domain is known"
+      end
     end
-    if (origin + './').path != @path
-      string << "; Path=#{@path}"
+    if @path
+      if !@origin || (@origin + './').path != @path
+        string << "; Path=#{@path}"
+      end
+    else
+      raise "path is known"
     end
     if @max_age
       string << "; Max-Age=#{@max_age}"

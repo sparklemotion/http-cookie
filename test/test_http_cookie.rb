@@ -458,6 +458,22 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_set_cookie_value
     url = URI.parse('http://rubyforge.org/path/')
 
+    [
+      HTTP::Cookie.new('a', 'b', :domain => 'rubyforge.org', :path => '/path/'),
+      HTTP::Cookie.new('a', 'b', :origin => url),
+    ].each { |cookie|
+      cookie.set_cookie_value
+    }
+
+    [
+      HTTP::Cookie.new('a', 'b', :domain => 'rubyforge.org'),
+      HTTP::Cookie.new('a', 'b', :for_domain => true, :path => '/path/'),
+    ].each { |cookie|
+      assert_raises(RuntimeError) {
+        cookie.set_cookie_value
+      }
+    }
+
     ['foo=bar', 'foo="bar"', 'foo="ba\"r baz"'].each { |cookie_value|
       cookie_params = @cookie_params.merge('path' => '/path/', 'secure' => 'secure', 'max-age' => 'Max-Age=1000')
       date = Time.at(Time.now.to_i)
