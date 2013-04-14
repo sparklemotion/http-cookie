@@ -166,9 +166,7 @@ class HTTP::Cookie::Scanner < StringScanner
       skip_wsp
 
       name, value = scan_name_value
-      if name.nil?
-        break
-      elsif value.nil?
+      if value.nil?
         @logger.warn("Cookie definition lacks a name-value pair.") if @logger
       elsif name.empty?
         @logger.warn("Cookie definition has an empty name.") if @logger
@@ -185,7 +183,6 @@ class HTTP::Cookie::Scanner < StringScanner
       when skip(/;/)
         skip_wsp
         aname, avalue = scan_name_value
-        break if aname.nil?
         next if aname.empty? || value.nil?
         aname.downcase!
         case aname
@@ -236,7 +233,7 @@ class HTTP::Cookie::Scanner < StringScanner
 
       name, value = scan_name_value
 
-      yield name, value if name && value
+      yield name, value if value
 
       # The comma is used as separator for concatenating multiple
       # values of a header.
