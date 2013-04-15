@@ -34,14 +34,19 @@ Or install it yourself as:
     # Load from a file
     jar.load(filename) if File.exist?(filename)
 
-    # Store received cookies
-    jar.parse(set_cookie_header_value, uri)
+    # Store received cookies, where uri is the origin of this header
+    header["Set-Cookie"].each { |value|
+      jar.parse(value, uri)
+    }
 
-    # Get the value for the Cookie field of a request header
-    cookie_header_value = HTTP::Cookie.cookie_value(jar.cookies(uri))
+    # ...
+
+    # Set the Cookie header value, where uri is the destination URI
+    header["Cookie"] = HTTP::Cookie.cookie_value(jar.cookies(uri))
 
     # Save to a file
     jar.save(filename)
+
 
     ########################
     # Client side example 2
@@ -50,13 +55,17 @@ Or install it yourself as:
     # Initialize a cookie jar using a Mozilla compatible SQLite3 backend
     jar = HTTP::CookieJar.new(store: :mozilla, filename: 'cookies.sqlite')
 
-    # Store received cookies
-    jar.parse(set_cookie_header_value, uri)
-
-    # Get the value for the Cookie field of a request header
-    cookie_header_value = HTTP::Cookie.cookie_value(jar.cookies(uri))
-
     # There is no need for load & save in this backend.
+
+    # Store received cookies, where uri is the origin of this header
+    header["Set-Cookie"].each { |value|
+      jar.parse(value, uri)
+    }
+
+    # ...
+
+    # Set the Cookie header value, where uri is the destination URI
+    header["Cookie"] = HTTP::Cookie.cookie_value(jar.cookies(uri))
 
 
     ########################
@@ -64,21 +73,21 @@ Or install it yourself as:
     ########################
 
     # Generate a domain cookie
-    cookie2 = HTTP::Cookie.new("uid", "u12345", domain: 'example.org',
+    cookie1 = HTTP::Cookie.new("uid", "u12345", domain: 'example.org',
                                                 for_domain: true,
                                                 path: '/',
                                                 max_age: 7*86400)
 
+    # Add it to the Set-Cookie response header
+    header['Set-Cookie'] = cookie1.set_cookie_value
+
     # Generate a host-only cookie
-    cookie1 = HTTP::Cookie.new("aid", "a12345", origin: my_url,
+    cookie2 = HTTP::Cookie.new("aid", "a12345", origin: my_url,
                                                 path: '/',
                                                 max_age: 7*86400)
 
-    # Set the Set-Cookie response header value
-    header['Set-Cookie'] = [
-      cookie1.set_cookie_value,
-      cookie2.set_cookie_value,
-    ]
+    # Add it to the Set-Cookie response header
+    header['Set-Cookie'] = cookie2.set_cookie_value
 
 
 ## Incompatibilities with Mechanize::Cookie/CookieJar
