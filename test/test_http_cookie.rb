@@ -3,11 +3,10 @@ require File.expand_path('helper', File.dirname(__FILE__))
 
 class TestHTTPCookie < Test::Unit::TestCase
   def silently
-    warn_level = $VERBOSE
-    $VERBOSE = false
-    res = yield
+    warn_level, $VERBOSE = $VERBOSE, false
+    yield
+  ensure
     $VERBOSE = warn_level
-    res
   end
 
   def setup
