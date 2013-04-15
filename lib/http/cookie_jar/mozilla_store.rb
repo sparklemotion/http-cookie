@@ -9,6 +9,7 @@ class HTTP::CookieJar
   # Session cookies are stored separately on memory and will not be
   # stored persistently in the SQLite3 database.
   class MozillaStore < AbstractStore
+    # :stopdoc:
     SCHEMA_VERSION = 5
 
     def default_options
@@ -31,6 +32,41 @@ class HTTP::CookieJar
       name host path
       appId inBrowserElement
     ]
+
+    SQL = {}
+
+    Callable = proc { |obj, meth, *args|
+      proc {
+        obj.__send__(meth, *args)
+      }
+    }
+
+    class Database < SQLite3::Database
+      def initialize(file, options = {})
+        @stmts = []
+        options = {
+          :results_as_hash => true,
+        }.update(options)
+        super
+      end
+
+      def prepare(sql)
+        case st = super
+        when SQLite3::Statement
+          @stmts << st
+        end
+        st
+      end
+
+      def close
+        return self if closed?
+        @stmts.reject! { |st|
+          st.closed? || st.close
+        }
+        super
+      end
+    end
+    # :startdoc:
 
     # Generates a Mozilla cookie store.  If the file does not exist,
     # it is created.  If it does and its schema is old, it is
@@ -59,8 +95,14 @@ class HTTP::CookieJar
       @filename = options[:filename] or raise ArgumentError, ':filename option is missing'
 
       @sjar = HashStore.new
-      @db = SQLite3::Database.new(@filename)
-      @db.results_as_hash = true
+
+      @db = Database.new(@filename)
+
+      @stmt = Hash.new { |st, key|
+        st[key] = @db.prepare(SQL[key])
+      }
+
+      ObjectSpace.define_finalizer(self, Callable[@db, :close])
 
       upgrade_database
 
@@ -126,6 +168,13 @@ class HTTP::CookieJar
       SQL
     end
 
+    def db_prepare(sql)
+      st = @db.prepare(sql)
+      yield st
+    ensure
+      st.close if st
+    end
+
     def upgrade_database
       loop {
         case schema_version
@@ -138,28 +187,28 @@ class HTTP::CookieJar
         when 2
           @db.execute("ALTER TABLE moz_cookies ADD baseDomain TEXT")
 
-          st_update = @db.prepare("UPDATE moz_cookies SET baseDomain = :baseDomain WHERE id = :id")
-
-          @db.execute("SELECT id, host FROM moz_cookies") { |row|
-            domain_name = DomainName.new(row['host'][/\A\.?(.*)/, 1])
-            domain = domain_name.domain || domain_name.hostname
-            st_update.execute(:baseDomain => domain, :id => row['id'])
+          db_prepare("UPDATE moz_cookies SET baseDomain = :baseDomain WHERE id = :id") { |st_update|
+            @db.execute("SELECT id, host FROM moz_cookies") { |row|
+              domain_name = DomainName.new(row['host'][/\A\.?(.*)/, 1])
+              domain = domain_name.domain || domain_name.hostname
+              st_update.execute(:baseDomain => domain, :id => row['id'])
+            }
           }
 
           @db.execute("CREATE INDEX moz_basedomain ON moz_cookies (baseDomain)")
           self.schema_version += 1
         when 3
-          st_delete = @db.prepare("DELETE FROM moz_cookies WHERE id = :id")
-
-          prev_row = nil
-          @db.execute(<<-'SQL') { |row|
-                       SELECT id, name, host, path FROM moz_cookies
-                         ORDER BY name ASC, host ASC, path ASC, expiry ASC
-          SQL
-            if %w[name host path].all? { |col| prev_row and row[col] == prev_row[col] }
-              st_delete.execute(prev_row['id'])
-            end
-            prev_row = row
+          db_prepare("DELETE FROM moz_cookies WHERE id = :id") { |st_delete|
+            prev_row = nil
+            @db.execute(<<-'SQL') { |row|
+                         SELECT id, name, host, path FROM moz_cookies
+                           ORDER BY name ASC, host ASC, path ASC, expiry ASC
+            SQL
+              if %w[name host path].all? { |col| prev_row and row[col] == prev_row[col] }
+                st_delete.execute(prev_row['id'])
+              end
+              prev_row = row
+            }
           }
 
           @db.execute("ALTER TABLE moz_cookies ADD creationTime INTEGER")
@@ -192,14 +241,15 @@ class HTTP::CookieJar
       end
     end
 
-    def db_add(cookie)
-      @st_add ||=
-        @db.prepare('INSERT OR REPLACE INTO moz_cookies (%s) VALUES (%s)' % [
-          ALL_COLUMNS.join(', '),
-          ALL_COLUMNS.map { |col| ":#{col}" }.join(', ')
-        ])
+    SQL[:add] = <<-'SQL' % [
+      INSERT OR REPLACE INTO moz_cookies (%s) VALUES (%s)
+    SQL
+      ALL_COLUMNS.join(', '),
+      ALL_COLUMNS.map { |col| ":#{col}" }.join(', ')
+    ]
 
-      @st_add.execute({
+    def db_add(cookie)
+      @stmt[:add].execute({
           :baseDomain => cookie.domain_name.domain || cookie.domain,
           :appId => @app_id,
           :inBrowserElement => @in_browser_element ? 1 : 0,
@@ -217,18 +267,17 @@ class HTTP::CookieJar
       self
     end
 
-    def db_delete(cookie)
-      @st_delete ||=
-        @db.prepare(<<-'SQL')
-                     DELETE FROM moz_cookies
-                       WHERE appId = :appId AND
-                             inBrowserElement = :inBrowserElement AND
-                             name = :name AND
-                             host = :host AND
-                             path = :path
-                    SQL
+    SQL[:delete] = <<-'SQL'
+      DELETE FROM moz_cookies
+        WHERE appId = :appId AND
+              inBrowserElement = :inBrowserElement AND
+              name = :name AND
+              host = :host AND
+              path = :path
+    SQL
 
-      @st_delete.execute({
+    def db_delete(cookie)
+      @stmt[:delete].execute({
           :appId => @app_id,
           :inBrowserElement => @in_browser_element ? 1 : 0,
           :name => cookie.name,
@@ -255,25 +304,34 @@ class HTTP::CookieJar
       db_delete(cookie)
     end
 
+    SQL[:cookies_for_domain] = <<-'SQL'
+      SELECT * FROM moz_cookies
+        WHERE baseDomain = :baseDomain AND
+              appId = :appId AND
+              inBrowserElement = :inBrowserElement AND
+              expiry >= :expiry
+    SQL
+
+    SQL[:update_lastaccessed] = <<-'SQL'
+      UPDATE moz_cookies
+        SET lastAccessed = :lastAccessed
+        WHERE id = :id
+    SQL
+
+    SQL[:all_cookies] = <<-'SQL'
+      SELECT * FROM moz_cookies
+        WHERE appId = :appId AND
+              inBrowserElement = :inBrowserElement AND
+              expiry >= :expiry
+    SQL
+
     def each(uri = nil, &block)
       now = Time.now
       if uri
-        @st_cookies_for_domain ||=
-          @db.prepare(<<-'SQL')
-                       SELECT * FROM moz_cookies
-                         WHERE baseDomain = :baseDomain AND
-                               appId = :appId AND
-                               inBrowserElement = :inBrowserElement AND
-                               expiry >= :expiry
-                      SQL
-
-        @st_update_lastaccessed ||=
-            @db.prepare("UPDATE moz_cookies SET lastAccessed = :lastAccessed where id = :id")
-
         thost = DomainName.new(uri.host)
         tpath = uri.path
 
-        @st_cookies_for_domain.execute({
+        @stmt[:cookies_for_domain].execute({
             :baseDomain => thost.domain || thost.hostname,
             :appId => @app_id,
             :inBrowserElement => @in_browser_element ? 1 : 0,
@@ -297,7 +355,7 @@ class HTTP::CookieJar
 
           if cookie.valid_for_uri?(uri)
             cookie.accessed_at = now
-            @st_update_lastaccessed.execute({
+            @stmt[:update_lastaccessed].execute({
                 'lastAccessed' => now.to_i,
                 'id' => row['id'],
               })
@@ -306,15 +364,7 @@ class HTTP::CookieJar
         }
         @sjar.each(uri, &block)
       else
-        @st_all_cookies ||=
-          @db.prepare(<<-'SQL')
-                       SELECT * FROM moz_cookies
-                         WHERE appId = :appId AND
-                               inBrowserElement = :inBrowserElement AND
-                               expiry >= :expiry
-                      SQL
-
-        @st_all_cookies.execute({
+        @stmt[:all_cookies].execute({
             :appId => @app_id,
             :inBrowserElement => @in_browser_element ? 1 : 0,
             :expiry => now.to_i,
@@ -344,11 +394,12 @@ class HTTP::CookieJar
       self
     end
 
-    def count
-      @st_count ||=
-        @db.prepare("SELECT COUNT(id) FROM moz_cookies")
+    SQL[:count] = <<-'SQL'
+      SELECT COUNT(id) FROM moz_cookies
+    SQL
 
-      @st_count.execute.first[0]
+    def count
+      @stmt[:count].execute.first[0]
     end
     protected :count
 
@@ -356,44 +407,43 @@ class HTTP::CookieJar
       @sjar.empty? && count == 0
     end
 
+    SQL[:delete_expired] = <<-'SQL'
+      DELETE FROM moz_cookies WHERE expiry < :expiry
+    SQL
+
+    SQL[:overusing_domains] = <<-'SQL'
+      SELECT LTRIM(host, '.') domain, COUNT(*) count
+        FROM moz_cookies
+        GROUP BY domain
+        HAVING count > :count
+    SQL
+
+    SQL[:delete_per_domain_overuse] = <<-'SQL'
+      DELETE FROM moz_cookies WHERE id IN (
+        SELECT id FROM moz_cookies
+          WHERE LTRIM(host, '.') = :domain
+          ORDER BY creationtime
+          LIMIT :limit)
+    SQL
+
+    SQL[:delete_total_overuse] = <<-'SQL'
+      DELETE FROM moz_cookies WHERE id IN (
+        SELECT id FROM moz_cookies ORDER BY creationTime ASC LIMIT :limit
+      )
+    SQL
+
     def cleanup(session = false)
-      @st_delete_expired ||=
-        @db.prepare("DELETE FROM moz_cookies WHERE expiry < :expiry")
-
-      @st_overusing_domains ||=
-        @db.prepare(<<-'SQL')
-                     SELECT LTRIM(host, '.') domain, COUNT(*) count
-                       FROM moz_cookies
-                       GROUP BY domain
-                       HAVING count > :count
-                    SQL
-
-      @st_delete_per_domain_overuse ||=
-        @db.prepare(<<-'SQL')
-                     DELETE FROM moz_cookies WHERE id IN (
-                       SELECT id FROM moz_cookies
-                         WHERE LTRIM(host, '.') = :domain
-                         ORDER BY creationtime
-                         LIMIT :limit)
-        SQL
-      @st_delete_total_overuse ||=
-        @db.prepare(<<-'SQL')
-                     DELETE FROM moz_cookies WHERE id IN (
-                       SELECT id FROM moz_cookies ORDER BY creationTime ASC LIMIT :limit
-                     )
-        SQL
-
       synchronize {
         break if @gc_index == 0
 
-        @st_delete_expired.execute({ 'expiry' => Time.now.to_i })
+        @stmt[:delete_expired].execute({ 'expiry' => Time.now.to_i })
 
-        @st_overusing_domains.execute({
+        @stmt[:overusing_domains].execute({
             'count' => HTTP::Cookie::MAX_COOKIES_PER_DOMAIN
           }).each { |row|
           domain, count = row['domain'], row['count']
 
-          @st_delete_per_domain_overuse.execute({
+          @stmt[:delete_per_domain_overuse].execute({
               'domain' => domain,
               'limit' => count - HTTP::Cookie::MAX_COOKIES_PER_DOMAIN,
             })
@@ -402,7 +452,7 @@ class HTTP::CookieJar
         overrun = count - HTTP::Cookie::MAX_COOKIES_TOTAL
 
         if overrun > 0
-          @st_delete_total_overuse.execute({ 'limit' => overrun })
+          @stmt[:delete_total_overuse].execute({ 'limit' => overrun })
         end
 
         @gc_index = 0

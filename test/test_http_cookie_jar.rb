@@ -2,25 +2,7 @@ require File.expand_path('helper', File.dirname(__FILE__))
 require 'tmpdir'
 
 module TestHTTPCookieJar
-  class TestBasic < Test::Unit::TestCase
-    def test_store
-      jar = HTTP::CookieJar.new(:store => :hash)
-      assert_instance_of HTTP::CookieJar::HashStore, jar.store
-
-      assert_raises(IndexError) {
-        jar = HTTP::CookieJar.new(:store => :nonexistent)
-      }
-
-      jar = HTTP::CookieJar.new(:store => HTTP::CookieJar::HashStore.new)
-      assert_instance_of HTTP::CookieJar::HashStore, jar.store
-
-      assert_raises(TypeError) {
-        jar = HTTP::CookieJar.new(:store => HTTP::CookieJar::HashStore)
-      }
-    end
-  end
-
-  module Tests
+  module CommonTests
     def setup(options = nil, options2 = nil)
       default_options = {
         :store => :hash,
@@ -770,16 +752,63 @@ module TestHTTPCookieJar
   end
 
   class WithHashStore < Test::Unit::TestCase
-    include Tests
+    include CommonTests
+
+    def test_new
+      jar = HTTP::CookieJar.new(:store => :hash)
+      assert_instance_of HTTP::CookieJar::HashStore, jar.store
+
+      assert_raises(IndexError) {
+        jar = HTTP::CookieJar.new(:store => :nonexistent)
+      }
+
+      jar = HTTP::CookieJar.new(:store => HTTP::CookieJar::HashStore.new)
+      assert_instance_of HTTP::CookieJar::HashStore, jar.store
+
+      assert_raises(TypeError) {
+        jar = HTTP::CookieJar.new(:store => HTTP::CookieJar::HashStore)
+      }
+    end
+
   end
 
   class WithMozillaStore < Test::Unit::TestCase
-    include Tests
+    include CommonTests
 
     def setup
       super(
         { :store => :mozilla, :filename => ":memory:" },
         { :store => :mozilla, :filename => ":memory:" })
+    end
+
+    def add_and_delete(jar)
+      jar.parse("name=Akinori; Domain=rubyforge.org; Expires=Sun, 08 Aug 2076 19:00:00 GMT; Path=/",
+                'http://rubyforge.org/')
+      jar.parse("country=Japan; Domain=rubyforge.org; Expires=Sun, 08 Aug 2076 19:00:00 GMT; Path=/",
+                'http://rubyforge.org/')
+      jar.delete(HTTP::Cookie.new("name", :domain => 'rubyforge.org'))
+    end
+
+    def test_close
+      add_and_delete(@jar)
+
+      assert_not_send [@jar.store, :closed?]
+      @jar.store.close
+      assert_send [@jar.store, :closed?]
+      @jar.store.close	# should do nothing
+      assert_send [@jar.store, :closed?]
+    end
+
+    def test_finalizer
+      db = nil
+      loop {
+        jar = HTTP::CookieJar.new(:store => :mozilla, :filename => ':memory:')
+        add_and_delete(jar)
+        db = jar.store.instance_variable_get(:@db)
+        break
+      }
+      GC.start
+      assert_send [db, :closed?]
     end
 
     def test_upgrade_mozillastore
