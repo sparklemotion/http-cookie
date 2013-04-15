@@ -16,7 +16,7 @@ class Hash
   class << self
     def try_convert(object)
       if object.is_a?(Hash) ||
-          (object.respond_to?(:to_h) && (object = object.to_str).is_a?(Hash))
+          (object.respond_to?(:to_hash) && (object = object.to_hash).is_a?(Hash))
         object
       else
         nil
