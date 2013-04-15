@@ -809,7 +809,11 @@ module TestHTTPCookieJar
       }
       at_exit {
         GC.start
-        assert_send [db, :closed?]
+        if db.closed?
+          puts "finalizer worked"
+        else
+          puts "finalizer did not work"
+        end
       }
     end
 
