@@ -1,5 +1,5 @@
 module HTTP
   class Cookie
-    VERSION = "1.0.0.pre11"
+    VERSION = "1.0.0.pre12"
   end
 end
