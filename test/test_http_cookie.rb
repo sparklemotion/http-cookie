@@ -2,13 +2,6 @@
 require File.expand_path('helper', File.dirname(__FILE__))
 
 class TestHTTPCookie < Test::Unit::TestCase
-  def silently
-    warn_level, $VERBOSE = $VERBOSE, false
-    yield
-  ensure
-    $VERBOSE = warn_level
-  end
-
   def setup
     httpdate = 'Sun, 27-Sep-2037 00:00:00 GMT'
 
@@ -46,12 +39,10 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     dates.each do |date|
       cookie = "PREF=1; expires=#{date}"
-      silently do
-        assert_equal 1, HTTP::Cookie.parse(cookie, url) { |c|
-          assert c.expires, "Tried parsing: #{date}"
-          assert_send [c.expires, :<, yesterday]
-        }.size
-      end
+      assert_equal 1, HTTP::Cookie.parse(cookie, url) { |c|
+        assert c.expires, "Tried parsing: #{date}"
+        assert_send [c.expires, :<, yesterday]
+      }.size
     end
 
     [
@@ -177,14 +168,12 @@ class TestHTTPCookie < Test::Unit::TestCase
       "20/06/95 21:07",
     ]
 
-    silently do
-      dates.each do |date|
-        cookie = "PREF=1; expires=#{date}"
-        assert_equal 1, HTTP::Cookie.parse(cookie, url) { |c|
-          assert_equal(true, c.expires.nil?)
-        }.size
-      end
-    end
+    dates.each { |date|
+      cookie = "PREF=1; expires=#{date}"
+      assert_equal 1, HTTP::Cookie.parse(cookie, url) { |c|
+        assert_equal(true, c.expires.nil?)
+      }.size
+    }
   end
 
   def test_parse_domain_dot
@@ -535,6 +524,30 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal expires, cookie.expires
     assert_raises(RuntimeError) {
       cookie.acceptable?
+    }
+
+    # various keywords
+    [
+      [:Expires,  /should be downcased/],
+      ["Expires", /should be downcased.*use symbol/m],
+    ].each { |key, pattern|
+      assert_warning(pattern, "warn of key: #{key.inspect}") {
+        cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', key => expires.dup)
+        assert_equal 'key', cookie.name
+        assert_equal 'value', cookie.value
+        assert_equal expires, cookie.expires
+      }
+    }
+    [
+      [:expires?, /unknown keyword/],
+      [[:expires], /invalid keyword/],
+    ].each { |key, pattern|
+      assert_warning(pattern, "warn of key: #{key.inspect}") {
+        cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', key => expires.dup)
+        assert_equal 'key', cookie.name
+        assert_equal 'value', cookie.value
+        assert_equal nil, cookie.expires
+      }
     }
 
     cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', :expires => expires.dup)

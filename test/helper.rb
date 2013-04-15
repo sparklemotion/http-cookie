@@ -3,6 +3,30 @@ require 'test-unit'
 require 'uri'
 require 'http/cookie'
 
+module Test
+  module Unit
+    module Assertions
+      def assert_warn(pattern, message = nil, &block)
+        class << (output = "")
+          alias write <<
+        end
+        stderr, $stderr = $stderr, output
+        yield
+        assert_match(pattern, output, message)
+      ensure
+        $stderr = stderr
+      end
+
+      def assert_warning(pattern, message = nil, &block)
+        verbose, $VERBOSE = $VERBOSE, true
+        assert_warn(pattern, message, &block)
+      ensure
+        $VERBOSE = verbose
+      end
+    end
+  end
+end
+
 module Enumerable
   def combine
     masks = inject([[], 1]){|(ar, m), e| [ar << m, m << 1 ] }[0]

@@ -42,7 +42,11 @@ class HTTP::CookieJar::YAMLSaver < HTTP::CookieJar::AbstractSaver
               # YAML::Object of Syck
               cookie_hash = cookie_hash.ivars
             end
-            cookie = HTTP::Cookie.new(cookie_hash)
+            cookie = HTTP::Cookie.new({}.tap { |hash|
+                cookie_hash.each_pair { |key, value|
+                  hash[key.to_sym] = value
+                }
+              })
             jar.add(cookie)
           }
         }

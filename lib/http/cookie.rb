@@ -114,9 +114,12 @@ class HTTP::Cookie
   # is called if defined.  Each key can be either a symbol or a
   # string of downcased attribute names.
   #
-  # This methods accepts any attribute name for which a setter method
+  # This method accepts any attribute name for which a setter method
   # is defined.  Beware, however, any error (typically ArgumentError)
-  # a setter method raises will be passed through.
+  # a setter method raises will be passed through.  It is preferred
+  # that each keyword is a downcased symbol.  Support for strings and
+  # mixed case keywords will be obsoleted when ruby 2.0 keyword syntax
+  # is adopted.
   #
   # If `value` is omitted or it is nil, an expiration cookie is
   # created unless `max_age` or `expires` (`expires_at`) is given.
@@ -157,8 +160,8 @@ class HTTP::Cookie
     end
     for_domain = false
     domain = max_age = origin = nil
-    attr_hash.each_pair { |key, val|
-      case key.to_sym
+    attr_hash.each_pair { |okey, val|
+      case key ||= okey
       when :name
         self.name = val
       when :value
@@ -181,7 +184,7 @@ class HTTP::Cookie
       when :secure, :secure?
         @secure = val
       when /[A-Z]/
-        warn "keyword should be downcased: #{key}" if $VERBOSE
+        warn "keyword should be downcased: #{okey.inspect}" if $VERBOSE
         key = key.downcase
         redo
       when Symbol
@@ -189,14 +192,15 @@ class HTTP::Cookie
         if respond_to?(setter)
           __send__(setter, val)
         else
-          warn "unknown keyword: #{key}" if $VERBOSE
+          warn "unknown keyword: #{okey.inspect}" if $VERBOSE
         end
       when String
+        warn "use symbol for keyword: #{okey.inspect}" if $VERBOSE
         key = key.to_sym
         redo
       else
-        key = key.to_s
-        redo
+        warn "invalid keyword ignored: #{okey.inspect}" if $VERBOSE
+        next
       end
     }
     if @name.nil?
