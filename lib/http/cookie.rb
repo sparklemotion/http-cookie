@@ -344,8 +344,8 @@ class HTTP::Cookie
 
   # See #name.
   def name=(name)
-    name = String.try_convert(name) or
-      raise TypeError, "#{name.class} is not a String"
+    name = (String.try_convert(name) or
+      raise TypeError, "#{name.class} is not a String")
     if name.empty?
       raise ArgumentError, "cookie name cannot be empty"
     elsif name.match(/[\x00-\x20\x7F,;\\"=]/)
@@ -365,8 +365,8 @@ class HTTP::Cookie
       self.expires = UNIX_EPOCH
       return @value = ''
     end
-    value = String.try_convert(value) or
-      raise TypeError, "#{value.class} is not a String"
+    value = (String.try_convert(value) or
+      raise TypeError, "#{value.class} is not a String")
     if value.match(/[\x00-\x1F\x7F]/)
       raise ArgumentError, "invalid cookie value"
     end
@@ -393,8 +393,8 @@ class HTTP::Cookie
     when DomainName
       @domain_name = domain
     else
-      domain = String.try_convert(domain) or
-        raise TypeError, "#{domain.class} is not a String"
+      domain = (String.try_convert(domain) or
+        raise TypeError, "#{domain.class} is not a String")
       if domain.start_with?('.')
         for_domain = true
         domain = domain[1..-1]
@@ -438,8 +438,8 @@ class HTTP::Cookie
 
   # See #path.
   def path=(path)
-    path = String.try_convert(path) or
-      raise TypeError, "#{path.class} is not a String"
+    path = (String.try_convert(path) or
+      raise TypeError, "#{path.class} is not a String")
     @path = path.start_with?('/') ? path : '/'
   end
 
