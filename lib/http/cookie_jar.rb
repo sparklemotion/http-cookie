@@ -94,7 +94,7 @@ class HTTP::CookieJar
       begin
         cookie.acceptable?
       rescue RuntimeError => e
-          raise ArgumentError, e.message
+        raise ArgumentError, e.message
       end
     self
   end

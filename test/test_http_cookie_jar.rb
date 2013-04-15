@@ -749,6 +749,46 @@ module TestHTTPCookieJar
       assert_equal %w[Akinori Japan], cookies.map { |c| c.value }
       assert_equal %w[Japan Akinori], @jar.to_a.sort_by { |c| c.name }.map { |c| c.value }
     end
+
+    def test_expire_by_each_and_cleanup
+      uri = URI('http://www.example.org/')
+
+      ts = Time.now.to_f
+      if ts % 1 > 0.5
+        sleep 0.5
+        ts += 0.5
+      end
+      expires = Time.at(ts.floor)
+      time = expires
+
+      if mozilla_store?
+        # MozillaStore only has the time precision of seconds.
+        time = expires
+        expires -= 1
+      end
+
+      0.upto(2) { |i|
+        c = HTTP::Cookie.new('Foo%d' % (3 - i), 'Bar', :expires => expires + i, :origin => uri)
+        @jar  << c
+        @jar2 << c
+      }
+
+      assert_equal %w[Foo1 Foo2], @jar.cookies.map(&:name)
+      assert_equal %w[Foo1 Foo2], @jar2.cookies(uri).map(&:name)
+
+      sleep_until time + 1
+
+      assert_equal %w[Foo1], @jar.cookies.map(&:name)
+      assert_equal %w[Foo1], @jar2.cookies(uri).map(&:name)
+
+      sleep_until time + 2
+
+      @jar.cleanup
+      @jar2.cleanup
+
+      assert_send [@jar,  :empty?]
+      assert_send [@jar2, :empty?]
+    end
   end
 
   class WithHashStore < Test::Unit::TestCase
@@ -770,6 +810,20 @@ module TestHTTPCookieJar
       }
     end
 
+    def test_clone
+      jar = @jar.clone
+      assert_not_send [
+        @jar.store,
+        :equal?,
+        jar.store
+      ]
+      assert_not_send [
+        @jar.store.instance_variable_get(:@jar),
+        :equal?,
+        jar.store.instance_variable_get(:@jar)
+      ]
+      assert_equal @jar.cookies, jar.cookies
+    end
   end
 
   class WithMozillaStore < Test::Unit::TestCase
@@ -787,6 +841,12 @@ module TestHTTPCookieJar
       jar.parse("country=Japan; Domain=rubyforge.org; Expires=Sun, 08 Aug 2076 19:00:00 GMT; Path=/",
                 'http://rubyforge.org/')
       jar.delete(HTTP::Cookie.new("name", :domain => 'rubyforge.org'))
+    end
+
+    def test_clone
+      assert_raises(TypeError) {
+        @jar.clone
+      }
     end
 
     def test_close

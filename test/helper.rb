@@ -47,3 +47,9 @@ end
 def test_file(filename)
   File.expand_path(filename, File.dirname(__FILE__))
 end
+
+def sleep_until(time)
+  if (s = time - Time.now) > 0
+    sleep s
+  end
+end
