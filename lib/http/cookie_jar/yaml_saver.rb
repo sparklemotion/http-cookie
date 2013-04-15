@@ -38,6 +38,10 @@ class HTTP::CookieJar::YAMLSaver < HTTP::CookieJar::AbstractSaver
       data.each { |domain, paths|
         paths.each { |path, names|
           names.each { |cookie_name, cookie_hash|
+            if cookie_hash.respond_to?(:ivars)
+              # YAML::Object of Syck
+              cookie_hash = cookie_hash.ivars
+            end
             cookie = HTTP::Cookie.new(cookie_hash)
             jar.add(cookie)
           }
