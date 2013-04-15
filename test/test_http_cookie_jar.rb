@@ -781,6 +781,52 @@ module TestHTTPCookieJar
         { :store => :mozilla, :filename => ":memory:" },
         { :store => :mozilla, :filename => ":memory:" })
     end
+
+    def test_upgrade_mozillastore
+      Dir.mktmpdir { |dir|
+        filename = File.join(dir, 'cookies.sqlite')
+
+        sqlite = SQLite3::Database.new(filename)
+        sqlite.execute(<<-'SQL')
+          CREATE TABLE moz_cookies (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            value TEXT,
+            host TEXT,
+            path TEXT,
+            expiry INTEGER,
+            isSecure INTEGER,
+            isHttpOnly INTEGER)
+        SQL
+        sqlite.execute(<<-'SQL')
+          PRAGMA user_version = 1
+        SQL
+
+        begin
+          st_insert = sqlite.prepare(<<-'SQL')
+            INSERT INTO moz_cookies (
+              id, name, value, host, path, expiry, isSecure, isHttpOnly
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          SQL
+
+          st_insert.execute(1, 'name1', 'value1', '.example.co.jp', '/', 2312085765, 0, 0)
+          st_insert.execute(2, 'name1', 'value2', '.example.co.jp', '/', 2312085765, 0, 0)
+          st_insert.execute(3, 'name1', 'value3', 'www.example.co.jp', '/', 2312085765, 0, 0)
+        ensure
+          st_insert.close if st_insert
+        end
+
+        sqlite.close
+        jar = HTTP::CookieJar.new(:store => :mozilla, :filename => filename)
+
+        assert_equal 2, jar.to_a.size
+        assert_equal 2, jar.cookies('http://www.example.co.jp/').size
+
+        cookie, *rest = jar.cookies('http://host.example.co.jp/')
+        assert_send [rest, :empty?]
+        assert_equal 'value2', cookie.value
+      }
+    end
   end if begin
     require 'sqlite3'
     true

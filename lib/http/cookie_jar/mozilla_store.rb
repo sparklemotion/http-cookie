@@ -141,9 +141,9 @@ class HTTP::CookieJar
           st_update = @db.prepare("UPDATE moz_cookies SET baseDomain = :baseDomain WHERE id = :id")
 
           @db.execute("SELECT id, host FROM moz_cookies") { |row|
-            domain_name = DomainName.new(row[:host])
+            domain_name = DomainName.new(row['host'][/\A\.?(.*)/, 1])
             domain = domain_name.domain || domain_name.hostname
-            st_update.execute(:baseDomain => domain, :id => row[:id])
+            st_update.execute(:baseDomain => domain, :id => row['id'])
           }
 
           @db.execute("CREATE INDEX moz_basedomain ON moz_cookies (baseDomain)")
@@ -151,12 +151,12 @@ class HTTP::CookieJar
         when 3
           st_delete = @db.prepare("DELETE FROM moz_cookies WHERE id = :id")
 
-          prev_row  = nil
+          prev_row = nil
           @db.execute(<<-'SQL') { |row|
                        SELECT id, name, host, path FROM moz_cookies
                          ORDER BY name ASC, host ASC, path ASC, expiry ASC
           SQL
-            if %w[name host path].all? { |col| row[col] == prev_row[col] }
+            if %w[name host path].all? { |col| prev_row and row[col] == prev_row[col] }
               st_delete.execute(prev_row['id'])
             end
             prev_row = row
@@ -289,8 +289,8 @@ class HTTP::CookieJar
               attrs[:domain]      = row['host']
               attrs[:path]        = row['path']
               attrs[:expires_at]  = Time.at(row['expiry'])
-              attrs[:accessed_at] = Time.at(row['lastAccessed'])
-              attrs[:created_at]  = Time.at(row['creationTime'])
+              attrs[:accessed_at] = Time.at(row['lastAccessed'] || 0)
+              attrs[:created_at]  = Time.at(row['creationTime'] || 0)
               attrs[:secure]      = secure
               attrs[:httponly]    = row['isHttpOnly'] != 0
             })
@@ -325,8 +325,8 @@ class HTTP::CookieJar
               attrs[:domain]      = row['host']
               attrs[:path]        = row['path']
               attrs[:expires_at]  = Time.at(row['expiry'])
-              attrs[:accessed_at] = Time.at(row['lastAccessed'])
-              attrs[:created_at]  = Time.at(row['creationTime'])
+              attrs[:accessed_at] = Time.at(row['lastAccessed'] || 0)
+              attrs[:created_at]  = Time.at(row['creationTime'] || 0)
               attrs[:secure]      = row['isSecure'] != 0
               attrs[:httponly]    = row['isHttpOnly'] != 0
             })
