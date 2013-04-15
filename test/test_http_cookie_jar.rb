@@ -807,8 +807,10 @@ module TestHTTPCookieJar
         db = jar.store.instance_variable_get(:@db)
         break
       }
-      GC.start
-      assert_send [db, :closed?]
+      at_exit {
+        GC.start
+        assert_send [db, :closed?]
+      }
     end
 
     def test_upgrade_mozillastore
