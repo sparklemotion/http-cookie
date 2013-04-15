@@ -805,15 +805,15 @@ module TestHTTPCookieJar
         jar = HTTP::CookieJar.new(:store => :mozilla, :filename => ':memory:')
         add_and_delete(jar)
         db = jar.store.instance_variable_get(:@db)
-        break
-      }
-      at_exit {
-        GC.start
-        if db.closed?
-          puts "finalizer worked"
-        else
-          puts "finalizer did not work"
+        class << db
+          alias close_orig close
+          def close
+            STDERR.print "[finalizer is called]"
+            STDERR.flush
+            close_orig
+          end
         end
+        break
       }
     end
 
