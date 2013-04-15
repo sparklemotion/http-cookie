@@ -19,3 +19,7 @@ module Enumerable
     result
   end
 end
+
+def test_file(filename)
+  File.expand_path(filename, File.dirname(__FILE__))
+end

@@ -505,6 +505,32 @@ module TestHTTPCookieJar
       assert_equal(5, @jar.cookies(url).length)
     end
 
+    def test_load_yaml_mechanize
+      @jar.load(test_file('mechanize.yml'), :yaml)
+
+      assert_equal 4, @jar.to_a.size
+
+      com_nid, com_pref = @jar.cookies('http://www.google.com/')
+
+      assert_equal 'NID', com_nid.name
+      assert_equal 'Sun, 23 Sep 2063 08:20:15 GMT', com_nid.expires.httpdate
+      assert_equal 'google.com', com_nid.domain_name.hostname
+
+      assert_equal 'PREF', com_pref.name
+      assert_equal 'Tue, 24 Mar 2065 08:20:15 GMT', com_pref.expires.httpdate
+      assert_equal 'google.com', com_pref.domain_name.hostname
+
+      cojp_nid, cojp_pref = @jar.cookies('http://www.google.co.jp/')
+
+      assert_equal 'NID', cojp_nid.name
+      assert_equal 'Sun, 23 Sep 2063 08:20:16 GMT', cojp_nid.expires.httpdate
+      assert_equal 'google.co.jp', cojp_nid.domain_name.hostname
+
+      assert_equal 'PREF', cojp_pref.name
+      assert_equal 'Tue, 24 Mar 2065 08:20:16 GMT', cojp_pref.expires.httpdate
+      assert_equal 'google.co.jp', cojp_pref.domain_name.hostname
+    end
+
     def test_expire_cookies
       url = URI 'http://rubyforge.org/'
 
