@@ -73,7 +73,7 @@ class HTTP::CookieJar
     # Closes the SQLite3 database.  After closing, any operation may
     # raise an error.
     def close
-      @db.close
+      @db.closed? || @db.close
       self
     end
 
