@@ -69,7 +69,12 @@ class HTTP::CookieJar
   #       jar.origin = origin
   #       jar.add(cookie)     # acceptance check is performed
   def add(cookie)
-    @store.add(cookie) if cookie.acceptable?
+    @store.add(cookie) if
+      begin
+        cookie.acceptable?
+      rescue RuntimeError => e
+          raise ArgumentError, e.message
+      end
     self
   end
   alias << add

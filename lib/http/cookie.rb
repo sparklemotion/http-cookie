@@ -564,9 +564,9 @@ class HTTP::Cookie
   def acceptable?
     case
     when @domain.nil?
-      raise ArgumentError, "domain is missing"
+      raise "domain is missing"
     when @path.nil?
-      raise ArgumentError, "path is missing"
+      raise "path is missing"
     when @origin.nil?
       true
     else
@@ -574,8 +574,8 @@ class HTTP::Cookie
     end
   end
 
-  # Tests if it is OK to send this cookie to a given `uri`.  A runtime
-  # error is raised if the cookie's domain is unknown.
+  # Tests if it is OK to send this cookie to a given `uri`.  A
+  # RuntimeError is raised if the cookie's domain is unknown.
   def valid_for_uri?(uri)
     if @domain.nil?
       raise "cannot tell if this cookie is valid because the domain is unknown"

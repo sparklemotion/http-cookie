@@ -523,7 +523,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 'key', cookie.name
     assert_equal 'value', cookie.value
     assert_equal nil, cookie.expires
-    assert_raises(ArgumentError) {
+    assert_raises(RuntimeError) {
       cookie.acceptable?
     }
 
@@ -534,7 +534,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 'key', cookie.name
     assert_equal 'value', cookie.value
     assert_equal expires, cookie.expires
-    assert_raises(ArgumentError) {
+    assert_raises(RuntimeError) {
       cookie.acceptable?
     }
 
@@ -543,7 +543,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 'value', cookie.value
     assert_equal expires, cookie.expires
     assert_equal false, cookie.for_domain?
-    assert_raises(ArgumentError) {
+    assert_raises(RuntimeError) {
       # domain and path are missing
       cookie.acceptable?
     }
@@ -553,7 +553,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 'value', cookie.value
     assert_equal expires, cookie.expires
     assert_equal true, cookie.for_domain?
-    assert_raises(ArgumentError) {
+    assert_raises(RuntimeError) {
       # path is missing
       cookie.acceptable?
     }
@@ -563,7 +563,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 'value', cookie.value
     assert_equal expires, cookie.expires
     assert_equal false, cookie.for_domain?
-    assert_raises(ArgumentError) {
+    assert_raises(RuntimeError) {
       # path is missing
       cookie.acceptable?
     }
@@ -574,7 +574,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal expires, cookie.expires
     assert_equal 'example.org', cookie.domain
     assert_equal true, cookie.for_domain?
-    assert_raises(ArgumentError) {
+    assert_raises(RuntimeError) {
       # path is missing
       cookie.acceptable?
     }
@@ -849,7 +849,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       cookie.domain = d
       assert_equal nil, cookie.domain, "domain=#{d.inspect}"
       assert_equal nil, cookie.domain_name, "domain=#{d.inspect}"
-      assert_raises(ArgumentError) {
+      assert_raises(RuntimeError) {
         cookie.acceptable?
       }
 
