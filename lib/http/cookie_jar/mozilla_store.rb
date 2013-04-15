@@ -109,6 +109,10 @@ class HTTP::CookieJar
       @gc_index = 0
     end
 
+    def initialize_copy(other)
+      raise TypeError, 'can\'t clone %s' % self.class
+    end
+
     # The file name of the SQLite3 database given in initialization.
     attr_reader :filename
 
