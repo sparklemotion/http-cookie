@@ -26,7 +26,7 @@ class HTTP::CookieJar::AbstractSaver
   end
 
   def default_options
-    {}
+    # {}
   end
   private :default_options
 
@@ -42,10 +42,10 @@ class HTTP::CookieJar::AbstractSaver
   end
 
   def save(io, jar)
-    raise
+    # self
   end
 
   def load(io, jar)
-    raise
+    # self
   end
 end

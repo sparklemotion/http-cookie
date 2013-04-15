@@ -30,7 +30,7 @@ class HTTP::CookieJar::AbstractStore
   end
 
   def default_options
-    {}
+    # {}
   end
   private :default_options
 
@@ -46,18 +46,15 @@ class HTTP::CookieJar::AbstractStore
   end
 
   def initialize_copy(other)
-    raise
-    self
+    # self
   end
 
   def add(cookie)
-    raise
-    self
+    # self
   end
 
   def delete(cookie)
-    raise
-    self
+    # self
   end
 
   # Iterates over all cookies that are not expired.
@@ -70,35 +67,34 @@ class HTTP::CookieJar::AbstractStore
   # If (and only if) the +uri+ option is given, last access time of
   # each cookie is updated to the current time.
   def each(uri = nil, &block)
-    if uri
-      raise
-    else
-      synchronize {
-        raise
-      }
-    end
-    self
+    # if uri
+    #   ...
+    # else
+    #   synchronize {
+    #     ...
+    #   }
+    # end
+    # self
   end
   include Enumerable
 
   def empty?
-    raise
+    # true or false
   end
 
   def clear
-    raise
-    self
+    # self
   end
 
   def cleanup(session = false)
-    if session
-      select { |cookie| cookie.session? || cookie.expired? }
-    else
-      select(&:expired?)
-    end.each { |cookie|
-      delete(cookie)
-    }
-    # subclasses can optionally remove over-the-limit cookies.
-    self
+    # if session
+    #   select { |cookie| cookie.session? || cookie.expired? }
+    # else
+    #   select(&:expired?)
+    # end.each { |cookie|
+    #   delete(cookie)
+    # }
+    # # subclasses can optionally remove over-the-limit cookies.
+    # self
   end
 end

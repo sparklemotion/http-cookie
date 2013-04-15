@@ -16,9 +16,9 @@ module TestHTTPCookieJar
       @jar2 = HTTP::CookieJar.new(new_options2)
     end
 
-    def hash_store?
-      @store_type == :hash
-    end
+    #def hash_store?
+    #  @store_type == :hash
+    #end
 
     def mozilla_store?
       @store_type == :mozilla
