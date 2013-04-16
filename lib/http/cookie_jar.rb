@@ -59,6 +59,7 @@ class HTTP::CookieJar
     end
   end
 
+  # The copy constructor.  Not all backend store classes support cloning.
   def initialize_copy(other)
     @store = other.instance_eval { @store.dup }
   end
@@ -136,7 +137,7 @@ class HTTP::CookieJar
   #
   # If (and only if) the `uri` option is given, last access time of
   # each cookie is updated to the current time.
-  def each(uri = nil, &block)
+  def each(uri = nil, &block) # :yield: cookie
     block_given? or return enum_for(__method__, uri)
 
     if uri
@@ -207,7 +208,7 @@ class HTTP::CookieJar
   #     </dl>
   #
   # All options given are passed through to the underlying cookie
-  # saver module.
+  # saver module's constructor.
   def save(writable, *options)
     opthash = {
       :format => :yaml,
@@ -266,7 +267,7 @@ class HTTP::CookieJar
   #     </dl>
   #
   # All options given are passed through to the underlying cookie
-  # saver module.
+  # saver module's constructor.
   def load(readable, *options)
     opthash = {
       :format => :yaml,
@@ -311,7 +312,8 @@ class HTTP::CookieJar
     self
   end
 
-  # Removes expired cookies and returns self.
+  # Removes expired cookies and returns self.  If `session` is true,
+  # all session cookies are removed as well.
   def cleanup(session = false)
     @store.cleanup session
     self

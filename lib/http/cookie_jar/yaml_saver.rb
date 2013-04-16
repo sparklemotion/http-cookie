@@ -1,9 +1,20 @@
+# :markup: markdown
 require 'http/cookie_jar'
 require 'psych' if !defined?(YAML) && RUBY_VERSION == "1.9.2"
 require 'yaml'
 
-# YAMLSaver saves and loads cookies in the YAML format.
+# YAMLSaver saves and loads cookies in the YAML format.  It can load a
+# YAML file saved by Mechanize, but the saving format is not
+# compatible with older versions of Mechanize (< 2.7).
 class HTTP::CookieJar::YAMLSaver < HTTP::CookieJar::AbstractSaver
+  # :singleton-method: new
+  # :call-seq:
+  #   new(**options)
+  #
+  # There is no option keyword supported at the moment.
+
+  ##
+
   def save(io, jar)
     YAML.dump(@session ? jar.to_a : jar.reject(&:session?), io)
   end

@@ -1,3 +1,4 @@
+# :markup: markdown
 require 'http/cookie_jar'
 
 class HTTP::CookieJar
@@ -18,6 +19,9 @@ class HTTP::CookieJar
       }
     end
 
+    # :call-seq:
+    #   new(**options)
+    #
     # Generates a hash based cookie store.
     #
     # Available option keywords are as below:
@@ -42,6 +46,7 @@ class HTTP::CookieJar
       @gc_index = 0
     end
 
+    # The copy constructor.  This store class supports cloning.
     def initialize_copy(other)
       @jar = Marshal.load(Marshal.dump(other.instance_variable_get(:@jar)))
     end
@@ -59,7 +64,7 @@ class HTTP::CookieJar
       self
     end
 
-    def each(uri = nil)
+    def each(uri = nil) # :yield: cookie
       now = Time.now
       if uri
         thost = DomainName.new(uri.host)

@@ -68,6 +68,9 @@ class HTTP::CookieJar
     end
     # :startdoc:
 
+    # :call-seq:
+    #   new(**options)
+    #
     # Generates a Mozilla cookie store.  If the file does not exist,
     # it is created.  If it does and its schema is old, it is
     # automatically upgraded with a new schema keeping the existing
@@ -109,6 +112,7 @@ class HTTP::CookieJar
       @gc_index = 0
     end
 
+    # Raises TypeError.  Cloning is inhibited in this store class.
     def initialize_copy(other)
       raise TypeError, 'can\'t clone %s' % self.class
     end
@@ -138,7 +142,7 @@ class HTTP::CookieJar
 
     protected
 
-    def schema_version=(version)
+    def schema_version= version
       @db.execute("PRAGMA user_version = %d" % version)
       @schema_version = version
     end
@@ -329,7 +333,7 @@ class HTTP::CookieJar
               expiry >= :expiry
     SQL
 
-    def each(uri = nil, &block)
+    def each(uri = nil, &block) # :yield: cookie
       now = Time.now
       if uri
         thost = DomainName.new(uri.host)

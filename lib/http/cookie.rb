@@ -87,7 +87,7 @@ class HTTP::Cookie
   # The Expires attribute value as a Time object.
   #
   # The setter method accepts a Time object, a string representation
-  # of date/time, or `nil`.
+  # of date/time that Time.parse can understand, or `nil`.
   #
   # Setting this value resets #max_age to nil.  When #max_age is
   # non-nil, #expires returns `created_at + max_age`.
@@ -340,7 +340,7 @@ class HTTP::Cookie
   attr_reader :name
 
   # See #name.
-  def name=(name)
+  def name= name
     name = (String.try_convert(name) or
       raise TypeError, "#{name.class} is not a String")
     if name.empty?
@@ -357,7 +357,7 @@ class HTTP::Cookie
   attr_reader :value
 
   # See #value.
-  def value=(value)
+  def value= value
     if value.nil?
       self.expires = UNIX_EPOCH
       return @value = ''
@@ -376,7 +376,7 @@ class HTTP::Cookie
   attr_reader :domain
 
   # See #domain.
-  def domain=(domain)
+  def domain= domain
     case domain
     when nil
       @for_domain = false
@@ -434,7 +434,7 @@ class HTTP::Cookie
   attr_reader :path
 
   # See #path.
-  def path=(path)
+  def path= path
     path = (String.try_convert(path) or
       raise TypeError, "#{path.class} is not a String")
     @path = path.start_with?('/') ? path : '/'
@@ -443,7 +443,7 @@ class HTTP::Cookie
   attr_reader :origin
 
   # See #origin.
-  def origin=(origin)
+  def origin= origin
     return origin if origin == @origin
     @origin.nil? or
       raise ArgumentError, "origin cannot be changed once it is set"
@@ -479,7 +479,7 @@ class HTTP::Cookie
   end
 
   # See #expires.
-  def expires=(t)
+  def expires= t
     case t
     when nil, Time
     else
@@ -496,7 +496,7 @@ class HTTP::Cookie
   attr_reader :max_age
 
   # See #max_age.
-  def max_age=(sec)
+  def max_age= sec
     @expires = nil
     case sec
     when Integer, nil
@@ -632,7 +632,7 @@ class HTTP::Cookie
 
   # Compares the cookie with another.  When there are many cookies with
   # the same name for a URL, the value of the smallest must be used.
-  def <=>(other)
+  def <=> other
     # RFC 6265 5.4
     # Precedence: 1. longer path  2. older creation
     (@name <=> other.name).nonzero? ||

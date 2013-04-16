@@ -1,5 +1,7 @@
+# :markup: markdown
 require 'monitor'
 
+# An abstract superclass for all store classes.
 class HTTP::CookieJar::AbstractStore
   include MonitorMixin
 
@@ -20,20 +22,25 @@ class HTTP::CookieJar::AbstractStore
       end
     end
 
-    def inherited(subclass)
+    def inherited(subclass) # :nodoc:
       @@class_map[class_to_symbol(subclass)] = subclass
     end
 
-    def class_to_symbol(klass)
+    def class_to_symbol(klass) # :nodoc:
       klass.name[/[^:]+?(?=Store$|$)/].downcase.to_sym
     end
   end
 
+  # Defines options and their default values.
   def default_options
     # {}
   end
   private :default_options
 
+  # :call-seq:
+  #   new(**options)
+  #
+  # Called by the constructor of each subclass using super().
   def initialize(options = nil)
     super() # MonitorMixin
     options ||= {}
@@ -45,14 +52,21 @@ class HTTP::CookieJar::AbstractStore
     }
   end
 
+  # This is an abstract method that each subclass must override.
   def initialize_copy(other)
     # self
   end
 
+  # Implements HTTP::CookieJar#add().
+  #
+  # This is an abstract method that each subclass must override.
   def add(cookie)
     # self
   end
 
+  # Implements HTTP::CookieJar#delete().
+  #
+  # This is an abstract method that each subclass must override.
   def delete(cookie)
     # self
   end
@@ -66,7 +80,9 @@ class HTTP::CookieJar::AbstractStore
   #
   # If (and only if) the +uri+ option is given, last access time of
   # each cookie is updated to the current time.
-  def each(uri = nil, &block)
+  #
+  # This is an abstract method that each subclass must override.
+  def each(uri = nil, &block) # :yield: cookie
     # if uri
     #   ...
     # else
@@ -78,15 +94,22 @@ class HTTP::CookieJar::AbstractStore
   end
   include Enumerable
 
+  # Implements HTTP::CookieJar#empty?().
   def empty?
     each { return false }
     true
   end
 
+  # Implements HTTP::CookieJar#clear().
+  #
+  # This is an abstract method that each subclass must override.
   def clear
     # self
   end
 
+  # Implements HTTP::CookieJar#cleanup().
+  #
+  # This is an abstract method that each subclass must override.
   def cleanup(session = false)
     # if session
     #   select { |cookie| cookie.session? || cookie.expired? }

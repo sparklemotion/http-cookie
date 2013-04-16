@@ -1,3 +1,6 @@
+# :markup: markdown
+
+# An abstract superclass for all saver classes.
 class HTTP::CookieJar::AbstractSaver
   class << self
     @@class_map = {}
@@ -16,20 +19,25 @@ class HTTP::CookieJar::AbstractSaver
       end
     end
 
-    def inherited(subclass)
+    def inherited(subclass) # :nodoc:
       @@class_map[class_to_symbol(subclass)] = subclass
     end
 
-    def class_to_symbol(klass)
+    def class_to_symbol(klass) # :nodoc:
       klass.name[/[^:]+?(?=Saver$|$)/].downcase.to_sym
     end
   end
 
+  # Defines options and their default values.
   def default_options
     # {}
   end
   private :default_options
 
+  # :call-seq:
+  #   new(**options)
+  #
+  # Called by the constructor of each subclass using super().
   def initialize(options = nil)
     options ||= {}
     @logger  = options[:logger]
@@ -41,10 +49,16 @@ class HTTP::CookieJar::AbstractSaver
     }
   end
 
+  # Implements HTTP::CookieJar#save().
+  #
+  # This is an abstract method that each subclass must override.
   def save(io, jar)
     # self
   end
 
+  # Implements HTTP::CookieJar#load().
+  #
+  # This is an abstract method that each subclass must override.
   def load(io, jar)
     # self
   end

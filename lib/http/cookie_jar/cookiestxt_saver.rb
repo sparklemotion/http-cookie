@@ -1,9 +1,25 @@
+# :markup: markdown
 require 'http/cookie_jar'
 
 # CookiestxtSaver saves and loads cookies in the cookies.txt format.
 class HTTP::CookieJar::CookiestxtSaver < HTTP::CookieJar::AbstractSaver
-  True  = "TRUE"
-  False = "FALSE"
+  # :singleton-method: new
+  # :call-seq:
+  #   new(**options)
+  #
+  # Available option keywords are below:
+  #
+  # * `:header`
+  #
+  #     Specifies the header line not including a line feed, which is
+  #     only used by #save().  None is output if nil is
+  #     given. (default: `"# HTTP Cookie File"`)
+  #
+  # * `:linefeed`
+  #
+  #     Specifies the line separator (default: `"\n"`).
+
+  ##
 
   def save(io, jar)
     io.puts @header if @header
@@ -28,8 +44,13 @@ class HTTP::CookieJar::CookiestxtSaver < HTTP::CookieJar::AbstractSaver
     }
   end
 
+  # :stopdoc:
+  True  = "TRUE"
+  False = "FALSE"
+
   HTTPONLY_PREFIX = '#HttpOnly_'
   RE_HTTPONLY_PREFIX = /\A#{HTTPONLY_PREFIX}/
+  # :startdoc:
 
   # Serializes the cookie into a cookies.txt line.
   def cookie_to_record(cookie)
