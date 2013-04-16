@@ -20,7 +20,11 @@ module TestHTTPCookieJar
         assert_raises(NameError) {
           HTTP::CookieJar::ErroneousStore
         }
-        assert_includes $LOADED_FEATURES, rb
+        if RUBY_VERSION >= "1.9"
+          assert_includes $LOADED_FEATURES, rb
+        else
+          assert_includes $LOADED_FEATURES, rb[(dir.size + 1)..-1]
+        end
       }
     end
 
@@ -41,7 +45,11 @@ module TestHTTPCookieJar
         assert_raises(NameError) {
           HTTP::CookieJar::ErroneousSaver
         }
-        assert_includes $LOADED_FEATURES, rb
+        if RUBY_VERSION >= "1.9"
+          assert_includes $LOADED_FEATURES, rb
+        else
+          assert_includes $LOADED_FEATURES, rb[(dir.size + 1)..-1]
+        end
       }
     end
   end
