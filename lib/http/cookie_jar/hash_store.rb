@@ -113,10 +113,6 @@ class HTTP::CookieJar
       self
     end
 
-    def empty?
-      @jar.empty?
-    end
-
     def cleanup(session = false)
       now = Time.now
       all_cookies = []

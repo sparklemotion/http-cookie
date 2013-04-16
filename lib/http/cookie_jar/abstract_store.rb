@@ -79,7 +79,8 @@ class HTTP::CookieJar::AbstractStore
   include Enumerable
 
   def empty?
-    # true or false
+    each { return false }
+    true
   end
 
   def clear

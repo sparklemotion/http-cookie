@@ -398,19 +398,6 @@ class HTTP::CookieJar
       self
     end
 
-    SQL[:count] = <<-'SQL'
-      SELECT COUNT(id) FROM moz_cookies
-    SQL
-
-    def count
-      @stmt[:count].execute.first[0]
-    end
-    protected :count
-
-    def empty?
-      @sjar.empty? && count == 0
-    end
-
     SQL[:delete_expired] = <<-'SQL'
       DELETE FROM moz_cookies WHERE expiry < :expiry
     SQL
