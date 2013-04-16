@@ -6,7 +6,7 @@ module TestHTTPCookieJar
     def setup(options = nil, options2 = nil)
       default_options = {
         :store => :hash,
-        :gc_threshold => 150,
+        :gc_threshold => 1500, # increased by 10 for shorter test time
       }
       new_options  = default_options.merge(options || {})
       new_options2 = new_options.merge(options2 || {})
@@ -692,7 +692,7 @@ module TestHTTPCookieJar
       @jar.cleanup
       count = @jar.to_a.size
       assert_equal limit_per_domain, count
-      assert_equal [*1..41] + [*43..(limit_per_domain + 1)], @jar.map { |cookie|
+      assert_equal [*1..(limit_per_domain + 1)] - [42], @jar.map { |cookie|
         cookie.name[/(\d+)$/].to_i
       }.sort
 
