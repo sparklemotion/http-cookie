@@ -1,5 +1,5 @@
 class Array
-  def select!
+  def select! # :yield: x
     i = 0
     each_with_index { |x, j|
       yield x or next
@@ -11,7 +11,7 @@ class Array
     self
   end unless method_defined?(:select!)
 
-  def sort_by!(&block)
+  def sort_by!(&block) # :yield: x
     replace(sort_by(&block))
   end unless method_defined?(:sort_by!)
 end
