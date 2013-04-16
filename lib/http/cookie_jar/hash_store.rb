@@ -1,13 +1,5 @@
 require 'http/cookie_jar'
 
-# :stopdoc:
-class Array
-  def sort_by!(&block)
-    replace(sort_by(&block))
-  end unless method_defined?(:sort_by!)
-end
-# :startdoc:
-
 class HTTP::CookieJar
   # A store class that uses a hash-based cookie store.
   #

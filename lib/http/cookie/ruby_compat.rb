@@ -10,6 +10,10 @@ class Array
     self[i..-1] = []
     self
   end unless method_defined?(:select!)
+
+  def sort_by!(&block)
+    replace(sort_by(&block))
+  end unless method_defined?(:sort_by!)
 end
 
 class Hash
