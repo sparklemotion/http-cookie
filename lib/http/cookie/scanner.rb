@@ -152,13 +152,6 @@ class HTTP::Cookie::Scanner < StringScanner
   end
 
   def scan_set_cookie
-    unless block_given?
-      scan_set_cookie { |*values|
-        return values
-      }
-      return
-    end
-
     # RFC 6265 4.1.1 & 5.2
     until eos?
       start = pos
@@ -221,13 +214,6 @@ class HTTP::Cookie::Scanner < StringScanner
   end
 
   def scan_cookie
-    unless block_given?
-      scan_cookie { |*values|
-        return values
-      }
-      return
-    end
-
     # RFC 6265 4.1.1 & 5.4
     until eos?
       skip_wsp
