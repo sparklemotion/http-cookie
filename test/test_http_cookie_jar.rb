@@ -2,6 +2,50 @@ require File.expand_path('helper', File.dirname(__FILE__))
 require 'tmpdir'
 
 module TestHTTPCookieJar
+  class TestAutoloading < Test::Unit::TestCase
+    def test_nonexistent_store
+      assert_raises(NameError) {
+        HTTP::CookieJar::NonexistentStore
+      }
+    end
+
+    def test_erroneous_store
+      Dir.mktmpdir { |dir|
+        Dir.mkdir(File.join(dir, 'http'))
+        Dir.mkdir(File.join(dir, 'http', 'cookie_jar'))
+        rb = File.join(dir, 'http', 'cookie_jar', 'erroneous_store.rb')
+        File.open(rb, 'w').close
+        $LOAD_PATH.unshift(dir)
+
+        assert_raises(NameError) {
+          HTTP::CookieJar::ErroneousStore
+        }
+        assert_includes $LOADED_FEATURES, rb
+      }
+    end
+
+    def test_nonexistent_saver
+      assert_raises(NameError) {
+        HTTP::CookieJar::NonexistentSaver
+      }
+    end
+
+    def test_erroneous_saver
+      Dir.mktmpdir { |dir|
+        Dir.mkdir(File.join(dir, 'http'))
+        Dir.mkdir(File.join(dir, 'http', 'cookie_jar'))
+        rb = File.join(dir, 'http', 'cookie_jar', 'erroneous_saver.rb')
+        File.open(rb, 'w').close
+        $LOAD_PATH.unshift(dir)
+
+        assert_raises(NameError) {
+          HTTP::CookieJar::ErroneousSaver
+        }
+        assert_includes $LOADED_FEATURES, rb
+      }
+    end
+  end
+
   module CommonTests
     def setup(options = nil, options2 = nil)
       default_options = {

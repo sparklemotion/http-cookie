@@ -6,9 +6,6 @@ require 'http/cookie'
 # any particular website.
 
 class HTTP::CookieJar
-  require 'http/cookie_jar/abstract_store'
-  require 'http/cookie_jar/abstract_saver'
-
   class << self
     def const_missing(name)
       case name.to_s
