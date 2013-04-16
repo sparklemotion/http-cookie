@@ -528,25 +528,25 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     # various keywords
     [
-      [:Expires,  /should be downcased/],
-      ["Expires", /should be downcased.*use symbol/m],
+      ["Expires", /use downcased symbol/],
     ].each { |key, pattern|
       assert_warning(pattern, "warn of key: #{key.inspect}") {
         cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', key => expires.dup)
         assert_equal 'key', cookie.name
         assert_equal 'value', cookie.value
-        assert_equal expires, cookie.expires
+        assert_equal expires, cookie.expires, "key: #{key.inspect}"
       }
     }
     [
-      [:expires?, /unknown keyword/],
+      [:Expires,   /unknown attribute name/],
+      [:expires?,  /unknown attribute name/],
       [[:expires], /invalid keyword/],
     ].each { |key, pattern|
       assert_warning(pattern, "warn of key: #{key.inspect}") {
         cookie = HTTP::Cookie.new(:value => 'value', :name => 'key', key => expires.dup)
         assert_equal 'key', cookie.name
         assert_equal 'value', cookie.value
-        assert_equal nil, cookie.expires
+        assert_equal nil, cookie.expires, "key: #{key.inspect}"
       }
     }
 
