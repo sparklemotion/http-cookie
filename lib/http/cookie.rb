@@ -497,7 +497,6 @@ class HTTP::Cookie
 
   # See #max_age.
   def max_age= sec
-    @expires = nil
     case sec
     when Integer, nil
     else
@@ -507,6 +506,7 @@ class HTTP::Cookie
         raise ArgumentError, "invalid Max-Age: #{sec.inspect}"
       sec = str.to_i
     end
+    @expires = nil
     if @session = sec.nil?
       @max_age = nil
     else

@@ -692,19 +692,32 @@ class TestHTTPCookie < Test::Unit::TestCase
 
   def test_max_age=
     cookie = HTTP::Cookie.new(cookie_values)
+    expires = cookie.expires
 
     assert_raises(ArgumentError) {
       cookie.max_age = "+1"
     }
+    # make sure #expires is not destroyed
+    assert_equal expires, cookie.expires
+
     assert_raises(ArgumentError) {
       cookie.max_age = "1.5"
     }
+    # make sure #expires is not destroyed
+    assert_equal expires, cookie.expires
+
     assert_raises(ArgumentError) {
       cookie.max_age = "1 day"
     }
+    # make sure #expires is not destroyed
+    assert_equal expires, cookie.expires
+
     assert_raises(TypeError) {
       cookie.max_age = [1]
     }
+    # make sure #expires is not destroyed
+    assert_equal expires, cookie.expires
+
     cookie.max_age = "12"
     assert_equal 12, cookie.max_age
 
