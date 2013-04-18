@@ -174,7 +174,7 @@ class HTTP::Cookie
         # Let max_age take precedence over expires
         max_age = val
       when :expires, :expires_at
-        self.expires = val
+        self.expires = val unless max_age
       when :httponly, :httponly?
         @httponly = val
       when :secure, :secure?
