@@ -447,6 +447,7 @@ class HTTP::Cookie
     return origin if origin == @origin
     @origin.nil? or
       raise ArgumentError, "origin cannot be changed once it is set"
+    # Delay setting @origin because #domain= or #path= may fail
     origin = URI(origin)
     if URI::HTTP === origin
       self.domain ||= origin.host
