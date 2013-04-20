@@ -22,6 +22,9 @@ The following is an incomplete list of its features:
   domain like "org", "co.jp", or "appspot.com".  This feature is
   brought to you by the domain_name gem.
 
+* The number of cookies and the size are properly capped so that a
+  cookie store does not get flooded.
+
 * It supports the legacy Netscape cookies.txt format for
   serialization, maximizing the interoperability with other
   implementations.
