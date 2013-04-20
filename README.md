@@ -17,6 +17,11 @@ The following is an incomplete list of its features:
   HTTP cookie mechanism) to a high extent, with real world conventions
   deeply in mind.
 
+* It takes eTLD (effective TLD, also known as "Public Suffix") into
+  account just as major browsers do, to reject cookies with an eTLD
+  domain like "org", "co.jp", or "appspot.com".  This feature is
+  brought to you by the domain_name gem.
+
 * It supports the legacy Netscape cookies.txt format for
   serialization, maximizing the interoperability with other
   implementations.
