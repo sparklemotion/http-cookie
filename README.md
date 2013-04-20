@@ -8,6 +8,26 @@ It was originally a part of the
 separated as an independent library in the hope of serving as a common
 component that is reusable from any HTTP related piece of software.
 
+The following is an incomplete list of its features:
+
+* Its behavior is highly compatible with that of today's major web
+  browsers.
+
+* It is based on and conforms to RFC 6265 (the latest standard for the
+  HTTP cookie mechanism) to a high extent, with real world conventions
+  deeply in mind.
+
+* It supports the legacy Netscape cookies.txt format for
+  serialization, maximizing the interoperability with other
+  implementations.
+
+* It supports the cookies.sqlite format adopted by Mozilla Firefox for
+  backend store database which can be shared among multiple program
+  instances.
+
+* It is relatively easy to add a new serialization format or a backend
+  store because of its modular API.
+
 ## Installation
 
 Add this line to your application's `Gemfile`:
