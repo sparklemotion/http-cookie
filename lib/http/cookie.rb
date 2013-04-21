@@ -603,7 +603,7 @@ class HTTP::Cookie
       if @domain
         string << "; Domain=#{@domain}"
       else
-        raise "for_domain is specified but domain is known"
+        raise "for_domain is specified but domain is unknown"
       end
     end
     if @path
@@ -611,7 +611,7 @@ class HTTP::Cookie
         string << "; Path=#{@path}"
       end
     else
-      raise "path is known"
+      raise "path is unknown"
     end
     if @max_age
       string << "; Max-Age=#{@max_age}"
