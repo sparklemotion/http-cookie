@@ -1,0 +1,10 @@
+## 1.0.1 (2013-04-21)
+
+  - Minor error handling improvements and documentation updates.
+
+  - Argument error regarding specifying store/saver classes no longer
+    raises IndexError, but either ArgumentError or TypeError.
+
+## 1.0.0 (2013-04-17)
+
+  - Initial Release.
