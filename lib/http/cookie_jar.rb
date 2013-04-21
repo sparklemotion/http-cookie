@@ -29,16 +29,38 @@ class HTTP::CookieJar
 
   attr_reader :store
 
+  def get_impl(base, value, *args)
+    case value
+    when base
+      value
+    when Symbol
+      begin
+        base.implementation(value).new(*args)
+      rescue IndexError => e
+        raise ArgumentError, e.message
+      end
+    when Class
+      if base >= value
+        value.new(*args)
+      else
+        raise TypeError, 'not a subclass of %s: %s' % [base, value]
+      end
+    else
+      raise TypeError, 'invalid object: %s' % value.inspect
+    end
+  end
+  private :get_impl
+
   # Generates a new cookie jar.
   #
   # Available option keywords are as below:
   #
   # :store
   # : The store class that backs this jar. (default: `:hash`)
-  # A symbol or an instance of a store class is accepted.  Symbols are
-  # mapped to store classes, like `:hash` to
-  # HTTP::CookieJar::HashStore and `:mozilla` to
-  # HTTP::CookieJar::MozillaStore.
+  # A symbol addressing a store class, a store class, or an instance
+  # of a store class is accepted.  Symbols are mapped to store
+  # classes, like `:hash` to HTTP::CookieJar::HashStore and `:mozilla`
+  # to HTTP::CookieJar::MozillaStore.
   #
   # Any options given are passed through to the initializer of the
   # specified store class.  For example, the `:mozilla`
@@ -49,14 +71,7 @@ class HTTP::CookieJar
       :store => :hash,
     }
     opthash.update(options) if options
-    case store = opthash[:store]
-    when Symbol
-      @store = AbstractStore.implementation(store).new(opthash)
-    when AbstractStore
-      @store = store
-    else
-      raise TypeError, 'wrong object given as cookie store: %s' % store.inspect
-    end
+    @store = get_impl(AbstractStore, opthash[:store], opthash)
   end
 
   # The copy constructor.  Not all backend store classes support cloning.
@@ -191,6 +206,10 @@ class HTTP::CookieJar
   #
   # * `:format`
   #
+  #     Specifies the format for saving.  A saver class, a symbol
+  #     addressing a saver class, or a pre-generated instance of a
+  #     saver class is accepted.
+  #
   #     <dl class="rdoc-list note-list">
   #       <dt>:yaml</dt>
   #       <dd>YAML structure (default)</dd>
@@ -221,20 +240,20 @@ class HTTP::CookieJar
       when Symbol
         opthash[:format] = options
       else
-        opthash.update(options) if options
+        if hash = Hash.try_convert(options)
+          opthash.update(hash)
+        end
       end
     when 2
       opthash[:format], options = options
-      opthash.update(options) if options
+      if hash = Hash.try_convert(options)
+        opthash.update(hash)
+      end
     else
       raise ArgumentError, 'wrong number of arguments (%d for 1-3)' % (1 + options.size)
     end
 
-    begin
-      saver = AbstractSaver.implementation(opthash[:format]).new(opthash)
-    rescue IndexError => e
-      raise ArgumentError, e.message
-    end
+    saver = get_impl(AbstractSaver, opthash[:format], opthash)
 
     if writable.respond_to?(:write)
       saver.save(writable, self)
@@ -259,6 +278,10 @@ class HTTP::CookieJar
   #
   # * `:format`
   #
+  #     Specifies the format for loading.  A saver class, a symbol
+  #     addressing a saver class, or a pre-generated instance of a
+  #     saver class is accepted.
+  #
   #     <dl class="rdoc-list note-list">
   #       <dt>:yaml</dt>
   #       <dd>YAML structure (default)</dd>
@@ -280,20 +303,20 @@ class HTTP::CookieJar
       when Symbol
         opthash[:format] = options
       else
-        opthash.update(options) if options
+        if hash = Hash.try_convert(options)
+          opthash.update(hash)
+        end
       end
     when 2
       opthash[:format], options = options
-      opthash.update(options) if options
+      if hash = Hash.try_convert(options)
+        opthash.update(hash)
+      end
     else
       raise ArgumentError, 'wrong number of arguments (%d for 1-3)' % (1 + options.size)
     end
 
-    begin
-      saver = AbstractSaver.implementation(opthash[:format]).new(opthash)
-    rescue IndexError => e
-      raise ArgumentError, e.message
-    end
+    saver = get_impl(AbstractSaver, opthash[:format], opthash)
 
     if readable.respond_to?(:write)
       saver.load(readable, self)

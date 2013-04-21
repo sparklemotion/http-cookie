@@ -355,14 +355,6 @@ module TestHTTPCookieJar
       assert_equal(0, @jar.cookies(url).length)
     end
 
-    def test_save_nonexistent_saver
-      Dir.mktmpdir { |dir|
-        assert_raises(ArgumentError) {
-          @jar.save(File.join(dir, "file"), :nonexistent)
-        }
-      }
-    end
-
     def test_save_cookies_yaml
       url = URI 'http://rubyforge.org/'
 
@@ -403,12 +395,18 @@ module TestHTTPCookieJar
         @jar.save(filename, :format => :cookiestxt)
         @jar.save(filename, :cookiestxt, :session => true)
         @jar.save(filename, :cookiestxt)
+        @jar.save(filename, HTTP::CookieJar::CookiestxtSaver)
+        @jar.save(filename, HTTP::CookieJar::CookiestxtSaver.new)
         @jar.save(filename, :session => true)
         @jar.save(filename)
+
         assert_raises(ArgumentError) {
           @jar.save()
         }
         assert_raises(ArgumentError) {
+          @jar.save(filename, :nonexistent)
+        }
+        assert_raises(TypeError) {
           @jar.save(filename, { :format => :cookiestxt }, { :session => true })
         }
         assert_raises(ArgumentError) {
@@ -418,6 +416,8 @@ module TestHTTPCookieJar
         @jar.load(filename, :format => :cookiestxt, :linefeed => "\n")
         @jar.load(filename, :format => :cookiestxt, :linefeed => "\n")
         @jar.load(filename, :format => :cookiestxt)
+        @jar.load(filename, HTTP::CookieJar::CookiestxtSaver)
+        @jar.load(filename, HTTP::CookieJar::CookiestxtSaver.new)
         @jar.load(filename, :cookiestxt, :linefeed => "\n")
         @jar.load(filename, :cookiestxt)
         @jar.load(filename, :linefeed => "\n")
@@ -426,6 +426,9 @@ module TestHTTPCookieJar
           @jar.load()
         }
         assert_raises(ArgumentError) {
+          @jar.load(filename, :nonexistent)
+        }
+        assert_raises(TypeError) {
           @jar.load(filename, { :format => :cookiestxt }, { :linefeed => "\n" })
         }
         assert_raises(ArgumentError) {
@@ -850,16 +853,14 @@ module TestHTTPCookieJar
       jar = HTTP::CookieJar.new(:store => :hash)
       assert_instance_of HTTP::CookieJar::HashStore, jar.store
 
-      assert_raises(IndexError) {
+      assert_raises(ArgumentError) {
         jar = HTTP::CookieJar.new(:store => :nonexistent)
       }
 
       jar = HTTP::CookieJar.new(:store => HTTP::CookieJar::HashStore.new)
       assert_instance_of HTTP::CookieJar::HashStore, jar.store
 
-      assert_raises(TypeError) {
-        jar = HTTP::CookieJar.new(:store => HTTP::CookieJar::HashStore)
-      }
+      jar = HTTP::CookieJar.new(:store => HTTP::CookieJar::HashStore)
     end
 
     def test_clone
