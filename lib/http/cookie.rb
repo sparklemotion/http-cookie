@@ -288,7 +288,9 @@ class HTTP::Cookie
               case aname
               when 'domain'
                 cookie.for_domain = true
-                cookie.domain = avalue # This may negate @for_domain
+                # The following may negate @for_domain if the value is
+                # an eTLD or IP address, hence this order.
+                cookie.domain = avalue
               when 'path'
                 cookie.path = avalue
               when 'expires'
