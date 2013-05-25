@@ -16,7 +16,7 @@ class HTTP::CookieJar
       end
       begin
         require file
-      rescue LoadError => e
+      rescue LoadError
         raise NameError, 'can\'t resolve constant %s; failed to load %s' % [name, file]
       end
       if const_defined?(name)
