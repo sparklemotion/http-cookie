@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
   gem.description   = %q{HTTP::Cookie is a Ruby library to handle HTTP Cookies based on RFC 6265.  It has with security, standards compliance and compatibility in mind, to behave just the same as today's major web browsers.  It has builtin support for the legacy cookies.txt and the latest cookies.sqlite formats of Mozilla Firefox, and its modular API makes it easy to add support for a new backend store.}
   gem.summary       = %q{A Ruby library to handle HTTP Cookies based on RFC 6265}
   gem.homepage      = "https://github.com/sparklemotion/http-cookie"
+  gem.license       = "MIT"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
