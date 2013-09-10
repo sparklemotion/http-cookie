@@ -126,6 +126,22 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 0, HTTP::Cookie.parse(cookie, url).size
   end
 
+  def test_parse_bad_name
+    cookie = "a\001b=c"
+    url = URI.parse('http://www.example.com/')
+    assert_nothing_raised {
+      assert_equal 0, HTTP::Cookie.parse(cookie, url).size
+    }
+  end
+
+  def test_parse_bad_value
+    cookie = "a=b\001c"
+    url = URI.parse('http://www.example.com/')
+    assert_nothing_raised {
+      assert_equal 0, HTTP::Cookie.parse(cookie, url).size
+    }
+  end
+
   def test_parse_weird_cookie
     cookie = 'n/a, ASPSESSIONIDCSRRQDQR=FBLDGHPBNDJCPCGNCPAENELB; path=/'
     url = URI.parse('http://www.searchinnovation.com/')

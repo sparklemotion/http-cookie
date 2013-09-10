@@ -281,7 +281,12 @@ class HTTP::Cookie
         Scanner.new(set_cookie, logger).scan_set_cookie { |name, value, attrs|
           break if name.nil? || name.empty?
 
-          cookie = new(name, value)
+          begin
+            cookie = new(name, value)
+          rescue => e
+            logger.warn("Invalid name or value: #{e}") if logger
+            next
+          end
           cookie.created_at = created_at if created_at
           attrs.each { |aname, avalue|
             begin
