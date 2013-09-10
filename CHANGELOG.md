@@ -1,3 +1,9 @@
+## 1.0.2 (2013-09-10)
+
+  - Fix HTTP::Cookie.parse so that it does not raise ArgumentError
+    when it finds a bad name or value that is parsable but considered
+    invalid.
+
 ## 1.0.1 (2013-04-21)
 
   - Minor error handling improvements and documentation updates.
