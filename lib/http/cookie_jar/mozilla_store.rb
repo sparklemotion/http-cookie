@@ -265,8 +265,8 @@ class HTTP::CookieJar
           :host => cookie.dot_domain,
           :path => cookie.path,
           :expiry => cookie.expires_at.to_i,
-          :creationTime => cookie.created_at.to_i,
-          :lastAccessed => cookie.accessed_at.to_i,
+          :creationTime => ("%10.6f" % cookie.created_at.to_f),
+          :lastAccessed => ("%10.6f" % cookie.accessed_at.to_f),
           :isSecure => cookie.secure? ? 1 : 0,
           :isHttpOnly => cookie.httponly? ? 1 : 0,
         })
@@ -333,6 +333,16 @@ class HTTP::CookieJar
               expiry >= :expiry
     SQL
 
+    def microseconds_to_time(microseconds)
+      seconds = if microseconds.to_s.size <= 10
+                  microseconds
+                else
+                  microseconds / 1_000_000
+                end
+
+      Time.at seconds
+    end
+
     def each(uri = nil, &block) # :yield: cookie
       now = Time.now
       if uri
@@ -355,8 +365,8 @@ class HTTP::CookieJar
               attrs[:domain]      = row['host']
               attrs[:path]        = row['path']
               attrs[:expires_at]  = Time.at(row['expiry'])
-              attrs[:accessed_at] = Time.at(row['lastAccessed'] || 0)
-              attrs[:created_at]  = Time.at(row['creationTime'] || 0)
+              attrs[:accessed_at] = microseconds_to_time(row['lastAccessed'] || 0)
+              attrs[:created_at]  = microseconds_to_time(row['creationTime'] || 0)
               attrs[:secure]      = secure
               attrs[:httponly]    = row['isHttpOnly'] != 0
             })
@@ -383,8 +393,8 @@ class HTTP::CookieJar
               attrs[:domain]      = row['host']
               attrs[:path]        = row['path']
               attrs[:expires_at]  = Time.at(row['expiry'])
-              attrs[:accessed_at] = Time.at(row['lastAccessed'] || 0)
-              attrs[:created_at]  = Time.at(row['creationTime'] || 0)
+              attrs[:accessed_at] = microseconds_to_time(row['lastAccessed'] || 0)
+              attrs[:created_at]  = microseconds_to_time(row['creationTime'] || 0)
               attrs[:secure]      = row['isSecure'] != 0
               attrs[:httponly]    = row['isHttpOnly'] != 0
             })
