@@ -377,6 +377,13 @@ class HTTP::Cookie
     # RFC 6265 4.1.1
     # cookie-name may not match:
     # /[^\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]/
+    orig = value
+    if m = value.match(/^"(.*)"$/)
+      @raw_value = value
+      value = m[1]
+    else
+      @raw_value = nil
+    end
     @value = value
   end
 
@@ -594,7 +601,8 @@ class HTTP::Cookie
   # Returns a string for use in the Cookie header, i.e. `name=value`
   # or `name="value"`.
   def cookie_value
-    "#{@name}=#{Scanner.quote(@value)}"
+    v = ( @raw_value.nil? ? Scanner.quote(@value) : @raw_value )
+    "#{@name}=#{v}"
   end
   alias to_s cookie_value
 

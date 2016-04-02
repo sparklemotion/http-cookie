@@ -111,6 +111,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 1, HTTP::Cookie.parse(cookie_str, uri) { |cookie|
       assert_equal 'quoted', cookie.name
       assert_equal 'value', cookie.value
+      assert_equal 'quoted="value"', cookie.cookie_value
     }.size
   end
 
@@ -430,7 +431,10 @@ class TestHTTPCookie < Test::Unit::TestCase
   def test_cookie_value
     [
       ['foo="bar  baz"', 'bar  baz'],
+      ['foo="bar  baz"', '"bar  baz"'],
       ['foo="bar\"; \"baz"', 'bar"; "baz'],
+      ['foo="bar\"; \"baz"', '"bar\"; \"baz"'],
+      ['foo="ba\"r baz"', '"ba\"r baz"'],
     ].each { |cookie_value, value|
       cookie = HTTP::Cookie.new('foo', value)
       assert_equal(cookie_value, cookie.cookie_value)
@@ -453,8 +457,14 @@ class TestHTTPCookie < Test::Unit::TestCase
 
     assert_equal 3, hash.size
 
+    parsed_pairs = [
+      ['Foo', 'value1'],
+      ['Bar', '"value 2"'],
+      ['Baz', 'value3'],
+    ]
+
     hash.each_pair { |name, value|
-      _, pvalue = pairs.assoc(name)
+      _, pvalue = parsed_pairs.assoc(name)
       assert_equal pvalue, value
     }
   end

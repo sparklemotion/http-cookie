@@ -55,10 +55,14 @@ class HTTP::Cookie::Scanner < StringScanner
       case
       when scan(/[^,;"]+/)
         s << matched
-      when skip(/"/)
-        # RFC 6265 2.2
-        # A cookie-value may be DQUOTE'd.
-        s << scan_dquoted
+      when scan(/"/)
+        if s.length == 0
+          # RFC 6265 2.2
+          # A cookie-value may be DQUOTE'd.
+          s << '"' << scan_dquoted << '"'
+        else
+          s << matched
+        end
       when check(/;|#{RE_COOKIE_COMMA}/o)
         break
       else
