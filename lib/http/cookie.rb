@@ -25,7 +25,7 @@ class HTTP::Cookie
   UNIX_EPOCH = Time.at(0)
 
   PERSISTENT_PROPERTIES = %w[
-    name        value
+    name        value  raw_value
     domain      for_domain  path
     secure      httponly
     expires     max_age
@@ -386,6 +386,8 @@ class HTTP::Cookie
     end
     @value = value
   end
+
+  attr_accessor :raw_value
 
   attr_reader :domain
 

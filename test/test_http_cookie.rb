@@ -84,6 +84,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 1, HTTP::Cookie.parse(cookie_str, uri) { |cookie|
       assert_equal 'foo',               cookie.name
       assert_equal 'bar',               cookie.value
+      assert_equal nil,                 cookie.raw_value
       assert_equal '/',                 cookie.path
       assert_equal Time.at(1320539286), cookie.expires
     }.size
@@ -111,6 +112,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 1, HTTP::Cookie.parse(cookie_str, uri) { |cookie|
       assert_equal 'quoted', cookie.name
       assert_equal 'value', cookie.value
+      assert_equal '"value"', cookie.raw_value
       assert_equal 'quoted="value"', cookie.cookie_value
     }.size
   end
@@ -1070,6 +1072,24 @@ class TestHTTPCookie < Test::Unit::TestCase
         }
       }
     }
+  end
+
+  def test_yaml_quotes
+    require 'yaml'
+    uri = URI.parse('http://localhost/')
+    cookie_str = 'foo="bar"; Path=/'
+    assert_equal 1, HTTP::Cookie.parse(cookie_str, uri) { |cookie|
+      assert_equal 'foo', cookie.name
+      assert_equal 'bar', cookie.value
+      assert_equal '"bar"', cookie.raw_value
+
+      ycookie = YAML.load(cookie.to_yaml)
+      puts ycookie
+      assert_equal 'bar', ycookie.value
+      assert_equal '"bar"', ycookie.raw_value
+      assert_equal cookie_str, ycookie.set_cookie_value
+
+    }.size
   end
 
   def test_yaml_expires
