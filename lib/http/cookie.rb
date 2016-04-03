@@ -25,7 +25,7 @@ class HTTP::Cookie
   UNIX_EPOCH = Time.at(0)
 
   PERSISTENT_PROPERTIES = %w[
-    name        value
+    name        value  raw_value
     domain      for_domain  path
     secure      httponly
     expires     max_age
@@ -139,6 +139,7 @@ class HTTP::Cookie
         args.pop
       else
         self.name, self.value = args # value is set to nil
+        adjust_raw_value
         return
       end
     when 2..3
@@ -149,6 +150,7 @@ class HTTP::Cookie
         argc == 2 or
           raise ArgumentError, "wrong number of arguments (#{argc} for 1-3)"
         self.name, self.value = args
+        adjust_raw_value
         return
       end
     else
@@ -204,6 +206,7 @@ class HTTP::Cookie
     self.origin = origin if origin
     self.max_age = max_age if max_age
     self.value = value.nil? && (@expires || @max_age) ? '' : value
+    adjust_raw_value
   end
 
   autoload :Scanner, 'http/cookie/scanner'
@@ -379,6 +382,17 @@ class HTTP::Cookie
     # /[^\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]/
     @value = value
   end
+
+  def adjust_raw_value
+    if m = @value.match(/^"(.*)"$/)
+      @raw_value = @value
+      @value = m[1]
+    else
+      @raw_value = nil
+    end
+  end
+
+  attr_accessor :raw_value
 
   attr_reader :domain
 
@@ -594,7 +608,8 @@ class HTTP::Cookie
   # Returns a string for use in the Cookie header, i.e. `name=value`
   # or `name="value"`.
   def cookie_value
-    "#{@name}=#{Scanner.quote(@value)}"
+    v = ( @raw_value.nil? ? Scanner.quote(@value) : @raw_value )
+    "#{@name}=#{v}"
   end
   alias to_s cookie_value
 
