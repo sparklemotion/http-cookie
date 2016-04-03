@@ -1084,7 +1084,6 @@ class TestHTTPCookie < Test::Unit::TestCase
       assert_equal '"bar"', cookie.raw_value
 
       ycookie = YAML.load(cookie.to_yaml)
-      puts ycookie
       assert_equal 'bar', ycookie.value
       assert_equal '"bar"', ycookie.raw_value
       assert_equal cookie_str, ycookie.set_cookie_value
