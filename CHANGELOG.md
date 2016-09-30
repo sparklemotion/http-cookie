@@ -1,3 +1,9 @@
+## 1.0.3 (2016-09-30)
+
+- Treat comma as normal character in HTTP::Cookie.cookie_value_to_hash
+  instead of key-value pair separator.  This should fix the problem
+  described in CVE-2016-7401.
+
 ## 1.0.2 (2013-09-10)
 
   - Fix HTTP::Cookie.parse so that it does not raise ArgumentError
