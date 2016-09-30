@@ -50,7 +50,7 @@ class HTTP::Cookie::Scanner < StringScanner
     }
   end
 
-  def scan_value
+  def scan_value(comma_as_separator = false)
     ''.tap { |s|
       case
       when scan(/[^,;"]+/)
@@ -59,7 +59,9 @@ class HTTP::Cookie::Scanner < StringScanner
         # RFC 6265 2.2
         # A cookie-value may be DQUOTE'd.
         s << scan_dquoted
-      when check(/;|#{RE_COOKIE_COMMA}/o)
+      when check(/;/)
+        break
+      when comma_as_separator && check(RE_COOKIE_COMMA)
         break
       else
         s << getch
@@ -68,12 +70,12 @@ class HTTP::Cookie::Scanner < StringScanner
     }
   end
 
-  def scan_name_value
+  def scan_name_value(comma_as_separator = false)
     name = scan_name
     if skip(/\=/)
-      value = scan_value
+      value = scan_value(comma_as_separator)
     else
-      scan_value
+      scan_value(comma_as_separator)
       value = nil
     end
     [name, value]
@@ -159,7 +161,7 @@ class HTTP::Cookie::Scanner < StringScanner
 
       skip_wsp
 
-      name, value = scan_name_value
+      name, value = scan_name_value(true)
       if value.nil?
         @logger.warn("Cookie definition lacks a name-value pair.") if @logger
       elsif name.empty?
@@ -176,7 +178,7 @@ class HTTP::Cookie::Scanner < StringScanner
         break
       when skip(/;/)
         skip_wsp
-        aname, avalue = scan_name_value
+        aname, avalue = scan_name_value(true)
         next if aname.empty? || value.nil?
         aname.downcase!
         case aname
@@ -218,13 +220,12 @@ class HTTP::Cookie::Scanner < StringScanner
     until eos?
       skip_wsp
 
-      name, value = scan_name_value
+      # Do not treat comma in a Cookie header value as separator; see CVE-2016-7401
+      name, value = scan_name_value(false)
 
       yield name, value if value
 
-      # The comma is used as separator for concatenating multiple
-      # values of a header.
-      skip(/[;,]/)
+      skip(/;/)
     end
   end
 end

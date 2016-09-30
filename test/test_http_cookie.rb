@@ -441,17 +441,28 @@ class TestHTTPCookie < Test::Unit::TestCase
       ['Bar', 'value 2'],
       ['Baz', 'value3'],
       ['Bar', 'value"4'],
+      ['Quux', 'x, value=5'],
     ]
 
     cookie_value = HTTP::Cookie.cookie_value(pairs.map { |name, value|
         HTTP::Cookie.new(:name => name, :value => value)
       })
 
-    assert_equal 'Foo=value1; Bar="value 2"; Baz=value3; Bar="value\\"4"', cookie_value
+    assert_equal 'Foo=value1; Bar="value 2"; Baz=value3; Bar="value\\"4"; Quux="x, value=5"', cookie_value
 
     hash = HTTP::Cookie.cookie_value_to_hash(cookie_value)
 
-    assert_equal 3, hash.size
+    assert_equal pairs.map(&:first).uniq.size, hash.size
+
+    hash.each_pair { |name, value|
+      _, pvalue = pairs.assoc(name)
+      assert_equal pvalue, value
+    }
+
+    # Do not treat comma in a Cookie header value as separator; see CVE-2016-7401
+    hash = HTTP::Cookie.cookie_value_to_hash('Quux=x, value=5; Foo=value1; Bar="value 2"; Baz=value3; Bar="value\\"4"')
+
+    assert_equal pairs.map(&:first).uniq.size, hash.size
 
     hash.each_pair { |name, value|
       _, pvalue = pairs.assoc(name)
