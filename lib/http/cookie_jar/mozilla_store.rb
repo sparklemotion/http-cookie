@@ -10,7 +10,7 @@ class HTTP::CookieJar
   # stored persistently in the SQLite3 database.
   class MozillaStore < AbstractStore
     # :stopdoc:
-    SCHEMA_VERSION = 5
+    SCHEMA_VERSION = 7
 
     def default_options
       {
@@ -147,8 +147,8 @@ class HTTP::CookieJar
       @schema_version = version
     end
 
-    def create_table
-      self.schema_version = SCHEMA_VERSION
+    def create_table_v5
+      self.schema_version = 5
       @db.execute("DROP TABLE IF EXISTS moz_cookies")
       @db.execute(<<-'SQL')
                    CREATE TABLE moz_cookies (
@@ -173,6 +173,62 @@ class HTTP::CookieJar
                      ON moz_cookies (baseDomain,
                                      appId,
                                      inBrowserElement);
+      SQL
+    end
+
+    def create_table_v6
+      self.schema_version = 6
+      @db.execute("DROP TABLE IF EXISTS moz_cookies")
+      @db.execute(<<-'SQL')
+                   CREATE TABLE moz_cookies (
+                     id INTEGER PRIMARY KEY,
+                     baseDomain TEXT,
+                     originAttributes TEXT NOT NULL DEFAULT '',
+                     name TEXT,
+                     value TEXT,
+                     host TEXT,
+                     path TEXT,
+                     expiry INTEGER,
+                     lastAccessed INTEGER,
+                     creationTime INTEGER,
+                     isSecure INTEGER,
+                     isHttpOnly INTEGER,
+                     CONSTRAINT moz_uniqueid UNIQUE (name, host, path, originAttributes)
+                   )
+      SQL
+      @db.execute(<<-'SQL')
+                   CREATE INDEX moz_basedomain
+                     ON moz_cookies (baseDomain,
+                                     originAttributes);
+      SQL
+    end
+
+    def create_table
+      self.schema_version = SCHEMA_VERSION
+      @db.execute("DROP TABLE IF EXISTS moz_cookies")
+      @db.execute(<<-'SQL')
+                   CREATE TABLE moz_cookies (
+                     id INTEGER PRIMARY KEY,
+                     baseDomain TEXT,
+                     originAttributes TEXT NOT NULL DEFAULT '',
+                     name TEXT,
+                     value TEXT,
+                     host TEXT,
+                     path TEXT,
+                     expiry INTEGER,
+                     lastAccessed INTEGER,
+                     creationTime INTEGER,
+                     isSecure INTEGER,
+                     isHttpOnly INTEGER,
+                     appId INTEGER DEFAULT 0,
+                     inBrowserElement INTEGER DEFAULT 0,
+                     CONSTRAINT moz_uniqueid UNIQUE (name, host, path, originAttributes)
+                   )
+      SQL
+      @db.execute(<<-'SQL')
+                   CREATE INDEX moz_basedomain
+                     ON moz_cookies (baseDomain,
+                                     originAttributes);
       SQL
     end
 
@@ -226,7 +282,7 @@ class HTTP::CookieJar
         when 4
           @db.execute("ALTER TABLE moz_cookies RENAME TO moz_cookies_old")
           @db.execute("DROP INDEX moz_basedomain")
-          create_table
+          create_table_v5
           @db.execute(<<-'SQL')
                        INSERT INTO moz_cookies
                          (baseDomain, appId, inBrowserElement, name, value, host, path, expiry,
@@ -236,7 +292,52 @@ class HTTP::CookieJar
                            FROM moz_cookies_old
           SQL
           @db.execute("DROP TABLE moz_cookies_old")
+        when 5
+          @db.execute("ALTER TABLE moz_cookies RENAME TO moz_cookies_old")
+          @db.execute("DROP INDEX moz_basedomain")
+          create_table_v6
+          @db.create_function('CONVERT_TO_ORIGIN_ATTRIBUTES', 2) { |func, appId, inBrowserElement|
+            params = {}
+            params['appId'] = appId if appId.nonzero?
+            params['inBrowserElement'] = inBrowserElement if inBrowserElement.nonzero?
+            func.result = URI.encode_www_form(params)
+          }
+          @db.execute(<<-'SQL')
+                       INSERT INTO moz_cookies
+                         (baseDomain, originAttributes, name, value, host, path, expiry,
+                          lastAccessed, creationTime, isSecure, isHttpOnly)
+                         SELECT baseDomain,
+                                CONVERT_TO_ORIGIN_ATTRIBUTES(appId, inBrowserElement),
+                                name, value, host, path, expiry, lastAccessed, creationTime,
+                                isSecure, isHttpOnly
+                           FROM moz_cookies_old
+          SQL
+          @db.execute("DROP TABLE moz_cookies_old")
+        when 6
+          @db.execute("ALTER TABLE moz_cookies ADD appId INTEGER DEFAULT 0")
+          @db.execute("ALTER TABLE moz_cookies ADD inBrowserElement INTEGER DEFAULT 0")
+          @db.create_function('SET_APP_ID', 1) { |func, originAttributes|
+            func.result =
+              if pair = URI.decode_www_form(originAttributes).assoc('appId')
+                pair.last.to_i
+              else
+                0
+              end
+          }
+          @db.create_function('SET_IN_BROWSER', 1) { |func, originAttributes|
+            func.result =
+              if pair = URI.decode_www_form(originAttributes).assoc('inBrowserElement')
+                pair.last.to_i
+              else
+                0
+              end
+          }
+          @db.execute(<<-'SQL')
+                       UPDATE moz_cookies SET appId = SET_APP_ID(originAttributes),
+                                              inBrowserElement = SET_IN_BROWSER(originAttributes)
+          SQL
           @logger.info("Upgraded database to schema version %d" % schema_version) if @logger
+          self.schema_version += 1
         else
           break
         end
