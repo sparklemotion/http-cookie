@@ -22,14 +22,11 @@ class HTTP::CookieJar
 
     ALL_COLUMNS = %w[
       baseDomain
-      appId inBrowserElement
+      originAttributes
       name value
       host path
       expiry creationTime lastAccessed
       isSecure isHttpOnly
-    ]
-    UK_COLUMNS = %w[
-      name host path
       appId inBrowserElement
     ]
 
@@ -94,6 +91,11 @@ class HTTP::CookieJar
     # element. (default: `false`)
     def initialize(options = nil)
       super
+
+      @origin_attributes = URI.encode_www_form({}.tap { |params|
+        params['appId'] = @app_id if @app_id.nonzero?
+        params['inBrowserElement'] = 1 if @in_browser_element
+      })
 
       @filename = options[:filename] or raise ArgumentError, ':filename option is missing'
 
@@ -360,8 +362,7 @@ class HTTP::CookieJar
     def db_add(cookie)
       @stmt[:add].execute({
           :baseDomain => cookie.domain_name.domain || cookie.domain,
-          :appId => @app_id,
-          :inBrowserElement => @in_browser_element ? 1 : 0,
+          :originAttributes => @origin_attributes,
           :name => cookie.name, :value => cookie.value,
           :host => cookie.dot_domain,
           :path => cookie.path,
@@ -370,6 +371,8 @@ class HTTP::CookieJar
           :lastAccessed => cookie.accessed_at.to_i,
           :isSecure => cookie.secure? ? 1 : 0,
           :isHttpOnly => cookie.httponly? ? 1 : 0,
+          :appId => @app_id,
+          :inBrowserElement => @in_browser_element ? 1 : 0,
         })
       cleanup if (@gc_index += 1) >= @gc_threshold
 
