@@ -441,7 +441,6 @@ class HTTP::CookieJar
       now = Time.now
       if uri
         thost = DomainName.new(uri.host)
-        tpath = uri.path
 
         @stmt[:cookies_for_domain].execute({
             :baseDomain => thost.domain || thost.hostname,
