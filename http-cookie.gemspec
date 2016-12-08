@@ -31,4 +31,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency("rake", [">= 0.9.2.2", *("< 11" if RUBY_VERSION < "1.9")])
   gem.add_development_dependency("rdoc", ["> 2.4.2"])
   gem.add_development_dependency("simplecov", [">= 0"])
+  gem.add_development_dependency("json", ["< 2"]) if RUBY_VERSION < "2.0"
 end
