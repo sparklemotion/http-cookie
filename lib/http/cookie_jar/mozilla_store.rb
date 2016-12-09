@@ -357,8 +357,8 @@ class HTTP::CookieJar
           :host => cookie.dot_domain,
           :path => cookie.path,
           :expiry => cookie.expires_at.to_i,
-          :creationTime => cookie.created_at.to_i,
-          :lastAccessed => cookie.accessed_at.to_i,
+          :creationTime => serialize_usectime(cookie.created_at),
+          :lastAccessed => serialize_usectime(cookie.accessed_at),
           :isSecure => cookie.secure? ? 1 : 0,
           :isHttpOnly => cookie.httponly? ? 1 : 0,
           :appId => @app_id,
@@ -409,6 +409,14 @@ class HTTP::CookieJar
       def get_query_param(str, key)
         CGI.parse(str)[key].first
       end
+    end
+
+    def serialize_usectime(time)
+      time ? (time.to_f * 1e6).floor : 0
+    end
+
+    def deserialize_usectime(value)
+      Time.at(value ? value / 1e6 : 0)
     end
 
     public
@@ -470,8 +478,8 @@ class HTTP::CookieJar
               attrs[:domain]      = row['host']
               attrs[:path]        = row['path']
               attrs[:expires_at]  = Time.at(row['expiry'])
-              attrs[:accessed_at] = Time.at(row['lastAccessed'] || 0)
-              attrs[:created_at]  = Time.at(row['creationTime'] || 0)
+              attrs[:accessed_at] = deserialize_usectime(row['lastAccessed'])
+              attrs[:created_at]  = deserialize_usectime(row['creationTime'])
               attrs[:secure]      = secure
               attrs[:httponly]    = row['isHttpOnly'] != 0
             })
@@ -479,7 +487,7 @@ class HTTP::CookieJar
           if cookie.valid_for_uri?(uri)
             cookie.accessed_at = now
             @stmt[:update_lastaccessed].execute({
-                'lastAccessed' => now.to_i,
+                'lastAccessed' => serialize_usectime(now),
                 'id' => row['id'],
               })
             yield cookie
@@ -498,8 +506,8 @@ class HTTP::CookieJar
               attrs[:domain]      = row['host']
               attrs[:path]        = row['path']
               attrs[:expires_at]  = Time.at(row['expiry'])
-              attrs[:accessed_at] = Time.at(row['lastAccessed'] || 0)
-              attrs[:created_at]  = Time.at(row['creationTime'] || 0)
+              attrs[:accessed_at] = deserialize_usectime(row['lastAccessed'])
+              attrs[:created_at]  = deserialize_usectime(row['creationTime'])
               attrs[:secure]      = row['isSecure'] != 0
               attrs[:httponly]    = row['isHttpOnly'] != 0
             })
