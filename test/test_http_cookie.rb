@@ -632,9 +632,9 @@ class TestHTTPCookie < Test::Unit::TestCase
       HTTP::Cookie.new("key", nil),
       HTTP::Cookie.new("key", :secure => true),
       HTTP::Cookie.new("key"),
-    ].each { |cookie|
-      assert_equal '', cookie.value
-      assert_equal true, cookie.expired?
+    ].each { |cookie_instance|
+      assert_equal '', cookie_instance.value
+      assert_equal true, cookie_instance.expired?
     }
 
     [
@@ -642,9 +642,9 @@ class TestHTTPCookie < Test::Unit::TestCase
       HTTP::Cookie.new("key", nil, :expires => Time.now + 3600),
       HTTP::Cookie.new("key", :expires => Time.now + 3600),
       HTTP::Cookie.new("key", :expires => Time.now + 3600, :value => nil),
-    ].each { |cookie|
-      assert_equal '', cookie.value
-      assert_equal false, cookie.expired?
+    ].each { |cookie_instance|
+      assert_equal '', cookie_instance.value
+      assert_equal false, cookie_instance.expired?
     }
   end
 
@@ -749,7 +749,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 12, cookie.max_age
 
     cookie.max_age = -3
-    assert_equal -3, cookie.max_age
+    assert_equal(-3, cookie.max_age)
   end
 
   def test_session
