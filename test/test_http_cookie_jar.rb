@@ -386,7 +386,7 @@ module TestHTTPCookieJar
         assert_same @jar, value
 
         @jar2.load(File.join(dir, "cookies.yml"))
-        cookies = @jar2.cookies(url).sort_by { |cookie| cookie.name }
+        cookies = @jar2.cookies(url).sort_by { |cookie_instance| cookie_instance.name }
         assert_equal(2, cookies.length)
         assert_equal('Baz', cookies[0].name)
         assert_equal(false, cookies[0].for_domain)
@@ -476,8 +476,8 @@ module TestHTTPCookieJar
       url = URI 'http://rubyforge.org/foo/'
 
       # Add one cookie with an expiration date in the future
-      cookie = HTTP::Cookie.new(cookie_values)
-      expires = cookie.expires
+      cookie1 = HTTP::Cookie.new(cookie_values)
+      expires = cookie1.expires
       s_cookie = HTTP::Cookie.new(cookie_values(:name => 'Bar',
           :expires => nil))
       cookie2 = HTTP::Cookie.new(cookie_values(:name => 'Baz',
@@ -490,7 +490,7 @@ module TestHTTPCookieJar
       ma_cookie = HTTP::Cookie.new(cookie_values(:name => 'Maxage',
           :value => 'Foo#Maxage',
           :max_age => 15000))
-      @jar.add(cookie)
+      @jar.add(cookie1)
       @jar.add(s_cookie)
       @jar.add(cookie2)
       @jar.add(h_cookie)
