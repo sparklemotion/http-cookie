@@ -92,7 +92,7 @@ class HTTP::CookieJar
     def initialize(options = nil)
       super
 
-      @origin_attributes = URI.encode_www_form({}.tap { |params|
+      @origin_attributes = encode_www_form({}.tap { |params|
         params['appId'] = @app_id if @app_id.nonzero?
         params['inBrowserElement'] = 1 if @in_browser_element
       })
@@ -302,7 +302,7 @@ class HTTP::CookieJar
             params = {}
             params['appId'] = appId if appId.nonzero?
             params['inBrowserElement'] = inBrowserElement if inBrowserElement.nonzero?
-            func.result = URI.encode_www_form(params)
+            func.result = encode_www_form(params)
           }
           @db.execute(<<-'SQL')
                        INSERT INTO moz_cookies
@@ -319,20 +319,10 @@ class HTTP::CookieJar
           @db.execute("ALTER TABLE moz_cookies ADD appId INTEGER DEFAULT 0")
           @db.execute("ALTER TABLE moz_cookies ADD inBrowserElement INTEGER DEFAULT 0")
           @db.create_function('SET_APP_ID', 1) { |func, originAttributes|
-            func.result =
-              if pair = URI.decode_www_form(originAttributes).assoc('appId')
-                pair.last.to_i
-              else
-                0
-              end
+            func.result = get_query_param(originAttributes, 'appId').to_i  # nil.to_i == 0
           }
           @db.create_function('SET_IN_BROWSER', 1) { |func, originAttributes|
-            func.result =
-              if pair = URI.decode_www_form(originAttributes).assoc('inBrowserElement')
-                pair.last.to_i
-              else
-                0
-              end
+            func.result = get_query_param(originAttributes, 'inBrowserElement').to_i  # nil.to_i == 0
           }
           @db.execute(<<-'SQL')
                        UPDATE moz_cookies SET appId = SET_APP_ID(originAttributes),
@@ -397,6 +387,28 @@ class HTTP::CookieJar
           :path => cookie.path,
         })
       self
+    end
+
+    if RUBY_VERSION >= '1.9'
+      def encode_www_form(enum)
+        URI.encode_www_form(enum)
+      end
+
+      def get_query_param(str, key)
+        URI.decode_www_form(str).find { |k, v|
+          break v if k == key
+        }
+      end
+    else
+      require 'cgi'
+
+      def encode_www_form(enum)
+        enum.map { |k, v| "#{CGI.escape(k)}=#{CGI.escape(v)}" }.join('&')
+      end
+
+      def get_query_param(str, key)
+        CGI.parse(str)[key].first
+      end
     end
 
     public
