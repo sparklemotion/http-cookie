@@ -1,3 +1,5 @@
+[![Gem Version](https://badge.fury.io/rb/http-cookie.svg)](https://badge.fury.io/rb/http-cookie)
+
 # HTTP::Cookie
 
 HTTP::Cookie is a ruby library to handle HTTP cookies in a way both
