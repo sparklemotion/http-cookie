@@ -51,7 +51,7 @@ class HTTP::Cookie::Scanner < StringScanner
   end
 
   def scan_value(comma_as_separator = false)
-    ''.tap { |s|
+    ''.dup.tap { |s|
       case
       when scan(/[^,;"]+/)
         s << matched
