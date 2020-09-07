@@ -3,12 +3,6 @@ require 'tmpdir'
 
 module TestHTTPCookieJar
   class TestAutoloading < Test::Unit::TestCase
-    def test_nonexistent_store
-      assert_raises(NameError) {
-        HTTP::CookieJar::NonexistentStore
-      }
-    end
-
     def test_erroneous_store
       Dir.mktmpdir { |dir|
         Dir.mkdir(File.join(dir, 'http'))
