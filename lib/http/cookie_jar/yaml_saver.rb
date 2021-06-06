@@ -22,7 +22,7 @@ class HTTP::CookieJar::YAMLSaver < HTTP::CookieJar::AbstractSaver
   def load(io, jar)
     begin
       # determine if we have unsafe_load from psych >= 4.0.0 or otherwise use leagcy method
-      data = YAML::VERSION.method_defined?(:unsafe_load) ? YAML.safe_load(io, permitted_classes: [HTTP::Cookie, Time]) : YAML.load(io)
+      data = YAML.respond_to?(:unsafe_load) ? YAML.safe_load(io, permitted_classes: [HTTP::Cookie, Time]) : YAML.load(io)
     rescue ArgumentError => e
       case e.message
       when %r{\Aundefined class/module Mechanize::}
