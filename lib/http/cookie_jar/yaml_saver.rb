@@ -76,7 +76,7 @@ class HTTP::CookieJar::YAMLSaver < HTTP::CookieJar::AbstractSaver
 
   if YAML.name == 'Psych' && Psych::VERSION >= '3.1'
     def load_yaml(yaml)
-      YAML.safe_load(yaml, :permitted_classes => %w[Time HTTP::Cookie Mechanize::Cookie DomainName])
+      YAML.safe_load(yaml, :permitted_classes => %w[Time HTTP::Cookie Mechanize::Cookie DomainName], :aliases => true)
     end
   else
     def load_yaml(yaml)
