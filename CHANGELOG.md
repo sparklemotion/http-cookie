@@ -1,4 +1,4 @@
-## Unreleased
+## 1.0.4 (2021-06-07)
 
 - Support Mozilla's cookie storage format up to version 7.
 
