@@ -20,7 +20,8 @@ The following is an incomplete list of its features:
 * It takes eTLD (effective TLD, also known as "Public Suffix") into
   account just as major browsers do, to reject cookies with an eTLD
   domain like "org", "co.jp", or "appspot.com".  This feature is
-  brought to you by the domain_name gem.
+  brought to you by the
+  [domain_name](https://github.com/knu/ruby-domain_name) gem.
 
 * The number of cookies and the size are properly capped so that a
   cookie store does not get flooded.
@@ -207,7 +208,7 @@ equivalent using HTTP::Cookie:
     guarantee that it will remain available in the future.
 
 
-HTTP::Cookie/CookieJar raise runtime errors to help migration, so
+HTTP::Cookie/CookieJar raises runtime errors to help migration, so
 after replacing the class names, try running your test code once to
 find out how to fix your code base.
 
