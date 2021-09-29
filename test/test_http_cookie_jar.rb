@@ -856,9 +856,10 @@ module TestHTTPCookieJar
       jar = HTTP::CookieJar.new(:store => :hash)
       assert_instance_of HTTP::CookieJar::HashStore, jar.store
 
-      assert_raises(ArgumentError) {
+      error = assert_raises(ArgumentError) {
         jar = HTTP::CookieJar.new(:store => :nonexistent)
       }
+      assert_equal 'cookie store unavailable: :nonexistent, error: cannot load such file -- http/cookie_jar/nonexistent_store', error.message
 
       jar = HTTP::CookieJar.new(:store => HTTP::CookieJar::HashStore.new)
       assert_instance_of HTTP::CookieJar::HashStore, jar.store

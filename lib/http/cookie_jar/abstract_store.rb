@@ -18,7 +18,7 @@ class HTTP::CookieJar::AbstractStore
         require 'http/cookie_jar/%s_store' % symbol
         @@class_map.fetch(symbol)
       rescue LoadError, IndexError => e
-        raise IndexError, 'cookie store unavailable: %s, error: %s' % symbol.inspect, e.message
+        raise IndexError, 'cookie store unavailable: %s, error: %s' % [symbol.inspect, e.message]
       end
     end
 
