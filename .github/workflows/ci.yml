@@ -15,10 +15,10 @@ jobs:
       matrix:
         os: [ubuntu]
         # We still kind of support Ruby 1.8.7
-        ruby: [2.5, 2.6, 2.7, 3.0, head, jruby]
+        ruby: [2.7, "3.0", 3.1, head, jruby]
 
     name: >-
-      ${{matrix.os}}-ruby${{matrix.ruby}}
+      ${{matrix.os}}:ruby-${{matrix.ruby}}
     runs-on: ${{matrix.os}}-latest
     continue-on-error: ${{matrix.ruby == 'head' || matrix.ruby == 'jruby'}}
 
