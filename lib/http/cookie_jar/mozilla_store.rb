@@ -136,7 +136,7 @@ class HTTP::CookieJar
 
     # Returns the schema version of the database.
     def schema_version
-      @schema_version ||= @db.execute("PRAGMA user_version").first[0]
+      @schema_version ||= @db.execute("PRAGMA user_version").first["user_version"]
     rescue SQLite3::SQLException
       @logger.warn "couldn't get schema version!" if @logger
       return nil
