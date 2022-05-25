@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 require File.expand_path('helper', File.dirname(__FILE__))
+require 'psych' if !defined?(YAML) && RUBY_VERSION == "1.9.2"
+require 'yaml'
 
 class TestHTTPCookie < Test::Unit::TestCase
   def setup
@@ -1073,6 +1075,16 @@ class TestHTTPCookie < Test::Unit::TestCase
     }
   end
 
+  if YAML.name == 'Psych' && Psych::VERSION >= '3.1'
+    private def load_yaml(yaml)
+      YAML.safe_load(yaml, :permitted_classes => %w[Time HTTP::Cookie Mechanize::Cookie DomainName], :aliases => true)
+    end
+  else
+    private def load_yaml(yaml)
+      YAML.load(yaml)
+    end
+  end
+
   def test_yaml_expires
     require 'yaml'
     cookie = HTTP::Cookie.new(cookie_values)
@@ -1080,29 +1092,29 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal false, cookie.session?
     assert_equal nil, cookie.max_age
 
-    ycookie = YAML.load(cookie.to_yaml)
+    ycookie = load_yaml(cookie.to_yaml)
     assert_equal false, ycookie.session?
     assert_equal nil, ycookie.max_age
     assert_in_delta cookie.expires, ycookie.expires, 1
 
     cookie.expires = nil
-    ycookie = YAML.load(cookie.to_yaml)
+    ycookie = load_yaml(cookie.to_yaml)
     assert_equal true, ycookie.session?
     assert_equal nil, ycookie.max_age
 
     cookie.expires = Time.now + 3600
-    ycookie = YAML.load(cookie.to_yaml)
+    ycookie = load_yaml(cookie.to_yaml)
     assert_equal false, ycookie.session?
     assert_equal nil, ycookie.max_age
     assert_in_delta cookie.expires, ycookie.expires, 1
 
     cookie.max_age = 3600
-    ycookie = YAML.load(cookie.to_yaml)
+    ycookie = load_yaml(cookie.to_yaml)
     assert_equal false, ycookie.session?
     assert_in_delta cookie.created_at + 3600, ycookie.expires, 1
 
     cookie.max_age = nil
-    ycookie = YAML.load(cookie.to_yaml)
+    ycookie = load_yaml(cookie.to_yaml)
     assert_equal true, ycookie.session?
     assert_equal nil, ycookie.expires
   end
