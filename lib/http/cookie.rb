@@ -129,7 +129,7 @@ class HTTP::Cookie
   #
   def initialize(*args)
     @name = @origin = @domain = @path =
-      @expires = @max_age = nil
+      @expires = @max_age = @same_site = nil
     @for_domain = @secure = @httponly = false
     @session = true
     @created_at = @accessed_at = Time.now
@@ -170,6 +170,8 @@ class HTTP::Cookie
         origin = val
       when :for_domain, :for_domain?
         for_domain = val
+      when :same_site
+        self.same_site = val
       when :max_age
         # Let max_age take precedence over expires
         max_age = val
@@ -309,6 +311,8 @@ class HTTP::Cookie
                 cookie.secure = avalue
               when 'httponly'
                 cookie.httponly = avalue
+              when 'samesite'
+                cookie.same_site = avalue
               end
             rescue => e
               logger.warn("Couldn't parse #{aname} '#{avalue}': #{e}") if logger
@@ -545,6 +549,13 @@ class HTTP::Cookie
   # The time this cookie was last accessed at.
   attr_accessor :accessed_at
 
+  # Value of SameSite attribute, if set
+  attr_reader :same_site
+
+  def same_site=(value)
+    @same_site = value.downcase
+  end
+
   # Tests if it is OK to accept this cookie if it is sent from a given
   # URI/URL, `uri`.
   def acceptable_from_uri?(uri)
@@ -572,11 +583,31 @@ class HTTP::Cookie
       raise "domain is missing"
     when @path.nil?
       raise "path is missing"
+    when same_site.eql?('none')
+      secure? && (URI::HTTPS === @origin)
+    when secure_prefix?
+      secure? && (URI::HTTPS === @origin)
+    when host_prefix?
+      secure? && (URI::HTTPS === @origin) &&
+      @path == '/' &&
+      !for_domain?
     when @origin.nil?
       true
     else
       acceptable_from_uri?(@origin)
     end
+  end
+
+  # Secure prefix check.  Returns true if the cookie name begins with
+  # the magic __Secure- prefix that means a cookie must be secure.
+  def secure_prefix?
+    @name.start_with?('__Secure-')
+  end
+
+  # Host prefix check.  Returns true if the cookie name begins with
+  # the magic __Host- prefix that means a cookie must be domain-locked.
+  def host_prefix?
+    @name.start_with?('__Host-')
   end
 
   # Tests if it is OK to send this cookie to a given `uri`.  A
@@ -628,6 +659,9 @@ class HTTP::Cookie
     end
     if @secure
       string << "; Secure"
+    end
+    if @same_site
+      string << "; SameSite=#{@same_site}"
     end
     string
   end
