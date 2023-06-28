@@ -6,28 +6,17 @@ class HTTP::CookieJar::AbstractStore
   include MonitorMixin
 
   class << self
-    @@class_map = {}
 
-    # Gets an implementation class by the name, optionally trying to
-    # load "http/cookie_jar/*_store" if not found.  If loading fails,
-    # IndexError is raised.
+    # Gets an implementation class by the name.
     def implementation(symbol)
-      @@class_map.fetch(symbol)
-    rescue IndexError
-      begin
-        require 'http/cookie_jar/%s_store' % symbol
-        @@class_map.fetch(symbol)
-      rescue LoadError, IndexError => e
-        raise IndexError, 'cookie store unavailable: %s, error: %s' % symbol.inspect, e.message
+      case symbol
+      when :hash
+        HTTP::CookieJar::HashStore
+      when :mozilla
+        HTTP::CookieJar::MozillaStore
+      else
+        raise IndexError, 'cookie store unavailable: %s' % symbol.inspect
       end
-    end
-
-    def inherited(subclass) # :nodoc:
-      @@class_map[class_to_symbol(subclass)] = subclass
-    end
-
-    def class_to_symbol(klass) # :nodoc:
-      klass.name[/[^:]+?(?=Store$|$)/].downcase.to_sym
     end
   end
 
@@ -122,3 +111,6 @@ class HTTP::CookieJar::AbstractStore
     # self
   end
 end
+
+require 'http/cookie_jar/hash_store'
+require 'http/cookie_jar/mozilla_store'
