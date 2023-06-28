@@ -6,8 +6,6 @@ require 'http/cookie'
 # any particular website.
 
 class HTTP::CookieJar
-  autoload :AbstractStore, 'http/cookie_jar/abstract_store'
-  autoload :AbstractSaver, 'http/cookie_jar/abstract_saver'
 
   attr_reader :store
 
@@ -324,3 +322,6 @@ class HTTP::CookieJar
     self
   end
 end
+
+require 'http/cookie_jar/abstract_store'
+require 'http/cookie_jar/abstract_saver'
