@@ -113,4 +113,15 @@ class HTTP::CookieJar::AbstractStore
 end
 
 require 'http/cookie_jar/hash_store'
-require 'http/cookie_jar/mozilla_store'
+
+begin
+  require 'http/cookie_jar/mozilla_store'
+rescue LoadError
+  if defined?(JRUBY_VERSION)
+    class HTTP::CookieJar::MozillaStore
+      def initialize(*)
+        raise ArgumentError, "MozillaStore is not supported on JRuby"
+      end
+    end
+  end
+end
