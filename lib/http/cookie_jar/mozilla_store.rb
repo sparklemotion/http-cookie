@@ -1,5 +1,4 @@
 # :markup: markdown
-require 'http/cookie_jar'
 require 'sqlite3'
 
 class HTTP::CookieJar

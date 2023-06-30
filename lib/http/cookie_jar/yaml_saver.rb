@@ -1,5 +1,4 @@
 # :markup: markdown
-require 'http/cookie_jar'
 require 'psych' if !defined?(YAML) && RUBY_VERSION == "1.9.2"
 require 'yaml'
 
