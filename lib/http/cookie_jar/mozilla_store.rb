@@ -1,5 +1,5 @@
 # :markup: markdown
-require 'sqlite3'
+autoload :SQLite3, 'sqlite3'
 
 class HTTP::CookieJar
   # A store class that uses Mozilla compatible SQLite3 database as

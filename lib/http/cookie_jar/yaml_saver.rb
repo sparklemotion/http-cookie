@@ -1,6 +1,5 @@
 # :markup: markdown
-require 'psych' if !defined?(YAML) && RUBY_VERSION == "1.9.2"
-require 'yaml'
+autoload :YAML, 'yaml'
 
 # YAMLSaver saves and loads cookies in the YAML format.  It can load a
 # YAML file saved by Mechanize, but the saving format is not
@@ -73,13 +72,9 @@ class HTTP::CookieJar::YAMLSaver < HTTP::CookieJar::AbstractSaver
     {}
   end
 
-  if YAML.name == 'Psych' && Psych::VERSION >= '3.1'
-    def load_yaml(yaml)
-      YAML.safe_load(yaml, :permitted_classes => %w[Time HTTP::Cookie Mechanize::Cookie DomainName], :aliases => true)
-    end
-  else
-    def load_yaml(yaml)
-      YAML.load(yaml)
-    end
+  def load_yaml(yaml)
+    YAML.safe_load(yaml, :permitted_classes => %w[Time HTTP::Cookie Mechanize::Cookie DomainName], :aliases => true)
+  rescue NoMethodError # ruby < 2.0, no safe_load
+    YAML.load(yaml)
   end
 end
