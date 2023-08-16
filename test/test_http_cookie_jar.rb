@@ -86,7 +86,9 @@ module TestHTTPCookieJar
       @jar.add(cookie)
       assert_equal false, @jar.empty?
       assert_equal false, @jar.empty?('http://rubyforge.org/')
+      assert_equal false, @jar.empty?(OpenStruct.new(:scheme => 'http', :host => 'rubyforge.org', :path => '/'))
       assert_equal true, @jar.empty?('http://example.local/')
+      assert_equal true, @jar.empty?(OpenStruct.new(:scheme => 'http', :host => 'example.local', :path => '/'))
     end
 
     def test_two_cookies_same_domain_and_name_different_paths
@@ -127,6 +129,8 @@ module TestHTTPCookieJar
       assert_equal(1, @jar.cookies(URI('http://RubyForge.org/')).length)
 
       assert_equal(1, @jar.cookies(URI('https://RubyForge.org/')).length)
+
+      assert_equal(1, @jar.cookies(OpenStruct.new(:scheme => 'https', :host => 'RubyForge.org', :path => '/')).length)
 
       assert_equal(0, @jar.cookies(URI('http://www.rubyforge.org/')).length)
     end
@@ -465,7 +469,7 @@ module TestHTTPCookieJar
     end
 
     def test_save_and_read_cookiestxt
-      url = URI 'http://rubyforge.org/foo/'
+      url = OpenStruct.new(:scheme => 'https', :host => 'rubyforge.org', :path => '/foo[]/')
 
       # Add one cookie with an expiration date in the future
       cookie = HTTP::Cookie.new(cookie_values)
@@ -474,7 +478,7 @@ module TestHTTPCookieJar
           :expires => nil))
       cookie2 = HTTP::Cookie.new(cookie_values(:name => 'Baz',
           :value => 'Foo#Baz',
-          :path => '/foo/',
+          :path => '/foo[]/',
           :for_domain => false))
       h_cookie = HTTP::Cookie.new(cookie_values(:name => 'Quux',
           :value => 'Foo#Quux',
@@ -523,7 +527,7 @@ module TestHTTPCookieJar
             assert_equal 'Foo#Baz', cookie.value
             assert_equal 'rubyforge.org', cookie.domain
             assert_equal false, cookie.for_domain
-            assert_equal '/foo/', cookie.path
+            assert_equal '/foo[]/', cookie.path
             assert_equal false, cookie.httponly?
           when 'Quux'
             assert_equal 'Foo#Quux', cookie.value
@@ -645,6 +649,34 @@ module TestHTTPCookieJar
       # Make sure we don't get the cookie in a different path
       assert_equal(0, @jar.cookies(URI('http://rubyforge.org/hello')).length)
       assert_equal(0, @jar.cookies(URI('http://rubyforge.org/')).length)
+
+      # Expire the first cookie
+      @jar.add(HTTP::Cookie.new(values.merge( :expires => Time.now - (10 * 86400))))
+      assert_equal(1, @jar.cookies(url).length)
+
+      # Expire the second cookie
+      @jar.add(HTTP::Cookie.new(values.merge( :name => 'Baz',
+            :expires => Time.now - (10 * 86400))))
+      assert_equal(0, @jar.cookies(url).length)
+    end
+
+    def test_non_rfc3986_compliant_paths
+      url = OpenStruct.new(:scheme => 'https', :host => 'RubyForge.org', :path => '/login[]')
+
+      values = cookie_values(:path => "/login[]", :expires => nil, :origin => url)
+
+      # Add one cookie with an expiration date in the future
+      cookie = HTTP::Cookie.new(values)
+      @jar.add(cookie)
+      assert_equal(1, @jar.cookies(url).length)
+
+      # Add a second cookie
+      @jar.add(HTTP::Cookie.new(values.merge( :name => 'Baz' )))
+      assert_equal(2, @jar.cookies(url).length)
+
+      # Make sure we don't get the cookie in a different path
+      assert_equal(0, @jar.cookies(OpenStruct.new(:scheme => 'https', :host => 'RubyForge.org', :path => '/hello[]')).length)
+      assert_equal(0, @jar.cookies(OpenStruct.new(:scheme => 'https', :host => 'RubyForge.org', :path => '/')).length)
 
       # Expire the first cookie
       @jar.add(HTTP::Cookie.new(values.merge( :expires => Time.now - (10 * 86400))))

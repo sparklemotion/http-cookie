@@ -156,8 +156,8 @@ class HTTP::CookieJar
     block_given? or return enum_for(__method__, uri)
 
     if uri
-      uri = URI(uri)
-      return self unless URI::HTTP === uri && uri.host
+      uri = HTTP::Cookie.parse_uri(uri)
+      return self unless ["http", "https"].include?(uri.scheme.downcase) && uri.host
     end
 
     @store.each(uri, &block)

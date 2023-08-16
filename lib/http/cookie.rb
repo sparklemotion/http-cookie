@@ -275,7 +275,7 @@ class HTTP::Cookie
         logger = options[:logger]
         created_at = options[:created_at]
       end
-      origin = URI(origin)
+      origin = parse_uri(origin)
 
       [].tap { |cookies|
         Scanner.new(set_cookie, logger).scan_set_cookie { |name, value, attrs|
@@ -341,6 +341,14 @@ class HTTP::Cookie
           hash[name] ||= value
         }
       }
+    end
+
+    def parse_uri(uri)
+      if uri.respond_to?(:scheme) && uri.respond_to?(:host) && uri.respond_to?(:path)
+        uri
+      else
+        URI(uri)
+      end
     end
   end
 
@@ -455,10 +463,10 @@ class HTTP::Cookie
     @origin.nil? or
       raise ArgumentError, "origin cannot be changed once it is set"
     # Delay setting @origin because #domain= or #path= may fail
-    origin = URI(origin)
-    if URI::HTTP === origin
+    origin = self.class.parse_uri(origin)
+    if ["http", "https"].include?(origin.scheme.downcase)
       self.domain ||= origin.host
-      self.path   ||= (origin + './').path
+      self.path   ||= origin.path.gsub(/[^\/]+\z/, "")
     end
     @origin = origin
   end
@@ -548,8 +556,8 @@ class HTTP::Cookie
   # Tests if it is OK to accept this cookie if it is sent from a given
   # URI/URL, `uri`.
   def acceptable_from_uri?(uri)
-    uri = URI(uri)
-    return false unless URI::HTTP === uri && uri.host
+    uri = self.class.parse_uri(uri)
+    return false unless ["http", "https"].include?(uri.scheme.downcase) && uri.host
     host = DomainName.new(uri.host)
 
     # RFC 6265 5.3
@@ -585,9 +593,9 @@ class HTTP::Cookie
     if @domain.nil?
       raise "cannot tell if this cookie is valid because the domain is unknown"
     end
-    uri = URI(uri)
+    uri = self.class.parse_uri(uri)
     # RFC 6265 5.4
-    return false if secure? && !(URI::HTTPS === uri)
+    return false if secure? && uri.scheme.downcase != "https"
     acceptable_from_uri?(uri) && HTTP::Cookie.path_match?(@path, uri.path)
   end
 
