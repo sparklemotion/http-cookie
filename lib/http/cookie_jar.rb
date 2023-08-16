@@ -156,7 +156,7 @@ class HTTP::CookieJar
     block_given? or return enum_for(__method__, uri)
 
     if uri
-      uri = URI(uri)
+      uri = HTTP::Cookie::URIParser.instance.convert_to_uri(uri)
       return self unless URI::HTTP === uri && uri.host
     end
 
