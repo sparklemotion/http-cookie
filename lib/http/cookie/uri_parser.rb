@@ -23,7 +23,7 @@ class HTTP::Cookie::URIParser
     # Not an absolute HTTP/HTTPS URI
     return URI::DEFAULT_PARSER.parse(uri) unless m
 
-    URI.for(
+    URI.scheme_list[m['scheme'].upcase].new(
       m['scheme'],
       m['userinfo'],
       m['host'],
