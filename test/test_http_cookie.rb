@@ -948,7 +948,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     }
 
     cookie = HTTP::Cookie.new('a', 'b')
-    cookie.origin = HTTP::Cookie::URIParser.instance.parse('http://example.com/path[]/')
+    cookie.origin = HTTP::Cookie::URIParser.parse('http://example.com/path[]/')
     assert_equal '/path[]/', cookie.path
 
     cookie = HTTP::Cookie.new('a', 'b', :domain => '.example.com')
@@ -1033,14 +1033,14 @@ class TestHTTPCookie < Test::Unit::TestCase
         ]
       },
       HTTP::Cookie.parse('a4=b; domain=example.com; path=/dir2[]/',
-        HTTP::Cookie::URIParser.instance.parse('http://example.com/dir[]/file.html')).first => {
+        HTTP::Cookie::URIParser.parse('http://example.com/dir[]/file.html')).first => {
         true => [
-          HTTP::Cookie::URIParser.instance.parse('https://example.com/dir2[]/file.html'),
-          HTTP::Cookie::URIParser.instance.parse('http://example.com/dir2[]/file.html'),
+          HTTP::Cookie::URIParser.parse('https://example.com/dir2[]/file.html'),
+          HTTP::Cookie::URIParser.parse('http://example.com/dir2[]/file.html'),
         ],
         false => [
-          HTTP::Cookie::URIParser.instance.parse('https://example.com/dir[]/file.html'),
-          HTTP::Cookie::URIParser.instance.parse('http://example.com/dir[]/file.html'),
+          HTTP::Cookie::URIParser.parse('https://example.com/dir[]/file.html'),
+          HTTP::Cookie::URIParser.parse('http://example.com/dir[]/file.html'),
           'file:///dir2/test.html',
         ]
       },
@@ -1091,7 +1091,7 @@ class TestHTTPCookie < Test::Unit::TestCase
       hash.each { |expected, urls|
         urls.each { |url|
           assert_equal expected, cookie.valid_for_uri?(url), '%s: %s' % [cookie.name, url]
-          assert_equal expected, cookie.valid_for_uri?(HTTP::Cookie::URIParser.instance.parse(url)), "%s: URI(%s)" % [cookie.name, url]
+          assert_equal expected, cookie.valid_for_uri?(HTTP::Cookie::URIParser.parse(url)), "%s: URI(%s)" % [cookie.name, url]
         }
       }
     }

@@ -465,7 +465,7 @@ module TestHTTPCookieJar
     end
 
     def test_save_and_read_cookiestxt
-      url = HTTP::Cookie::URIParser.instance.convert_to_uri('https://rubyforge.org/foo[]/')
+      url = HTTP::Cookie::URIParser.parse('https://rubyforge.org/foo[]/')
 
       # Add one cookie with an expiration date in the future
       cookie = HTTP::Cookie.new(cookie_values)
@@ -657,7 +657,7 @@ module TestHTTPCookieJar
     end
 
     def test_non_rfc3986_compliant_paths
-      url = HTTP::Cookie::URIParser.instance.convert_to_uri('http://RubyForge.org/login[]')
+      url = HTTP::Cookie::URIParser.parse('http://RubyForge.org/login[]')
 
       values = cookie_values(:path => "/login[]", :expires => nil, :origin => url)
 
@@ -671,8 +671,8 @@ module TestHTTPCookieJar
       assert_equal(2, @jar.cookies(url).length)
 
       # Make sure we don't get the cookie in a different path
-      assert_equal(0, @jar.cookies(HTTP::Cookie::URIParser.instance.convert_to_uri('http://RubyForge.org/hello[]')).length)
-      assert_equal(0, @jar.cookies(HTTP::Cookie::URIParser.instance.convert_to_uri('http://RubyForge.org/')).length)
+      assert_equal(0, @jar.cookies(HTTP::Cookie::URIParser.parse('http://RubyForge.org/hello[]')).length)
+      assert_equal(0, @jar.cookies(HTTP::Cookie::URIParser.parse('http://RubyForge.org/')).length)
 
       # Expire the first cookie
       @jar.add(HTTP::Cookie.new(values.merge( :expires => Time.now - (10 * 86400))))
