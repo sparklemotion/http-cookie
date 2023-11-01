@@ -1,5 +1,6 @@
 # :markup: markdown
 require 'http/cookie/version'
+require 'http/cookie/uri_parser'
 require 'time'
 require 'uri'
 require 'domain_name'
@@ -275,7 +276,7 @@ class HTTP::Cookie
         logger = options[:logger]
         created_at = options[:created_at]
       end
-      origin = URI(origin)
+      origin = HTTP::Cookie::URIParser.parse(origin)
 
       [].tap { |cookies|
         Scanner.new(set_cookie, logger).scan_set_cookie { |name, value, attrs|
@@ -455,7 +456,7 @@ class HTTP::Cookie
     @origin.nil? or
       raise ArgumentError, "origin cannot be changed once it is set"
     # Delay setting @origin because #domain= or #path= may fail
-    origin = URI(origin)
+    origin = HTTP::Cookie::URIParser.parse(origin)
     if URI::HTTP === origin
       self.domain ||= origin.host
       self.path   ||= (origin + './').path
@@ -548,7 +549,7 @@ class HTTP::Cookie
   # Tests if it is OK to accept this cookie if it is sent from a given
   # URI/URL, `uri`.
   def acceptable_from_uri?(uri)
-    uri = URI(uri)
+    uri = HTTP::Cookie::URIParser.parse(uri)
     return false unless URI::HTTP === uri && uri.host
     host = DomainName.new(uri.host)
 
@@ -585,7 +586,7 @@ class HTTP::Cookie
     if @domain.nil?
       raise "cannot tell if this cookie is valid because the domain is unknown"
     end
-    uri = URI(uri)
+    uri = HTTP::Cookie::URIParser.parse(uri)
     # RFC 6265 5.4
     return false if secure? && !(URI::HTTPS === uri)
     acceptable_from_uri?(uri) && HTTP::Cookie.path_match?(@path, uri.path)
