@@ -1,5 +1,4 @@
 # :markup: markdown
-require 'http/cookie_jar'
 
 # CookiestxtSaver saves and loads cookies in the cookies.txt format.
 class HTTP::CookieJar::CookiestxtSaver < HTTP::CookieJar::AbstractSaver

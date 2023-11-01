@@ -2,29 +2,15 @@
 
 # An abstract superclass for all saver classes.
 class HTTP::CookieJar::AbstractSaver
-  class << self
-    @@class_map = {}
 
-    # Gets an implementation class by the name, optionally trying to
-    # load "http/cookie_jar/*_saver" if not found.  If loading fails,
-    # IndexError is raised.
-    def implementation(symbol)
-      @@class_map.fetch(symbol)
-    rescue IndexError
-      begin
-        require 'http/cookie_jar/%s_saver' % symbol
-        @@class_map.fetch(symbol)
-      rescue LoadError, IndexError
-        raise IndexError, 'cookie saver unavailable: %s' % symbol.inspect
-      end
-    end
-
-    def inherited(subclass) # :nodoc:
-      @@class_map[class_to_symbol(subclass)] = subclass
-    end
-
-    def class_to_symbol(klass) # :nodoc:
-      klass.name[/[^:]+?(?=Saver$|$)/].downcase.to_sym
+  def self.implementation(symbol)
+    case symbol
+    when :yaml
+      HTTP::CookieJar::YAMLSaver
+    when :cookiestxt
+      HTTP::CookieJar::CookiestxtSaver
+    else
+      raise IndexError, 'cookie saver unavailable: %s' % symbol.inspect
     end
   end
 
@@ -63,3 +49,6 @@ class HTTP::CookieJar::AbstractSaver
     # self
   end
 end
+
+require "http/cookie_jar/yaml_saver"
+require "http/cookie_jar/cookiestxt_saver"
