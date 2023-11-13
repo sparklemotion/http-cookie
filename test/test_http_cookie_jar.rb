@@ -9,6 +9,15 @@ module TestHTTPCookieJar
       }
     end
 
+    def test_nonexistent_store_in_config
+      assert_raise_with_message(
+        ArgumentError,
+        /cookie store unavailable: :nonexistent, error: cannot load .*nonexistent_store/
+      ) {
+        HTTP::CookieJar.new(store: :nonexistent)
+      }
+    end
+
     def test_erroneous_store
       Dir.mktmpdir { |dir|
         Dir.mkdir(File.join(dir, 'http'))
