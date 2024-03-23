@@ -50,6 +50,6 @@ end
 
 def sleep_until(time)
   if (s = time - Time.now) > 0
-    sleep s
+    sleep s + 0.01
   end
 end

@@ -10,10 +10,8 @@ module TestHTTPCookieJar
     end
 
     def test_nonexistent_store_in_config
-      assert_raise_with_message(
-        ArgumentError,
-        /cookie store unavailable: :nonexistent, error: cannot load .*nonexistent_store/
-      ) {
+      expected = /cookie store unavailable: :nonexistent, error: (cannot load|no such file to load) .*nonexistent_store/
+      assert_raise_with_message(ArgumentError, expected) {
         HTTP::CookieJar.new(store: :nonexistent)
       }
     end
