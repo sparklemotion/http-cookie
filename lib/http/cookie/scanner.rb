@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'http/cookie'
 require 'strscan'
 require 'time'
@@ -23,7 +24,7 @@ class HTTP::Cookie::Scanner < StringScanner
   class << self
     def quote(s)
       return s unless s.match(RE_BAD_CHAR)
-      '"' << s.gsub(/([\\"])/, "\\\\\\1") << '"'
+      (+'"') << s.gsub(/([\\"])/, "\\\\\\1") << '"'
     end
   end
 
@@ -32,7 +33,7 @@ class HTTP::Cookie::Scanner < StringScanner
   end
 
   def scan_dquoted
-    ''.tap { |s|
+    (+'').tap { |s|
       case
       when skip(/"/)
         break
@@ -51,7 +52,7 @@ class HTTP::Cookie::Scanner < StringScanner
   end
 
   def scan_value(comma_as_separator = false)
-    ''.tap { |s|
+    (+'').tap { |s|
       case
       when scan(/[^,;"]+/)
         s << matched
