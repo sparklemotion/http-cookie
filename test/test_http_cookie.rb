@@ -1016,7 +1016,7 @@ class TestHTTPCookie < Test::Unit::TestCase
           'https://www.example.com/dir2/test.html',
         ]
       },
-      HTTP::Cookie.parse('a4=b; domain=example.com; path=/dir2/',
+      HTTP::Cookie.parse('a3=b; domain=example.com; path=/dir2/',
         URI('http://example.com/dir/file.html')).first => {
         true => [
           'https://example.com/dir2/test.html',
@@ -1044,7 +1044,7 @@ class TestHTTPCookie < Test::Unit::TestCase
           'file:///dir2/test.html',
         ]
       },
-      HTTP::Cookie.parse('a4=b; secure',
+      HTTP::Cookie.parse('a5=b; secure',
         URI('https://example.com/dir/file.html')).first => {
         true => [
           'https://example.com/dir/test.html',
@@ -1056,7 +1056,7 @@ class TestHTTPCookie < Test::Unit::TestCase
           'file:///dir2/test.html',
         ]
       },
-      HTTP::Cookie.parse('a5=b',
+      HTTP::Cookie.parse('a6=b',
         URI('https://example.com/')).first => {
         true => [
           'https://example.com',
@@ -1065,7 +1065,7 @@ class TestHTTPCookie < Test::Unit::TestCase
           'file:///',
         ]
       },
-      HTTP::Cookie.parse('a6=b; path=/dir',
+      HTTP::Cookie.parse('a7=b; path=/dir',
         'http://example.com/dir/file.html').first => {
         true => [
           'http://example.com/dir',
