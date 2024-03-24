@@ -1,4 +1,5 @@
 # :markup: markdown
+# frozen_string_literal: true
 require 'http/cookie/version'
 require 'http/cookie/uri_parser'
 require 'time'
@@ -425,7 +426,7 @@ class HTTP::Cookie
   # Returns the domain, with a dot prefixed only if the domain flag is
   # on.
   def dot_domain
-    @for_domain ? '.' << @domain : @domain
+    @for_domain ? (+'.') << @domain : @domain
   end
 
   # Returns the domain attribute value as a DomainName object.
@@ -595,7 +596,7 @@ class HTTP::Cookie
   # Returns a string for use in the Cookie header, i.e. `name=value`
   # or `name="value"`.
   def cookie_value
-    "#{@name}=#{Scanner.quote(@value)}"
+    +"#{@name}=#{Scanner.quote(@value)}"
   end
   alias to_s cookie_value
 

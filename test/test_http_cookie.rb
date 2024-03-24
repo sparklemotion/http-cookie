@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# frozen_string_literal: false
 require File.expand_path('helper', File.dirname(__FILE__))
 require 'psych' if !defined?(YAML) && RUBY_VERSION == "1.9.2"
 require 'yaml'
@@ -757,7 +758,7 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal 12, cookie.max_age
 
     cookie.max_age = -3
-    assert_equal -3, cookie.max_age
+    assert_equal(-3, cookie.max_age)
   end
 
   def test_session
