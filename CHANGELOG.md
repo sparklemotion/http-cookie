@@ -1,3 +1,10 @@
+## 1.0.6 (2024-06-01)
+
+- Fix error formatting bug in HTTP::CookieJar::AbstractStore (#42 by @andrelaszlo)
+- Allow non-RFC 3986-compliant URLs (#45 by @c960657)
+- Add coverage for Ruby 3.2 and 3.3 (#46 by @flavorjones)
+- Quash ruby 3.4 warnings (#47 by @flavorjones)
+
 ## 1.0.5 (2022-05-25)
 
 - Silence SQLite3 warnings
