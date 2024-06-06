@@ -1,3 +1,8 @@
+## 1.0.7 (2024-06-06)
+
+- Explicitly require "cgi" to avoid `NameError` in some applications. (#50 by @flavorjones)
+
+
 ## 1.0.6 (2024-06-01)
 
 - Fix error formatting bug in HTTP::CookieJar::AbstractStore (#42 by @andrelaszlo)
