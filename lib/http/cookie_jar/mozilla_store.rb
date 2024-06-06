@@ -400,8 +400,6 @@ class HTTP::CookieJar
         }
       end
     else
-      require 'cgi'
-
       def encode_www_form(enum)
         enum.map { |k, v| "#{CGI.escape(k)}=#{CGI.escape(v)}" }.join('&')
       end
