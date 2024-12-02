@@ -89,7 +89,7 @@ class HTTP::Cookie
 
   # The Expires attribute value as a Time object.
   #
-  # The setter method accepts a Time object, a string representation
+  # The setter method accepts a Time / DateTime object, a string representation
   # of date/time that Time.parse can understand, or `nil`.
   #
   # Setting this value resets #max_age to nil.  When #max_age is
@@ -493,6 +493,8 @@ class HTTP::Cookie
   def expires= t
     case t
     when nil, Time
+    when DateTime
+      t = t.to_time
     else
       t = Time.parse(t)
     end
