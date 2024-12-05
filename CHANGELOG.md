@@ -1,3 +1,8 @@
+## 1.0.8 (2024-12-05)
+
+- `Cookie#expires=` accepts `DateTime` objects. (#52) @luke-hill @flavorjones
+
+
 ## 1.0.7 (2024-06-06)
 
 - Explicitly require "cgi" to avoid `NameError` in some applications. (#50 by @flavorjones)
