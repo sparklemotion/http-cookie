@@ -717,8 +717,22 @@ class TestHTTPCookie < Test::Unit::TestCase
   end
 
   def test_expiration
-    cookie = HTTP::Cookie.new(cookie_values)
+    expires = Time.now + 86400
+    cookie = HTTP::Cookie.new(cookie_values(expires: expires))
 
+    assert_equal(expires, cookie.expires)
+    assert_equal false, cookie.expired?
+    assert_equal true, cookie.expired?(cookie.expires + 1)
+    assert_equal false, cookie.expired?(cookie.expires - 1)
+    cookie.expire!
+    assert_equal true, cookie.expired?
+  end
+
+  def test_expiration_using_datetime
+    expires = DateTime.now + 1
+    cookie = HTTP::Cookie.new(cookie_values(expires: expires))
+
+    assert_equal(expires.to_time, cookie.expires)
     assert_equal false, cookie.expired?
     assert_equal true, cookie.expired?(cookie.expires + 1)
     assert_equal false, cookie.expired?(cookie.expires - 1)
