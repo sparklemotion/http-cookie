@@ -1168,4 +1168,30 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal true,  HTTP::Cookie.path_match?('/admin', '/admin/')
     assert_equal true,  HTTP::Cookie.path_match?('/admin', '/admin/index')
   end
+
+  def test_to_h_coercion
+    now = Time.now
+    cookie = HTTP::Cookie.new(cookie_values.merge({ expires: now, max_age: 3600, created_at: now, accessed_at: now }))
+
+    cookie.keys.each { |key| assert_equal key.class, Symbol }
+    assert_equal cookie.keys.map(&:to_s), PERSISTENT_PROPERTIES
+
+    expected_hash =
+      {
+        name: 'Foo',
+        value: 'Bar',
+        path: '/',
+        expires: now,
+        for_domain: true,
+        domain: 'rubyforge.org',
+        origin: 'http://rubyforge.org/',
+        secure: true,
+        httponly: true,
+        max_age: 3600,
+        created_at: now,
+        accessed_at: now
+      }
+        
+    assert_equal cookie.to_h, expected_hash
+  end
 end
