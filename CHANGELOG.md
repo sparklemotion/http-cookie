@@ -1,3 +1,7 @@
+## next (unreleased)
+
+- Implement `Cookie#to_h`. (#55) @luke-hill @flavorjones
+
 ## 1.0.8 (2024-12-05)
 
 - `Cookie#expires=` accepts `DateTime` objects. (#52) @luke-hill @flavorjones
