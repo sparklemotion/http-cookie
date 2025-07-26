@@ -655,6 +655,11 @@ class HTTP::Cookie
   end
   include Comparable
 
+  # Hash serialization helper for use back into other libraries (Like Selenium)
+  def to_h
+    PERSISTENT_PROPERTIES.each_with_object({}) { |property, hash| hash[property.to_sym] = instance_variable_get("@#{property}") }
+  end
+
   # YAML serialization helper for Syck.
   def to_yaml_properties
     PERSISTENT_PROPERTIES.map { |name| "@#{name}" }
