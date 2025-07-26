@@ -1169,29 +1169,44 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal true,  HTTP::Cookie.path_match?('/admin', '/admin/index')
   end
 
-  def test_to_h_coercion
+  def test_to_h
     now = Time.now
-    cookie = HTTP::Cookie.new(cookie_values.merge({ expires: now, max_age: 3600, created_at: now, accessed_at: now }))
 
-    cookie.keys.each { |key| assert_equal key.class, Symbol }
-    assert_equal cookie.keys.map(&:to_s), PERSISTENT_PROPERTIES
-
+    cookie = HTTP::Cookie.new(cookie_values.merge({ max_age: 3600, created_at: now, accessed_at: now }))
     expected_hash =
       {
+        accessed_at: now,
+        created_at: now,
+        domain: 'rubyforge.org',
+        expires: nil,
+        for_domain: true,
+        httponly: cookie.httponly?,
+        max_age: 3600,
         name: 'Foo',
-        value: 'Bar',
         path: '/',
+        secure: cookie.secure?,
+        value: 'Bar',
+      }
+
+    assert_equal expected_hash, cookie.to_h
+
+    # exercise expires/max_age interaction
+    cookie = HTTP::Cookie.new(cookie_values.merge({ expires: now, created_at: now, accessed_at: now }))
+    expected_hash =
+      {
+        accessed_at: now,
+        created_at: now,
+        domain: 'rubyforge.org',
         expires: now,
         for_domain: true,
-        domain: 'rubyforge.org',
-        origin: 'http://rubyforge.org/',
-        secure: true,
-        httponly: true,
-        max_age: 3600,
-        created_at: now,
-        accessed_at: now
+        httponly: cookie.httponly?,
+        max_age: nil,
+        name: 'Foo',
+        path: '/',
+        secure: cookie.secure?,
+        value: 'Bar',
       }
-        
-    assert_equal cookie.to_h, expected_hash
+
+    assert_equal expected_hash, cookie.to_h
   end
 end
