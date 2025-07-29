@@ -1,6 +1,7 @@
 ## next (unreleased)
 
 - Implement `Cookie#to_h`. (#55) @luke-hill @flavorjones
+- Reduce gem size by excluding test files
 
 ## 1.0.8 (2024-12-05)
 

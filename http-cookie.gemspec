@@ -18,7 +18,11 @@ Gem::Specification.new do |gem|
   gem.homepage      = "https://github.com/sparklemotion/http-cookie"
   gem.license       = "MIT"
 
-  gem.files         = `git ls-files`.split($/)
+  gem.files         = `git ls-files lib`.split($/) + [
+    'CHANGELOG.md',
+    'LICENSE.txt',
+    'README.md',
+  ]
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
