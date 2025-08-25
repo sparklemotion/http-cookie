@@ -4,6 +4,20 @@ require 'monitor'
 # An abstract superclass for all store classes.
 class HTTP::CookieJar::AbstractStore
   include MonitorMixin
+  def marshal_dump
+    instance_variables.inject({}) do |vars, attr|
+      next vars if attr == :@mon_data
+      vars[attr] = instance_variable_get(attr)
+      vars
+    end
+  end
+
+  def marshal_load(vars)
+    vars.each do |attr, value|
+      instance_variable_set(attr, value)
+      @mon_data = Monitor.new
+    end
+  end
 
   class << self
     @@class_map = {}
