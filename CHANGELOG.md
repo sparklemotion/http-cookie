@@ -1,3 +1,10 @@
+## 1.1.1 (2026-04-06)
+
+- Fix thread-unsafe runtime requires. (#43 by @brasic, #57)
+- Replace `require 'cgi'` with `require 'cgi/escape'` to suppress Ruby 4.0 warning. (#56 by @dominion525)
+- Do not define `MozillaStore` on JRuby; leave the constant undefined instead.
+
+
 ## 1.1.0 (2025-09-26)
 
 - Implement `Cookie#to_h`. (#55) @luke-hill @flavorjones
