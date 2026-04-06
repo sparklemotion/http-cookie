@@ -114,13 +114,6 @@ end
 
 require 'http/cookie_jar/hash_store'
 
-# Skip loading MozillaStore on JRuby.
-if defined?(JRUBY_VERSION)
-  class HTTP::CookieJar::MozillaStore
-    def initialize(*)
-      raise ArgumentError, "MozillaStore is not supported on JRuby"
-    end
-  end
-else
+unless defined?(JRUBY_VERSION)
   require 'http/cookie_jar/mozilla_store'
 end
