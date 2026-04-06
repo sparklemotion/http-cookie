@@ -13,7 +13,7 @@ jobs:
     uses: ruby/actions/.github/workflows/ruby_versions.yml@master
     with:
       engine: cruby-jruby
-      versions: '["2.6", "2.7"]'
+      min_version: 3.3
 
   test:
     needs: ruby-versions

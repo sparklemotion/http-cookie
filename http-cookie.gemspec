@@ -28,12 +28,13 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.extra_rdoc_files = ['README.md', 'LICENSE.txt']
 
+  gem.required_ruby_version = ">= 3.3"
+
   gem.add_runtime_dependency("domain_name", ["~> 0.5"])
   gem.add_development_dependency("sqlite3", [">= 1.3"]) unless defined?(JRUBY_VERSION)
   gem.add_development_dependency("bundler", [">= 1.2.0"])
-  gem.add_development_dependency("test-unit", [">= 2.4.3", *("< 3" if RUBY_VERSION < "1.9")])
-  gem.add_development_dependency("rake", [">= 0.9.2.2", *("< 11" if RUBY_VERSION < "1.9")])
-  gem.add_development_dependency("rdoc", RUBY_VERSION > "1.9" ? "> 2.4.2" : "~> 2.4.2")
+  gem.add_development_dependency("test-unit", [">= 2.4.3"])
+  gem.add_development_dependency("rake", [">= 0.9.2.2"])
+  gem.add_development_dependency("rdoc", ["> 2.4.2"])
   gem.add_development_dependency("simplecov", [">= 0"])
-  gem.add_development_dependency("json", ["< 2"]) if RUBY_VERSION < "2.0"
 end
