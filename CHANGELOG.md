@@ -1,3 +1,8 @@
+## 1.1.3 (2026-04-06)
+
+- Restore compatibility with Ruby 2.6.
+
+
 ## 1.1.2 (2026-04-06)
 
 - Stop requiring sqlite3 at load time by changing `MozillaStore::Database` from inheritance to composition.
