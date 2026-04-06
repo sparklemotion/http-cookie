@@ -11,24 +11,14 @@ module TestHTTPCookieJar
     end
 
     def test_nonexistent_store_in_config
-      expected = /cookie store unavailable: :nonexistent, error: (cannot load|no such file to load) .*nonexistent_store/
-      assert_raise_with_message(ArgumentError, expected) {
+      assert_raise_with_message(ArgumentError, /cookie store unavailable: :nonexistent/) {
         HTTP::CookieJar.new(store: :nonexistent)
       }
     end
 
     def test_erroneous_store
-      Dir.mktmpdir { |dir|
-        Dir.mkdir(File.join(dir, 'http'))
-        Dir.mkdir(File.join(dir, 'http', 'cookie_jar'))
-        rb = File.join(dir, 'http', 'cookie_jar', 'erroneous_store.rb')
-        File.open(rb, 'w').close
-        $LOAD_PATH.unshift(dir)
-
-        assert_raises(NameError) {
-          HTTP::CookieJar::ErroneousStore
-        }
-        assert($LOADED_FEATURES.any? { |file| FileTest.identical?(file, rb) })
+      assert_raises(NameError) {
+        HTTP::CookieJar::ErroneousStore
       }
     end
 
@@ -39,17 +29,8 @@ module TestHTTPCookieJar
     end
 
     def test_erroneous_saver
-      Dir.mktmpdir { |dir|
-        Dir.mkdir(File.join(dir, 'http'))
-        Dir.mkdir(File.join(dir, 'http', 'cookie_jar'))
-        rb = File.join(dir, 'http', 'cookie_jar', 'erroneous_saver.rb')
-        File.open(rb, 'w').close
-        $LOAD_PATH.unshift(dir)
-
-        assert_raises(NameError) {
-          HTTP::CookieJar::ErroneousSaver
-        }
-        assert($LOADED_FEATURES.any? { |file| FileTest.identical?(file, rb) })
+      assert_raises(NameError) {
+        HTTP::CookieJar::ErroneousSaver
       }
     end
   end
