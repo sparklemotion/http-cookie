@@ -7,10 +7,7 @@ require 'uri'
 require 'domain_name'
 require 'http/cookie/ruby_compat'
 require 'cgi/escape'
-
-module HTTP
-  autoload :CookieJar, 'http/cookie_jar'
-end
+require 'http/cookie_jar'
 
 # This class is used to represent an HTTP Cookie.
 class HTTP::Cookie

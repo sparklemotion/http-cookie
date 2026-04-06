@@ -1,5 +1,4 @@
 # :markup: markdown
-require 'http/cookie_jar'
 
 class HTTP::CookieJar
   # A store class that uses a hash-based cookie store.

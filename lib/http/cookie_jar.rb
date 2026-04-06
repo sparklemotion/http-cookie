@@ -1,31 +1,10 @@
 # :markup: markdown
-require 'http/cookie'
 
 ##
 # This class is used to manage the Cookies that have been returned from
 # any particular website.
 
 class HTTP::CookieJar
-  class << self
-    def const_missing(name)
-      case name.to_s
-      when /\A([A-Za-z]+)Store\z/
-        file = 'http/cookie_jar/%s_store' % $1.downcase
-      when /\A([A-Za-z]+)Saver\z/
-        file = 'http/cookie_jar/%s_saver' % $1.downcase
-      end
-      begin
-        require file
-      rescue LoadError
-        raise NameError, 'can\'t resolve constant %s; failed to load %s' % [name, file]
-      end
-      if const_defined?(name)
-        const_get(name)
-      else
-        raise NameError, 'can\'t resolve constant %s after loading %s' % [name, file]
-      end
-    end
-  end
 
   attr_reader :store
 
@@ -342,3 +321,6 @@ class HTTP::CookieJar
     self
   end
 end
+
+require 'http/cookie_jar/abstract_store'
+require 'http/cookie_jar/abstract_saver'
