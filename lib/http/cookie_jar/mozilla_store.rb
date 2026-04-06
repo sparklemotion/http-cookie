@@ -61,12 +61,12 @@ class HTTP::CookieJar
         @db.closed?
       end
 
-      def execute(...)
-        @db.execute(...)
+      def execute(*args, &block)
+        @db.execute(*args, &block)
       end
 
-      def create_function(...)
-        @db.create_function(...)
+      def create_function(*args, &block)
+        @db.create_function(*args, &block)
       end
     end
     # :startdoc:
