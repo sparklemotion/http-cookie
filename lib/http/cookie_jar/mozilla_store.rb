@@ -37,20 +37,15 @@ class HTTP::CookieJar
       }
     }
 
-    class Database < SQLite3::Database
-      def initialize(file, options = {})
+    class Database
+      def initialize(file)
+        @db = SQLite3::Database.new(file, results_as_hash: true)
         @stmts = []
-        options = {
-          :results_as_hash => true,
-        }.update(options)
-        super
       end
 
       def prepare(sql)
-        case st = super
-        when SQLite3::Statement
-          @stmts << st
-        end
+        st = @db.prepare(sql)
+        @stmts << st if st.is_a?(SQLite3::Statement)
         st
       end
 
@@ -59,7 +54,19 @@ class HTTP::CookieJar
         @stmts.reject! { |st|
           st.closed? || st.close
         }
-        super
+        @db.close
+      end
+
+      def closed?
+        @db.closed?
+      end
+
+      def execute(...)
+        @db.execute(...)
+      end
+
+      def create_function(...)
+        @db.create_function(...)
       end
     end
     # :startdoc:
