@@ -1,8 +1,14 @@
+## 1.1.2 (2026-04-06)
+
+- Stop requiring sqlite3 at load time by changing `MozillaStore::Database` from inheritance to composition.
+
+
 ## 1.1.1 (2026-04-06)
 
 - Fix thread-unsafe runtime requires. (#43 by @brasic, #57)
 - Replace `require 'cgi'` with `require 'cgi/escape'` to suppress Ruby 4.0 warning. (#56 by @dominion525)
 - Do not define `MozillaStore` on JRuby; leave the constant undefined instead.
+- Relax sqlite3 development dependency to `>= 1.3`.
 
 
 ## 1.1.0 (2025-09-26)
