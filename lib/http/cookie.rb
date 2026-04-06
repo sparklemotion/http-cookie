@@ -6,7 +6,7 @@ require 'time'
 require 'uri'
 require 'domain_name'
 require 'http/cookie/ruby_compat'
-require 'cgi'
+require 'cgi/escape'
 
 module HTTP
   autoload :CookieJar, 'http/cookie_jar'
