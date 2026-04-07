@@ -1,3 +1,8 @@
+## 1.1.4 (2026-04-07)
+
+- Fix `require "http/cookie_jar"` raising `NameError: uninitialized constant HTTP`. (#61)
+
+
 ## 1.1.3 (2026-04-06)
 
 - Restore compatibility with Ruby 2.6.
