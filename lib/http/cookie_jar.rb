@@ -1,5 +1,7 @@
 # :markup: markdown
 
+require "http/cookie/version"
+
 ##
 # This class is used to manage the Cookies that have been returned from
 # any particular website.
