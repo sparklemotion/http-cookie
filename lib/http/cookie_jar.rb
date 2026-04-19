@@ -1,6 +1,6 @@
 # :markup: markdown
 
-require "http/cookie/version"
+require "http/cookie"
 
 ##
 # This class is used to manage the Cookies that have been returned from
