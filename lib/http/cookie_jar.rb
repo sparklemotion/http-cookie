@@ -1,6 +1,8 @@
 # :markup: markdown
 
-require "http/cookie"
+module HTTP
+  autoload :Cookie, "http/cookie"
+end
 
 ##
 # This class is used to manage the Cookies that have been returned from
