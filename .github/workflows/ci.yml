@@ -41,3 +41,14 @@ jobs:
       - name: Run rake
         run: |
           bundle exec rake
+
+  ci-pass:
+    if: always()
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            exit 1
+          fi
