@@ -1,3 +1,8 @@
+## 1.1.6 (2026-04-20)
+
+- Use `autoload` to avoid "circular require" warnings between `http/cookie` and `http/cookie_jar`. (#65)
+
+
 ## 1.1.5 (2026-04-19)
 
 - Fix `NameError: uninitialized constant HTTP::Cookie::MAX_COOKIES_TOTAL` when `http/cookie_jar` is required without `http/cookie`, as done by the `http` gem. (#62)
