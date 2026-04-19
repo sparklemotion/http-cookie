@@ -1,3 +1,8 @@
+## 1.1.5 (2026-04-19)
+
+- Fix `NameError: uninitialized constant HTTP::Cookie::MAX_COOKIES_TOTAL` when `http/cookie_jar` is required without `http/cookie`, as done by the `http` gem. (#62)
+
+
 ## 1.1.4 (2026-04-07)
 
 - Fix `require "http/cookie_jar"` raising `NameError: uninitialized constant HTTP`. (#61)
