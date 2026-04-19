@@ -1,0 +1,46 @@
+name: Publish gem to rubygems.org
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    if: github.repository == 'sparklemotion/http-cookie'
+    runs-on: ubuntu-latest
+
+    environment:
+      name: rubygems.org
+      url: https://rubygems.org/gems/http-cookie
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@6c3c2f2c1c457b00c10c4848d6f5491db3b629df  # v2.18.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@7372622e62b60b3cb750dcd2b9e32c247ffec26a  # v1.302.0
+        with:
+          ruby-version: ruby
+          bundler-cache: true
+
+      - name: Publish to RubyGems
+        uses: rubygems/release-gem@6317d8d1f7e28c24d28f6eff169ea854948bd9f7  # v1.2.0
+
+      - name: Create GitHub release
+        run: |
+          tag_name="$(git describe --tags --abbrev=0)"
+          gh release create "${tag_name}" --verify-tag --generate-notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
