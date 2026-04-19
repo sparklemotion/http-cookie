@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    labels:
+      - "automerge"
     groups:
       github-actions:
         patterns:
@@ -14,6 +16,8 @@ updates:
     target-branch: "v1.1"
     schedule:
       interval: "weekly"
+    labels:
+      - "automerge"
     groups:
       github-actions:
         patterns:
