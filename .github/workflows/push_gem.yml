@@ -33,7 +33,7 @@ jobs:
         uses: ruby/setup-ruby@7372622e62b60b3cb750dcd2b9e32c247ffec26a  # v1.302.0
         with:
           ruby-version: ruby
-          bundler-cache: true
+          bundler-cache: false
 
       - name: Publish to RubyGems
         uses: rubygems/release-gem@6317d8d1f7e28c24d28f6eff169ea854948bd9f7  # v1.2.0
