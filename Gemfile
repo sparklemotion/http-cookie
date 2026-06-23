@@ -1,4 +1,5 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in http-cookie.gemspec
+ruby RUBY_VERSION
+
 gemspec
