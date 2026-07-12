@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@7372622e62b60b3cb750dcd2b9e32c247ffec26a  # v1.302.0
+        uses: ruby/setup-ruby@7372622e62b60b3cb750dcd2b9e32c247ffec26a # zizmor: ignore[cache-poisoning] -- GitHub Actions caches are ref-isolated; a PR/fork cache cannot be restored by this tag-push release build # v1.302.0
         with:
           ruby-version: ruby
           bundler-cache: true
