@@ -9,10 +9,15 @@ on:
     branches:
       - "*"
 
+permissions: {}
+
 jobs:
   lint-actions:
     name: GitHub Actions audit
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -28,6 +33,7 @@ jobs:
           advanced-security: false
 
   ruby-versions:
+    permissions: {}
     uses: ruby/actions/.github/workflows/ruby_versions.yml@master # zizmor: ignore[unpinned-uses] -- trusted ruby-org reusable workflow; @master required to keep the Ruby version matrix current
     with:
       engine: cruby-jruby
@@ -35,6 +41,8 @@ jobs:
 
   test:
     needs: ruby-versions
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -64,6 +72,7 @@ jobs:
     if: always()
     needs: test
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Check test results
         run: |
