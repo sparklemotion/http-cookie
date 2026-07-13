@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     labels:
       - "automerge"
     groups:
@@ -16,6 +18,8 @@ updates:
     target-branch: "v1.1"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     labels:
       - "automerge"
     groups:
