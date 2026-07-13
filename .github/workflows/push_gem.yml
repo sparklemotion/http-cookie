@@ -31,7 +31,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@7372622e62b60b3cb750dcd2b9e32c247ffec26a # zizmor: ignore[cache-poisoning] -- GitHub Actions caches are ref-isolated; a PR/fork cache cannot be restored by this tag-push release build # v1.302.0
+        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # zizmor: ignore[cache-poisoning] -- GitHub Actions caches are ref-isolated; a PR/fork cache cannot be restored by this tag-push release build # v1.316.0
         with:
           ruby-version: ruby
           bundler-cache: true
