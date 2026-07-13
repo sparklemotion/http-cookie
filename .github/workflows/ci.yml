@@ -77,7 +77,9 @@ jobs:
     permissions: {}
     steps:
       - name: Check test results
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
         run: |
-          if [ "${{ needs.test.result }}" != "success" ]; then
+          if [ "$TEST_RESULT" != "success" ]; then
             exit 1
           fi
