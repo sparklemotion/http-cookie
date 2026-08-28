@@ -950,6 +950,29 @@ module TestHTTPCookieJar
       }
     end
 
+    def test_clear_is_scoped_to_application
+      Dir.mktmpdir do |dir|
+        filename = File.join(dir, "cookies.sqlite")
+        jars = [1, 2].map do |app_id|
+          HTTP::CookieJar.new(
+            :store => :mozilla,
+            :filename => filename,
+            :app_id => app_id,
+          )
+        end
+        jars.each do |jar|
+          jar.add(HTTP::Cookie.new(cookie_values(:name => "persistent")))
+          jar.add(HTTP::Cookie.new(cookie_values(:name => "session", :expires => nil)))
+        end
+
+        assert_same jars[0], jars[0].clear
+        assert_empty jars[0]
+        assert_equal %w[persistent session], jars[1].cookies.map(&:name).sort
+      ensure
+        jars&.each { |jar| jar.store.close }
+      end
+    end
+
     def test_upgrade_mozillastore
       Dir.mktmpdir { |dir|
         filename = File.join(dir, 'cookies.sqlite')
