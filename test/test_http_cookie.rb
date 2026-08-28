@@ -117,6 +117,13 @@ class TestHTTPCookie < Test::Unit::TestCase
     }.size
   end
 
+  def test_parse_quoted_value_with_trailing_escape
+    cookie_str = 'foo="bar' + "\\"
+    cookie = HTTP::Cookie.parse(cookie_str, URI("http://example")).first
+
+    assert_equal "bar", cookie.value
+  end
+
   def test_parse_no_nothing
     cookie = '; "", ;'
     url = URI.parse('http://www.example.com/')
