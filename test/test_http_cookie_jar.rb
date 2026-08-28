@@ -883,6 +883,12 @@ module TestHTTPCookieJar
       jar = HTTP::CookieJar.new(:store => HTTP::CookieJar::HashStore)
     end
 
+    def test_delete_missing_cookie_does_not_create_buckets
+      cookie = HTTP::Cookie.new(cookie_values(:domain => "missing.example"))
+      assert_same @jar, @jar.delete(cookie)
+      assert_empty @jar.store.instance_variable_get(:@jar)
+    end
+
     def test_clone
       jar = @jar.clone
       assert_not_send [
