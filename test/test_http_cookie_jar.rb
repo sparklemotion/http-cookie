@@ -825,6 +825,15 @@ module TestHTTPCookieJar
       assert_equal %w[Japan Akinori], @jar.to_a.sort_by { |c| c.name }.map { |c| c.value }
     end
 
+    def test_explicit_session_cleanup_after_counter_reset
+      cookie = HTTP::Cookie.new(cookie_values(:expires => nil))
+      @jar.add(cookie)
+      @jar.store.instance_variable_set(:@gc_index, 0)
+
+      assert_same @jar, @jar.cleanup(true)
+      assert_empty @jar
+    end
+
     def test_expire_by_each_and_cleanup
       uri = URI('http://www.example.org/')
 
