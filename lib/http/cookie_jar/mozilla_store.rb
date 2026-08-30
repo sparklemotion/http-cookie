@@ -65,6 +65,10 @@ class HTTP::CookieJar
         @db.execute(*args, &block)
       end
 
+      def transaction(&block)
+        @db.transaction(&block)
+      end
+
       def create_function(*args, &block)
         @db.create_function(*args, &block)
       end
@@ -248,6 +252,10 @@ class HTTP::CookieJar
     end
 
     def upgrade_database
+      @db.transaction { upgrade_database! }
+    end
+
+    def upgrade_database!
       loop {
         case schema_version
         when nil, 0
