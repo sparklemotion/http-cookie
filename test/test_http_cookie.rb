@@ -831,6 +831,43 @@ class TestHTTPCookie < Test::Unit::TestCase
     assert_equal true, tld_cookie2.acceptable?
   end
 
+  def test_cookie_prefixes
+    url = URI 'https://www.example.com/'
+
+    # Must have secure flag set
+    tld_cookie1 = HTTP::Cookie.new(cookie_values(:name => '__Secure-Foo', :domain => '.example.com', :origin => url, :secure => false))
+    assert_equal false, tld_cookie1.acceptable?
+
+    url = URI 'http://www.example.com/'
+
+    # Must have secure flag & domain set
+    tld_cookie1 = HTTP::Cookie.new(cookie_values(:name => '__Secure-Foo', :secure => true, :domain => '.example.com', :origin => url))
+    assert_equal false, tld_cookie1.acceptable?
+
+    url = URI 'https://www.example.com/'
+
+    tld_cookie1 = HTTP::Cookie.new(cookie_values(:name => '__Secure-Foo', :secure => true, :domain => '.example.com', :origin => url))
+    assert_equal true, tld_cookie1.acceptable?
+
+    url = URI 'https://www.example.com/'
+
+    # Path must be /
+    tld_cookie1 = HTTP::Cookie.new(cookie_values(:name => '__Host-Foo', :path => '/admin/', :secure => true, :domain => 'www.example.com', :origin => url))
+    assert_equal false, tld_cookie1.acceptable?
+
+    # Domain must not be set
+    url = URI 'https://www.example.com/'
+
+    tld_cookie1 = HTTP::Cookie.new(cookie_values(:name => '__Host-Foo', :path => '', :secure => true, :domain => 'www.example.com', :origin => url))
+    assert_equal false, tld_cookie1.acceptable?
+
+    # Domain must not be set
+    url = URI 'https://www.example.com/'
+
+    tld_cookie1 = HTTP::Cookie.new(cookie_values(:name => '__Host-Foo', :path => '', :secure => true, :domain => 'www.example.com', :origin => url))
+    assert_equal false, tld_cookie1.acceptable?
+  end
+
   def test_fall_back_rules_for_local_domains
     url = URI 'http://www.example.local'
 
@@ -888,6 +925,29 @@ class TestHTTPCookie < Test::Unit::TestCase
     cookie_str = 'a=b; path=/foo'
     cookie = HTTP::Cookie.parse(cookie_str, uri).first
     assert '/foo', cookie.path
+  end
+
+  def test_same_site
+    cookie_str = 'a=b; SameSite=lax'
+    uri = URI.parse('http://example.com')
+
+    cookie = HTTP::Cookie.parse(cookie_str, uri).first
+    assert_equal 'lax', cookie.same_site
+
+    # SameSite=None requires the secure attribute to be set
+    cookie_str = 'a=b; SameSite=None'
+
+    cookie = HTTP::Cookie.new({:name => 'a', :value => 'bar', :same_site => 'none', :secure => false, :origin => uri})
+    assert_equal 'none', cookie.same_site
+    assert_equal false, cookie.acceptable?
+
+
+    # SameSite=None requires the secure attribute to be set
+    cookie_str = 'a=b; SameSite=Lax'
+
+    cookie = HTTP::Cookie.parse(cookie_str, uri).first
+    assert_equal 'lax', cookie.same_site
+    assert_equal "a=b; SameSite=lax", cookie.set_cookie_value
   end
 
   def test_domain_nil
