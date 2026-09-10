@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in http-cookie.gemspec
+ruby RUBY_VERSION
+
 gemspec
 
 # rdoc depends on rbs, which ships no java-platform gem before 4.1.0.pre.2, so on
