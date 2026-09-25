@@ -47,6 +47,8 @@ class HTTP::CookieJar
 
     # The copy constructor.  This store class supports cloning.
     def initialize_copy(other)
+      super
+      mon_initialize
       @jar = Marshal.load(Marshal.dump(other.instance_variable_get(:@jar)))
     end
 
