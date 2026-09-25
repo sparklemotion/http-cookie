@@ -530,12 +530,17 @@ class HTTP::CookieJar
     end
 
     SQL[:delete_expired] = <<-'SQL'
-      DELETE FROM moz_cookies WHERE expiry < :expiry
+      DELETE FROM moz_cookies
+        WHERE appId = :appId AND
+              inBrowserElement = :inBrowserElement AND
+              expiry < :expiry
     SQL
 
     SQL[:overusing_domains] = <<-'SQL'
       SELECT LTRIM(host, '.') domain, COUNT(*) count
         FROM moz_cookies
+        WHERE appId = :appId AND
+              inBrowserElement = :inBrowserElement
         GROUP BY domain
         HAVING count > :count
     SQL
@@ -543,14 +548,19 @@ class HTTP::CookieJar
     SQL[:delete_per_domain_overuse] = <<-'SQL'
       DELETE FROM moz_cookies WHERE id IN (
         SELECT id FROM moz_cookies
-          WHERE LTRIM(host, '.') = :domain
+          WHERE appId = :appId AND
+                inBrowserElement = :inBrowserElement AND
+                LTRIM(host, '.') = :domain
           ORDER BY creationtime
           LIMIT :limit)
     SQL
 
     SQL[:delete_total_overuse] = <<-'SQL'
       DELETE FROM moz_cookies WHERE id IN (
-        SELECT id FROM moz_cookies ORDER BY creationTime ASC LIMIT :limit
+        SELECT id FROM moz_cookies
+          WHERE appId = :appId AND
+                inBrowserElement = :inBrowserElement
+          ORDER BY creationTime ASC LIMIT :limit
       )
     SQL
 
@@ -558,14 +568,22 @@ class HTTP::CookieJar
       synchronize {
         break if @gc_index == 0
 
-        @stmt[:delete_expired].execute({ 'expiry' => Time.now.to_i })
+        @stmt[:delete_expired].execute({
+            'appId' => @app_id,
+            'inBrowserElement' => @in_browser_element ? 1 : 0,
+            'expiry' => Time.now.to_i,
+          })
 
         @stmt[:overusing_domains].execute({
-            'count' => HTTP::Cookie::MAX_COOKIES_PER_DOMAIN
+            'appId' => @app_id,
+            'inBrowserElement' => @in_browser_element ? 1 : 0,
+            'count' => HTTP::Cookie::MAX_COOKIES_PER_DOMAIN,
           }).each { |row|
           domain, count = row['domain'], row['count']
 
           @stmt[:delete_per_domain_overuse].execute({
+              'appId' => @app_id,
+              'inBrowserElement' => @in_browser_element ? 1 : 0,
               'domain' => domain,
               'limit' => count - HTTP::Cookie::MAX_COOKIES_PER_DOMAIN,
             })
@@ -574,7 +592,11 @@ class HTTP::CookieJar
         overrun = count - HTTP::Cookie::MAX_COOKIES_TOTAL
 
         if overrun > 0
-          @stmt[:delete_total_overuse].execute({ 'limit' => overrun })
+          @stmt[:delete_total_overuse].execute({
+              'appId' => @app_id,
+              'inBrowserElement' => @in_browser_element ? 1 : 0,
+              'limit' => overrun,
+            })
         end
 
         @gc_index = 0
