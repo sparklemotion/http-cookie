@@ -1,6 +1,7 @@
 # frozen_string_literal: false
 require File.expand_path('helper', File.dirname(__FILE__))
 require 'tmpdir'
+require 'stringio'
 
 module TestHTTPCookieJar
   class TestAutoloading < Test::Unit::TestCase
@@ -427,6 +428,23 @@ module TestHTTPCookieJar
           @jar.load(filename, :cookiestxt, { :linefeed => "\n" }, { :format => :cookiestxt })
         }
       }
+    end
+
+    def test_load_from_read_only_stream
+      Dir.mktmpdir do |dir|
+        filename = File.join(dir, "cookies.yml")
+        @jar.add(HTTP::Cookie.new(cookie_values))
+        @jar.save(filename)
+        yaml = File.read(filename)
+        io = StringIO.new(yaml)
+        reader = Object.new
+        reader.define_singleton_method(:read) { |*args| io.read(*args) }
+        reader.define_singleton_method(:each_line) { |&block| io.each_line(&block) }
+        reader.define_singleton_method(:external_encoding) { io.external_encoding }
+
+        assert_same @jar2, @jar2.load(reader)
+        assert_equal ["Foo"], @jar2.cookies.map(&:name)
+      end
     end
 
     def test_save_session_cookies_yaml
