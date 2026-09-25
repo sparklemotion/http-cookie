@@ -524,7 +524,8 @@ class HTTP::CookieJar
     end
 
     def clear
-      @db.execute("DELETE FROM moz_cookies")
+      @db.execute("DELETE FROM moz_cookies WHERE appId = ? AND inBrowserElement = ?",
+        [@app_id, @in_browser_element ? 1 : 0])
       @sjar.clear
       self
     end
