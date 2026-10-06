@@ -201,6 +201,8 @@ class HTTP::Cookie::Scanner < StringScanner
         when 'secure', 'httponly'
           # RFC 6265 5.2.5, 5.2.6
           avalue = true
+        when 'samesite'
+          avalue = avalue.downcase
         end
         attrs[aname] = avalue
       end until eos?
