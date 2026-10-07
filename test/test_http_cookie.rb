@@ -1112,6 +1112,16 @@ class TestHTTPCookie < Test::Unit::TestCase
     }
   end
 
+  def test_uri_parser_preserves_repairable_input
+    input = "https://example.org/a[]?query=1#fragment"
+    original = input.dup
+
+    uri = HTTP::Cookie::URIParser.parse(input)
+    assert_equal original, input
+    assert_equal "/a[]", uri.path
+    assert_equal "/a[]", HTTP::Cookie::URIParser.parse(input.freeze).path
+  end
+
   if YAML.name == 'Psych' && Psych::VERSION >= '3.1'
     private def load_yaml(yaml)
       YAML.safe_load(yaml, :permitted_classes => %w[Time HTTP::Cookie Mechanize::Cookie DomainName], :aliases => true)

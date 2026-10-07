@@ -28,6 +28,7 @@ module HTTP::Cookie::URIParser
     m = URIREGEX.match(str) or raise
 
     path = m[:path]
+    str = str.dup
     str[m.begin(:path)...m.end(:path)] = escape_path(path)
     uri = URI.parse(str)
     uri.__send__(:set_path, path)
