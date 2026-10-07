@@ -112,8 +112,6 @@ class HTTP::CookieJar
       all_cookies = []
 
       synchronize {
-        break if @gc_index == 0
-
         @jar.each { |domain, paths|
           domain_cookies = []
 
