@@ -301,7 +301,7 @@ class HTTP::CookieJar
 
     saver = get_impl(AbstractSaver, opthash[:format], opthash)
 
-    if readable.respond_to?(:write)
+    if readable.respond_to?(:read)
       saver.load(readable, self)
     else
       File.open(readable, 'r') { |io|
