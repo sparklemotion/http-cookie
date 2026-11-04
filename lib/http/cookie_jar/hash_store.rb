@@ -58,8 +58,9 @@ class HTTP::CookieJar
     end
 
     def delete(cookie)
-      path_cookies = ((@jar[cookie.domain] ||= {})[cookie.path] ||= {})
-      path_cookies.delete(cookie.name)
+      paths = @jar[cookie.domain]
+      path_cookies = paths && paths[cookie.path]
+      path_cookies.delete(cookie.name) if path_cookies
       self
     end
 
