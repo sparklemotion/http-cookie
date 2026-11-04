@@ -555,9 +555,8 @@ class HTTP::CookieJar
     SQL
 
     def cleanup(session = false)
+      @sjar.cleanup(session)
       synchronize {
-        break if @gc_index == 0
-
         @stmt[:delete_expired].execute({ 'expiry' => Time.now.to_i })
 
         @stmt[:overusing_domains].execute({
