@@ -38,7 +38,7 @@ class HTTP::Cookie::Scanner < StringScanner
       when skip(/"/)
         break
       when skip(/\\/)
-        s << getch
+        s << getch unless eos?
       when scan(/[^"\\]+/)
         s << matched
       end until eos?
